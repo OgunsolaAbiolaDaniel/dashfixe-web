@@ -1,15 +1,37 @@
+// src/App.tsx
+import { useState } from 'react';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import Philosophy from './components/Philosophy';
+import Process from './components/Process';
+import DualAudience from './components/DualAudience';
+import FounderStory from './components/FounderStory';
+import FinalCta from './components/FinalCta';
+import Footer from './components/Footer';
+import ArtisanModal from './components/ArtisanModal';
+
 export default function App() {
+  const [isArtisanModalOpen, setIsArtisanModalOpen] = useState<boolean>(false);
+
+  const openModal = () => setIsArtisanModalOpen(true);
+  const closeModal = () => setIsArtisanModalOpen(false);
+
   return (
-    <div className="min-h-screen bg-brand-alt flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg text-center max-w-md border border-slate-100">
-        <h1 className="text-3xl font-bold text-brand-navy">Dashfixe Setup Complete 🎉</h1>
-        <p className="mt-2 text-brand-slate text-sm">
-          React + Vite + Tailwind CSS is configured and ready to build.
-        </p>
-        <button className="mt-6 px-5 py-2.5 bg-brand-blue hover:bg-brand-hover text-white font-medium rounded-lg text-sm transition-colors">
-          Get Started
-        </button>
-      </div>
+    <div className="min-h-screen bg-white text-brand-navy font-sans antialiased">
+      <Navbar onOpenArtisanModal={openModal} />
+      <main>
+        <Hero onOpenArtisanModal={openModal} />
+        <Philosophy />
+        <Process />
+        <DualAudience onOpenArtisanModal={openModal} />
+        <FounderStory />
+        <FinalCta />
+      </main>
+      <Footer />
+
+      {isArtisanModalOpen && (
+        <ArtisanModal onClose={closeModal} />
+      )}
     </div>
-  )
+  );
 }
