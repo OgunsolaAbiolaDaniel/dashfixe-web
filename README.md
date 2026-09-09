@@ -1,16 +1,26 @@
-# React + Vite
+# Dashfixe — web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Marketplace for skilled tradespeople in Portugal, starting with a pilot in Amora & Seixal.
+This is the customer-facing website: waitlist, home, and the search-and-map surface.
 
-Currently, two official plugins are available:
+React 19 · Vite 8 · TypeScript 5 · Tailwind 3 · react-router 7 · MapLibre GL (OpenFreeMap tiles)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run check    # typecheck + lint + tests
+npm run build    # production bundle in dist/
+```
 
-## React Compiler
+Routes today: `/` (home, signed out and signed in) · `/waitlist` · `/explore`.
+Everything else resolves through `src/routes.ts` until its page lands — see `SITEMAP.md`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Docs:
 
-## Expanding the ESLint configuration
+- `docs/HANDOVER.md` — where the project stands, how to run and migrate it, gotchas
+- `docs/BUILD_PLAN.md` — the phased plan and the definition of done
+- `docs/DESIGN.md` — implementation-level design decisions (type scale, the map)
+- `SITEMAP.md` — every designed screen and its route
+- `../Dashfixe.md` — business context, locked copy, design system (one folder up)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+No API keys are needed. Map tiles come from OpenFreeMap's public endpoint.

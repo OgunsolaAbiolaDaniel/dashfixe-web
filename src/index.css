@@ -1,9 +1,107 @@
-@import 'leaflet/dist/leaflet.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
+/* Base ground and type — designs/Dashfixe Design System - Web.dc.html */
+@layer base {
+  body {
+    margin: 0;
+    background: theme('colors.panel');
+    color: theme('colors.ink.DEFAULT');
+    font-family: theme('fontFamily.sans');
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: theme('colors.brand.DEFAULT');
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: theme('colors.brand.hover');
+  }
+
+  ::selection {
+    background: theme('colors.brand.tint-strong');
+    color: theme('colors.ink.DEFAULT');
+  }
+
+  input,
+  button,
+  select {
+    font-family: inherit;
+  }
+
+  /* Focus ring: 3px rgba(37,99,235,.28), offset 2. Never remove it. */
+  input:focus-visible,
+  button:focus-visible,
+  select:focus-visible,
+  a:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.28);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Live/availability pulse — `dfxp` in the design files. Colour comes from
+     the element's own `color`, so set text-* alongside bg-* on the dot. */
+  .pulse-dot {
+    position: relative;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: dfxp 2.4s ease-out infinite;
+  }
+}
+
+/* MapLibre chrome — keep the vendor UI out of the design's way. */
+/* maplibre-gl.css sets .maplibregl-map { position: relative }, which would win over
+   Tailwind's `absolute` and collapse the map to zero height. */
+.live-map.maplibregl-map {
+  position: absolute;
+  inset: 0;
+}
+
+.live-map .maplibregl-ctrl-attrib {
+  font-family: theme('fontFamily.sans');
+  font-size: 11px;
+  font-weight: 500;
+  color: theme('colors.ink.40');
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px 0 0 0;
+}
+
+.live-map .maplibregl-ctrl-attrib a {
+  color: theme('colors.ink.60');
+}
+
+.live-map .maplibregl-marker {
+  cursor: default;
+}
+
+.live-map .maplibregl-marker:has([data-marker] button) {
+  cursor: pointer;
+}
+
+.live-map canvas:focus-visible {
+  outline: none;
+}
+
+@keyframes dfxp {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }
