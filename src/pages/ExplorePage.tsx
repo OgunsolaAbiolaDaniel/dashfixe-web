@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import mark from '../assets/dashfixe-mark.png';
 import wordmark from '../assets/dashfixe-wordmark.png';
 import SearchPanel from '../components/explore/SearchPanel';
@@ -7,27 +7,52 @@ import MapCanvas from '../components/explore/MapCanvas';
 import ChatPanel from '../components/explore/ChatPanel';
 import { AVAILABLE } from '../components/explore/artisans';
 import { ROUTES, link } from '../routes';
+import { parseSearch, type When } from '../search';
+import { useAuth } from '../auth';
 import type { Lang } from '../types';
 
 /**
  * Search and map — designs/Dashfixe Web.dc.html.
  *
- * Two panes: a fixed-min search panel on the page ground, the map filling the rest.
- * Selecting in the list and selecting on the map are the same action, so both sync.
+ * The search arrives in the URL from the home composer, a trade tile or a nearby card,
+ * so a search is shareable and survives reload and the back button.
+ *
+ * Browsing is open — search, availability and estimates need no account. Opening a
+ * chat is the commit point: the docked panel never appears for a signed-out visitor,
+ * and "Chat" raises the auth sheet instead.
  *
  * The supply shown here is illustrative — see components/explore/artisans.ts.
  */
 export default function ExplorePage() {
+  const [params, setParams] = useSearchParams();
+  const search = parseSearch(params);
+  const { signedIn, gate } = useAuth();
   const [lang, setLang] = useState<Lang>('EN');
-  const [selectedId, setSelectedId] = useState(AVAILABLE[0].id);
-  const [chatWith, setChatWith] = useState<string | null>(AVAILABLE[0].id);
+
+  const arriving = AVAILABLE.find((a) => a.id === search.artisan)?.id ?? AVAILABLE[0].id;
+  const [selectedId, setSelectedId] = useState(arriving);
+  const [chatWith, setChatWith] = useState<string | null>(null);
 
   const select = (id: string) => {
     setSelectedId(id);
     if (chatWith) setChatWith(id);
   };
 
-  const chatArtisan = AVAILABLE.find((a) => a.id === chatWith) ?? null;
+  /** Chat is the commit point — this is where an account is needed. */
+  const openChat = (id: string) => {
+    setSelectedId(id);
+    gate(() => setChatWith(id));
+  };
+
+  const setWhen = (when: When) => {
+    const next = new URLSearchParams(params);
+    if (when === 'later') next.set('when', 'later');
+    else next.delete('when');
+    setParams(next, { replace: true });
+  };
+
+  // The docked chat is for signed-in customers only. Signing out closes it.
+  const chatArtisan = signedIn ? (AVAILABLE.find((a) => a.id === chatWith) ?? null) : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-page">
@@ -71,15 +96,7 @@ export default function ExplorePage() {
               </button>
             ))}
           </div>
-          <Link to={ROUTES.waitlist} className="text-[14.5px] font-bold text-ink hover:text-ink">
-            Log in
-          </Link>
-          <Link
-            to={ROUTES.waitlist}
-            className="rounded-btn bg-brand px-5 py-3 text-[14.5px] font-bold text-white transition hover:bg-brand-hover hover:text-white"
-          >
-            Sign up
-          </Link>
+          <AuthButtons />
         </div>
       </header>
 
@@ -87,12 +104,56 @@ export default function ExplorePage() {
         id="find"
         className="grid min-h-0 flex-1 items-stretch grid-cols-1 lg:grid-cols-[minmax(340px,436px)_minmax(0,1fr)]"
       >
-        <SearchPanel selectedId={selectedId} onSelect={select} onChat={setChatWith} />
+        <SearchPanel
+          search={search}
+          onWhen={setWhen}
+          selectedId={selectedId}
+          onSelect={select}
+          onChat={openChat}
+        />
         <div className="relative min-h-[520px] min-w-0">
           <MapCanvas selectedId={selectedId} onSelect={select} />
           {chatArtisan && <ChatPanel artisan={chatArtisan} onClose={() => setChatWith(null)} />}
         </div>
       </div>
     </div>
+  );
+}
+
+function AuthButtons() {
+  const { signedIn, requireAuth, signOut } = useAuth();
+
+  if (signedIn) {
+    return (
+      <button
+        type="button"
+        onClick={signOut}
+        className="flex h-ctl items-center gap-2.5 rounded-well border border-line bg-panel px-1.5 transition hover:bg-page"
+      >
+        <span className="grid h-8 w-8 flex-none place-items-center rounded-[11px] bg-avatar text-xs font-extrabold text-brand">
+          AM
+        </span>
+        <span className="pr-1.5 text-sm font-bold text-ink">Alex</span>
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => requireAuth()}
+        className="text-[14.5px] font-bold text-ink"
+      >
+        Log in
+      </button>
+      <button
+        type="button"
+        onClick={() => requireAuth()}
+        className="rounded-btn bg-brand px-5 py-3 text-[14.5px] font-bold text-white transition hover:bg-brand-hover"
+      >
+        Sign up
+      </button>
+    </>
   );
 }

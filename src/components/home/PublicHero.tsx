@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronDown, Clock, Crosshair, MapPin, Wrench } from '../icons';
-import { link } from '../../routes';
+import { exploreUrl, DEFAULT_ADDRESS, type When } from '../../search';
+import { useAuth } from '../../auth';
 
 const FIELD = 'flex h-[60px] items-center gap-[13px] rounded-input bg-well px-[18px]';
 const INPUT =
@@ -8,7 +10,19 @@ const INPUT =
 const ROUND_BTN =
   'grid h-[38px] w-[38px] flex-none place-items-center rounded-full bg-panel text-brand transition hover:bg-brand-tint';
 
-export default function PublicHero({ onAuth }: { onAuth: () => void }) {
+/**
+ * The composer. What is typed here carries into /explore — searching is browse-first
+ * and needs no account, so only the photo attachment and the account link gate on auth.
+ */
+export default function PublicHero() {
+  const navigate = useNavigate();
+  const { requireAuth, gate } = useAuth();
+  const [need, setNeed] = useState('');
+  const [address, setAddress] = useState('');
+  const [when, setWhen] = useState<When>('now');
+
+  const search = () => navigate(exploreUrl({ need, address, when }));
+
   return (
     <section id="top" className="bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(56px,7vw,96px)] pt-[clamp(36px,4vw,64px)]">
@@ -19,7 +33,7 @@ export default function PublicHero({ onAuth }: { onAuth: () => void }) {
               <span className="text-base font-bold text-ink">Amora, PT</span>
               <button
                 type="button"
-                onClick={onAuth}
+                onClick={() => requireAuth()}
                 className="text-base font-semibold text-ink-60 underline underline-offset-4 transition hover:text-ink"
               >
                 Change area
@@ -32,45 +46,77 @@ export default function PublicHero({ onAuth }: { onAuth: () => void }) {
 
             <button
               type="button"
+              onClick={() => setWhen(when === 'now' ? 'later' : 'now')}
+              aria-label="Choose when"
               className="mb-4 flex h-ctl-lg items-center gap-[11px] rounded-full bg-well px-[22px] text-base font-bold text-ink transition hover:bg-line"
             >
               <Clock size={19} />
-              Fix it now
+              {when === 'now' ? 'Fix it now' : 'Book for later'}
               <ChevronDown size={17} />
             </button>
 
-            <div className="flex max-w-[540px] flex-col gap-2.5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                search();
+              }}
+              className="flex max-w-[540px] flex-col gap-2.5"
+            >
               <div className={FIELD}>
                 <Wrench size={19} className="flex-none text-ink" />
-                <input type="text" placeholder="What needs fixing?" aria-label="What needs fixing" className={INPUT} />
-                <button type="button" onClick={onAuth} aria-label="Attach a photo" className={ROUND_BTN}>
+                <input
+                  type="text"
+                  value={need}
+                  onChange={(e) => setNeed(e.target.value)}
+                  placeholder="What needs fixing?"
+                  aria-label="What needs fixing"
+                  className={INPUT}
+                />
+                <button
+                  type="button"
+                  onClick={() => gate(() => {})}
+                  aria-label="Attach a photo"
+                  className={ROUND_BTN}
+                >
                   <Camera size={18} />
                 </button>
               </div>
               <div className={FIELD}>
                 <MapPin size={19} className="flex-none text-ink" />
-                <input type="text" placeholder="Your address" aria-label="Your address" className={INPUT} />
-                <button type="button" onClick={onAuth} aria-label="Use my location" className={ROUND_BTN}>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Your address"
+                  aria-label="Your address"
+                  className={INPUT}
+                />
+                <button
+                  type="button"
+                  onClick={() => setAddress(DEFAULT_ADDRESS)}
+                  aria-label="Use my location"
+                  className={ROUND_BTN}
+                >
                   <Crosshair size={18} />
                 </button>
               </div>
-            </div>
 
-            <div className="mt-[26px] flex flex-wrap items-center gap-[26px]">
-              <Link
-                to={link('explore')}
-                className="flex h-14 items-center rounded-btn bg-ink px-[30px] text-base font-bold text-white transition hover:bg-ink-80 hover:text-white"
-              >
-                See who's available
-              </Link>
-              <button
-                type="button"
-                onClick={onAuth}
-                className="border-b border-[#c8d1e0] pb-1 text-base font-semibold text-ink transition hover:border-ink"
-              >
-                Log in to see your recent jobs
-              </button>
-            </div>
+              <div className="mt-[22px] flex flex-wrap items-center gap-[26px]">
+                <button
+                  type="submit"
+                  className="flex h-14 items-center rounded-btn bg-ink px-[30px] text-base font-bold text-white transition hover:bg-ink-80"
+                >
+                  See who's available
+                </button>
+                <button
+                  type="button"
+                  onClick={() => requireAuth()}
+                  className="border-b border-[#c8d1e0] pb-1 text-base font-semibold text-ink transition hover:border-ink"
+                >
+                  Log in to see your recent jobs
+                </button>
+              </div>
+            </form>
           </div>
 
           <div className="relative">

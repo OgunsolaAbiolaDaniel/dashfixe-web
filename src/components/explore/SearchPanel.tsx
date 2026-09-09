@@ -1,8 +1,11 @@
-import { useState } from 'react';
 import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
 import { AVAILABLE, AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan } from './artisans';
+import { DEFAULT_ADDRESS, tradeLabel, type Search, type When } from '../../search';
+import { useAuth } from '../../auth';
 
 type Props = {
+  search: Search;
+  onWhen: (when: When) => void;
   selectedId: string;
   onSelect: (id: string) => void;
   onChat: (id: string) => void;
@@ -19,6 +22,7 @@ function ArtisanCard({
   onSelect: () => void;
   onChat: () => void;
 }) {
+  const { signedIn } = useAuth();
   return (
     <article
       onClick={onSelect}
@@ -85,15 +89,20 @@ function ArtisanCard({
               : 'bg-brand-tint text-brand-hover hover:bg-brand-tint-hover')
           }
         >
-          {selected ? `Chat with ${a.name.split(' ')[0]}` : 'Chat'}
+          {!signedIn
+            ? 'Request'
+            : selected
+              ? `Chat with ${a.name.split(' ')[0]}`
+              : 'Chat'}
         </button>
       </div>
     </article>
   );
 }
 
-export default function SearchPanel({ selectedId, onSelect, onChat }: Props) {
-  const [when, setWhen] = useState<'now' | 'later'>('now');
+export default function SearchPanel({ search, onWhen, selectedId, onSelect, onChat }: Props) {
+  const need = search.need || tradeLabel(search.trade);
+  const address = search.address || DEFAULT_ADDRESS;
 
   return (
     <div className="flex min-w-0 flex-col gap-5 overflow-y-auto border-r border-line-soft bg-page p-[26px]">
@@ -136,7 +145,7 @@ export default function SearchPanel({ selectedId, onSelect, onChat }: Props) {
           className="mb-2.5 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
         >
           <Camera size={18} className="flex-none text-brand" />
-          <span className="mr-auto text-[15px] font-bold text-ink">Plumbing</span>
+          <span className="mr-auto truncate text-[15px] font-bold text-ink">{need}</span>
           <ChevronDown size={16} className="text-ink-40" />
         </button>
         <button
@@ -144,19 +153,17 @@ export default function SearchPanel({ selectedId, onSelect, onChat }: Props) {
           className="mb-3 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
         >
           <MapPin size={18} className="flex-none text-brand" />
-          <span className="mr-auto truncate text-[15px] font-semibold text-ink-80">
-            Rua da Cooperativa 14, Amora
-          </span>
+          <span className="mr-auto truncate text-[15px] font-semibold text-ink-80">{address}</span>
         </button>
         <div className="flex gap-2 rounded-well bg-well p-1">
           {(['now', 'later'] as const).map((v) => (
             <button
               key={v}
               type="button"
-              onClick={() => setWhen(v)}
+              onClick={() => onWhen(v)}
               className={
                 'flex-1 rounded-[10px] p-2.5 text-center text-sm transition ' +
-                (when === v
+                (search.when === v
                   ? 'bg-panel font-bold text-ink shadow-card'
                   : 'font-semibold text-ink-40 hover:text-ink-60')
               }

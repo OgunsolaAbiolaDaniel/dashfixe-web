@@ -2,6 +2,9 @@
  * Illustrative supply. The design labels this "Sample data" on purpose —
  * no real artisans are recruited yet, so the badge must stay.
  */
+import { Link } from 'react-router-dom';
+import { exploreUrl } from '../../search';
+
 const PROS = [
   { initials: 'TF', name: 'Tiago Ferreira', meta: 'Plumbing · 1.4 km', price: '€60–75', free: true },
   { initials: 'RA', name: 'Rita Almeida', meta: 'Electrical · 2.1 km', price: '€70–90', free: true },
@@ -9,7 +12,7 @@ const PROS = [
   { initials: 'MS', name: 'Miguel Santos', meta: 'Carpentry · 3.0 km', price: '€55–70', free: false },
 ];
 
-export default function Nearby({ onAuth }: { onAuth: () => void }) {
+export default function Nearby() {
   return (
     <section className="bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(56px,7vw,96px)]">
@@ -23,11 +26,10 @@ export default function Nearby({ onAuth }: { onAuth: () => void }) {
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-4">
           {PROS.map((p) => (
-            <button
+            <Link
               key={p.initials}
-              type="button"
-              onClick={onAuth}
-              className="rounded-[20px] bg-well p-6 text-left transition hover:bg-line"
+              to={exploreUrl({ artisan: p.initials.toLowerCase() })}
+              className="block rounded-[20px] bg-well p-6 text-left transition hover:bg-line hover:text-ink"
             >
               <span className="mb-[18px] flex items-center gap-[13px]">
                 <span className="grid h-[52px] w-[52px] flex-none place-items-center rounded-full bg-panel text-[15px] font-extrabold text-brand">
@@ -54,7 +56,7 @@ export default function Nearby({ onAuth }: { onAuth: () => void }) {
                   {p.price}
                 </span>
               </span>
-            </button>
+            </Link>
           ))}
         </div>
       </div>
