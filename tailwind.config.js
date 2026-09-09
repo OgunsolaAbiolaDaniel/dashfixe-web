@@ -65,6 +65,14 @@ export default {
         'section': ['19px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '800' }],
         'title': ['34px', { lineHeight: '1.05', letterSpacing: '-0.035em', fontWeight: '800' }],
         'hero': ['36px', { lineHeight: '1.04', letterSpacing: '-0.035em', fontWeight: '800' }],
+
+        // Marketing scale — one step under uber.com. Fluid, capped, never past 52px.
+        // Use these on the public pages instead of ad-hoc clamp() values.
+        'display': ['clamp(34px, 4.4vw, 52px)', { lineHeight: '1.04', letterSpacing: '-0.04em', fontWeight: '800' }],
+        'h2': ['clamp(24px, 2.8vw, 34px)', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '800' }],
+        'h3': ['20px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'lead': ['15.5px', { lineHeight: '1.55', fontWeight: '500' }],
+        'nav': ['14px', { lineHeight: '1.2', fontWeight: '700' }],
       },
       borderRadius: {
         // Web: buttons 13-14, inputs 16, cards 22, hero cards 26

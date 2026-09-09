@@ -32,7 +32,10 @@ export default function WaitlistPage() {
 
   // TODO: POST to /api/waitlist and /api/artisans/apply once the backend exists.
   const submitWaitlist = (_email: string, markDone: (v: boolean) => void) => markDone(true);
-  const submitArtisan = (_application: ArtisanApplication) => setArtisanDone(true);
+  const submitArtisan = (application: ArtisanApplication) => {
+    void application; // held until POST /api/artisans/apply exists
+    setArtisanDone(true);
+  };
 
   return (
     <div className="min-h-screen bg-panel">

@@ -55,11 +55,10 @@ The browsing path rejoins the main path: on the day, a booking becomes a live jo
 | Help centre | `#help` | `/help` | planned |
 | Coverage | `#coverage` | `/coverage` | planned |
 | About Dashfixe | `#about` | `/about` | planned |
-| Search + map app | `Dashfixe Web.dc.html` | `/explore` | planned |
+| Search + map app | `Dashfixe Web.dc.html` | `/explore` | **built** (live map) |
 
-> `/explore` existed in an earlier build and was removed when the site became a single waitlist
-> page. Flow puts it back as the search-and-map surface. Rebuild it from `Dashfixe Web.dc.html`,
-> not from the deleted `ExplorePage.tsx` — that one was on the rejected terracotta palette.
+> `/explore` is rebuilt from `Dashfixe Web.dc.html` on real OpenFreeMap tiles
+> (`components/explore/LiveMap.tsx`). See `docs/DESIGN.md` for the map spec.
 
 ---
 
@@ -114,8 +113,7 @@ Dashfixe hex. Do not apply it. Dashfixe's design system is Lane 4.
 
 1. **`/for-artisans`** — the most-linked missing destination. Every nav, footer and CTA on the
    home page currently detours to the waitlist because it does not exist.
-2. **`/explore`** — the search-and-map surface from `Dashfixe Web.dc.html`. The product's
-   actual core, and the biggest single build.
+2. ~~**`/explore`**~~ — built. The search-and-map surface from `Dashfixe Web.dc.html`.
 3. **`/fix` → `/artisan/:id` → `/job/:id`** — the urgent path, in that order. They share
    components, so building them together is cheaper than one at a time.
 4. **`/trade/:slug` and `/book`** — the browsing path.

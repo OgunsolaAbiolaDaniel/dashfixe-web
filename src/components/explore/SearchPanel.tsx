@@ -1,5 +1,5 @@
 import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
-import { AVAILABLE, AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan } from './artisans';
+import { AVAILABLE, AVAILABLE_COUNT, MEDIAN_ETA, TOTAL_ONLINE, type Artisan } from './artisans';
 import { DEFAULT_ADDRESS, tradeLabel, type Search, type When } from '../../search';
 
 type Props = {
@@ -99,19 +99,19 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
   const address = search.address || DEFAULT_ADDRESS;
 
   return (
-    <div className="flex min-w-0 flex-col gap-5 overflow-y-auto border-r border-line-soft bg-page p-[26px]">
+    <div className="flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
       <div>
         <div className="mb-3.5 flex w-fit items-center gap-2 rounded-full bg-brand-tint px-3.5 py-2">
           <span className="pulse-dot block h-[7px] w-[7px] rounded-full bg-brand text-brand" />
           <span className="text-[12.5px] font-bold text-brand-hover">Amora &amp; Seixal · live</span>
         </div>
-        <h1 className="mb-2 text-4xl font-extrabold leading-[1.04] tracking-[-.035em] text-ink">
+        <h1 className="mb-2 text-[30px] font-extrabold leading-[1.06] tracking-[-.035em] text-ink">
           Who is free
           <br />
           right now
         </h1>
-        <p className="text-[15.5px] leading-[1.5] text-ink-60">
-          Nine vetted artisans are online within 5 km. Pick one, agree the price in chat, and they
+        <p className="text-[14.5px] leading-[1.5] text-ink-60">
+          Nine vetted artisans are online within 5 km of you. Pick one, agree the price in chat, and they
           travel once.
         </p>
       </div>
@@ -119,7 +119,7 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
       <div className="flex gap-px overflow-hidden rounded-[20px] border border-[#e6ebf3] bg-[#e6ebf3]">
         {[
           { v: String(TOTAL_ONLINE), unit: '', label: 'Online' },
-          { v: '21', unit: ' min', label: 'Median arrival' },
+          { v: String(MEDIAN_ETA), unit: ' min', label: 'Median arrival' },
           { v: '4.8', unit: '', label: 'Cohort rating' },
         ].map((s) => (
           <span key={s.label} className="flex-1 bg-panel px-3 py-3.5 text-center">
@@ -139,7 +139,7 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
           className="mb-2.5 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
         >
           <Camera size={18} className="flex-none text-brand" />
-          <span className="mr-auto truncate text-[15px] font-bold text-ink">{need}</span>
+          <span className="mr-auto truncate text-[14.5px] font-bold text-ink">{need}</span>
           <ChevronDown size={16} className="text-ink-40" />
         </button>
         <button
@@ -147,7 +147,7 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
           className="mb-3 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
         >
           <MapPin size={18} className="flex-none text-brand" />
-          <span className="mr-auto truncate text-[15px] font-semibold text-ink-80">{address}</span>
+          <span className="mr-auto truncate text-[14.5px] font-semibold text-ink-80">{address}</span>
         </button>
         <div className="flex gap-2 rounded-well bg-well p-1">
           {(['now', 'later'] as const).map((v) => (

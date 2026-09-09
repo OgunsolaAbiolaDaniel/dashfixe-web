@@ -14,12 +14,12 @@ const TRADES = [
 export default function Trades() {
   return (
     <section id="trades" className="scroll-mt-[88px] bg-panel">
-      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(56px,7vw,96px)]">
+      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
         <div className="mb-7 flex flex-wrap items-end gap-5">
-          <h2 className="mr-auto text-[clamp(30px,4vw,48px)] font-extrabold leading-[1.06] tracking-[-.04em] text-ink">
+          <h2 className="mr-auto text-h2 text-ink">
             Pick a trade
           </h2>
-          <span className="text-[15.5px] font-semibold text-ink-60">
+          <span className="text-[14.5px] font-semibold text-ink-60">
             Five at pilot launch. More as the network grows.
           </span>
         </div>
@@ -33,7 +33,7 @@ export default function Trades() {
               <span className="mb-[18px] grid h-11 w-11 place-items-center rounded-full bg-panel">
                 <Icon size={21} strokeWidth={1.6} className="text-brand" />
               </span>
-              <span className="block text-[18px] font-bold tracking-[-.015em] text-ink">{name}</span>
+              <span className="block text-[16.5px] font-bold tracking-[-.015em] text-ink">{name}</span>
               <span className="mt-1 block text-sm font-semibold text-ink-60">{hint}</span>
             </Link>
           ))}

@@ -10,10 +10,10 @@ const at = (p: { left: number; top: number }) => ({
 });
 
 /**
- * The map — designs/Dashfixe Web.dc.html.
+ * The drawn-city fallback for LiveMap — designs/Dashfixe Web.dc.html.
  *
- * The ground is a drawn city, not geographic tiles. The design system calls for real
- * desaturated tiles in production; the markers stay ours either way.
+ * Shown only when the vector tiles cannot load (offline, blocked network, no WebGL).
+ * Same markers, same key, same controls, so the page keeps its shape.
  */
 export default function MapCanvas({ selectedId, onSelect }: Props) {
   const selected = AVAILABLE.find((a) => a.id === selectedId);

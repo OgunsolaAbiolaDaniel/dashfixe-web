@@ -8,8 +8,8 @@ const CARD =
 export default function Apps({ onAuth }: { onAuth: () => void }) {
   return (
     <section className="bg-page">
-      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(48px,6vw,88px)]">
-        <h2 className="mb-[30px] text-[clamp(30px,4vw,48px)] font-extrabold leading-[1.06] tracking-[-.04em] text-ink">
+      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(44px,5vw,72px)]">
+        <h2 className="mb-[30px] text-h2 text-ink">
           It's easier in the apps
         </h2>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-5">
@@ -18,10 +18,10 @@ export default function Apps({ onAuth }: { onAuth: () => void }) {
               <Phone size={38} className="text-ink" />
             </span>
             <span className="mr-auto min-w-0">
-              <span className="block text-[22px] font-extrabold tracking-[-.03em] text-ink">
+              <span className="block text-h3 text-ink">
                 Get the Dashfixe app
               </span>
-              <span className="mt-[5px] block text-[15.5px] font-semibold text-ink-60">
+              <span className="mt-[5px] block text-[14.5px] font-semibold text-ink-60">
                 Ships with the pilot
               </span>
             </span>
@@ -33,10 +33,10 @@ export default function Apps({ onAuth }: { onAuth: () => void }) {
               <Wrench size={38} strokeWidth={1.5} className="text-ink" />
             </span>
             <span className="mr-auto min-w-0">
-              <span className="block text-[22px] font-extrabold tracking-[-.03em] text-ink">
+              <span className="block text-h3 text-ink">
                 Get the Artisan app
               </span>
-              <span className="mt-[5px] block text-[15.5px] font-semibold text-ink-60">
+              <span className="mt-[5px] block text-[14.5px] font-semibold text-ink-60">
                 For the pilot cohort
               </span>
             </span>

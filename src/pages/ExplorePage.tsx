@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import mark from '../assets/dashfixe-mark.png';
 import wordmark from '../assets/dashfixe-wordmark.png';
 import SearchPanel from '../components/explore/SearchPanel';
-import MapCanvas from '../components/explore/MapCanvas';
+import LiveMap from '../components/explore/LiveMap';
 import ChatPanel from '../components/explore/ChatPanel';
 import { AVAILABLE } from '../components/explore/artisans';
 import { ROUTES, link } from '../routes';
@@ -55,14 +55,14 @@ export default function ExplorePage() {
   const chatArtisan = signedIn ? (AVAILABLE.find((a) => a.id === chatWith) ?? null) : null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-page">
-      <header className="flex flex-wrap items-center gap-[26px] border-b border-line-soft bg-panel px-8 py-4">
+    <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
+      <header className="flex min-h-[69px] items-center gap-4 border-b border-line-soft bg-panel px-[clamp(16px,3vw,32px)] py-3 lg:gap-[26px]">
         <Link to={ROUTES.home} className="flex flex-none items-center gap-2.5">
           <img src={mark} alt="" className="block h-7 w-auto" />
           <img src={wordmark} alt="Dashfixe" className="block h-[17px] w-auto" />
         </Link>
 
-        <nav className="mr-auto flex gap-6">
+        <nav className="mr-auto hidden gap-6 md:flex">
           <a href="#find" className="text-[14.5px] font-bold text-brand">
             Find an artisan
           </a>
@@ -77,8 +77,8 @@ export default function ExplorePage() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-[11px]">
-          <div className="flex rounded-xl bg-well p-[3px]">
+        <div className="ml-auto flex items-center gap-[11px]">
+          <div className="hidden rounded-xl bg-well p-[3px] sm:flex">
             {(['EN', 'PT'] as const).map((code) => (
               <button
                 key={code}
@@ -100,9 +100,11 @@ export default function ExplorePage() {
         </div>
       </header>
 
+      {/* Desktop: the map pins to the viewport and the results panel scrolls on its
+          own, like a ride-hailing screen. Mobile: the page stacks and scrolls. */}
       <div
         id="find"
-        className="grid min-h-0 flex-1 items-stretch grid-cols-1 lg:grid-cols-[minmax(340px,436px)_minmax(0,1fr)]"
+        className="grid min-h-0 flex-1 items-stretch grid-cols-1 lg:grid-cols-[minmax(340px,436px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]"
       >
         <SearchPanel
           search={search}
@@ -111,8 +113,8 @@ export default function ExplorePage() {
           onSelect={select}
           onChat={openChat}
         />
-        <div className="relative min-h-[520px] min-w-0">
-          <MapCanvas selectedId={selectedId} onSelect={select} />
+        <div className="relative min-h-[520px] min-w-0 lg:min-h-0">
+          <LiveMap selectedId={selectedId} onSelect={select} />
           {chatArtisan && <ChatPanel artisan={chatArtisan} onClose={() => setChatWith(null)} />}
         </div>
       </div>

@@ -4,7 +4,7 @@ import wordmark from '../../assets/dashfixe-wordmark.png';
 import { Globe } from '../icons';
 import { link } from '../../routes';
 
-const NAV = 'rounded-xl px-[15px] py-2.5 text-[15px] font-bold text-ink transition hover:bg-well hover:text-ink';
+const NAV = 'rounded-xl px-[15px] py-2.5 text-nav text-ink transition hover:bg-well hover:text-ink';
 
 export default function PublicNav({ onAuth }: { onAuth: () => void }) {
   return (
@@ -26,25 +26,25 @@ export default function PublicNav({ onAuth }: { onAuth: () => void }) {
           <div className="flex flex-none items-center gap-1.5">
             <button
               type="button"
-              className="flex h-ctl items-center gap-2 rounded-xl px-[13px] text-[15px] font-bold text-ink transition hover:bg-well"
+              className="flex h-ctl items-center gap-2 rounded-xl px-[13px] text-nav text-ink transition hover:bg-well"
             >
               <Globe size={17} className="text-ink-60" />
               EN
             </button>
-            <a href={link('help')} className="flex h-ctl items-center rounded-xl px-[13px] text-[15px] font-bold text-ink transition hover:bg-well hover:text-ink">
+            <a href={link('help')} className="flex h-ctl items-center rounded-xl px-[13px] text-nav text-ink transition hover:bg-well hover:text-ink">
               Help
             </a>
             <button
               type="button"
               onClick={onAuth}
-              className="h-ctl rounded-xl px-[13px] text-[15px] font-bold text-ink transition hover:bg-well"
+              className="h-ctl rounded-xl px-[13px] text-nav text-ink transition hover:bg-well"
             >
               Log in
             </button>
             <button
               type="button"
               onClick={onAuth}
-              className="h-ctl rounded-full bg-ink px-[22px] text-[15px] font-bold text-white transition hover:bg-ink-80"
+              className="h-ctl rounded-full bg-ink px-[22px] text-nav text-white transition hover:bg-ink-80"
             >
               Sign up
             </button>

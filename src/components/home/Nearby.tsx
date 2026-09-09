@@ -15,9 +15,9 @@ const PROS = [
 export default function Nearby() {
   return (
     <section className="bg-panel">
-      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(56px,7vw,96px)]">
+      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
         <div className="mb-7 flex flex-wrap items-end gap-4">
-          <h2 className="mr-auto text-[clamp(30px,4vw,48px)] font-extrabold leading-[1.06] tracking-[-.04em] text-ink">
+          <h2 className="mr-auto text-h2 text-ink">
             Free in Amora right now
           </h2>
           <span className="rounded-full bg-warning-tint px-3 py-1.5 text-[11.5px] font-extrabold uppercase tracking-[.06em] text-warning">
@@ -36,7 +36,7 @@ export default function Nearby() {
                   {p.initials}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-[17px] font-bold text-ink">{p.name}</span>
+                  <span className="block text-[16px] font-bold text-ink">{p.name}</span>
                   <span className="mt-0.5 block text-sm font-semibold text-ink-60">{p.meta}</span>
                 </span>
               </span>
