@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import WaitlistPage from './pages/WaitlistPage';
+import ExplorePage from './pages/ExplorePage';
 
 /**
  * Routing follows the site map in SITEMAP.md, which mirrors `Dashfixe Flow.dc.html`.
@@ -33,7 +34,7 @@ export default function App() {
         {/* TODO /fix  /artisan/:id  /job/:id  /trade/:slug  /book */}
         {/* TODO /help  /coverage  /about */}
         {/* Lane 2 · Search + map — Dashfixe Web.dc.html */}
-        {/* TODO /explore */}
+        <Route path="/explore" element={<ExplorePage />} />
 
         {/* Lane 3 · Becoming an artisan — Dashfixe for Artisans.dc.html */}
         {/* TODO /for-artisans  /for-artisans/apply  /for-artisans/details  /artisan-app */}

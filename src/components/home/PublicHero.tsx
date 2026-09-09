@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom';
 import { Camera, ChevronDown, Clock, Crosshair, MapPin, Wrench } from '../icons';
+import { link } from '../../routes';
 
 const FIELD = 'flex h-[60px] items-center gap-[13px] rounded-input bg-well px-[18px]';
 const INPUT =
@@ -55,13 +57,12 @@ export default function PublicHero({ onAuth }: { onAuth: () => void }) {
             </div>
 
             <div className="mt-[26px] flex flex-wrap items-center gap-[26px]">
-              <button
-                type="button"
-                onClick={onAuth}
-                className="h-14 rounded-btn bg-ink px-[30px] text-base font-bold text-white transition hover:bg-ink-80"
+              <Link
+                to={link('explore')}
+                className="flex h-14 items-center rounded-btn bg-ink px-[30px] text-base font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 See who's available
-              </button>
+              </Link>
               <button
                 type="button"
                 onClick={onAuth}

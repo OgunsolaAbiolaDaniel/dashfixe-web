@@ -54,7 +54,7 @@ const BUILT: Record<PlannedRoute, boolean> = {
   artisanDetails: false,
   fix: false,
   book: false,
-  explore: false,
+  explore: true,
   help: false,
   coverage: false,
   about: false,

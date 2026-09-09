@@ -284,3 +284,44 @@ export const Apple = ({ size = 18, className }: IconProps) => (
   </svg>
 );
 
+export const Star = ({ size = 12, className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="m12 2 3 6.5 7 .9-5 4.8 1.2 7L12 17.8 5.8 21.2 7 14.2 2 9.4l7-.9Z" />
+  </svg>
+);
+
+/** Filled seal with a white tick — the verified-artisan mark. */
+export const Verified = ({ size = 15, className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="m12 2 2.4 1.8 3-.2 1 2.8 2.5 1.6-1 2.9 1 2.9-2.5 1.6-1 2.8-3-.2L12 22l-2.4-1.8-3 .2-1-2.8L3.1 16l1-2.9-1-2.9 2.5-1.6 1-2.8 3 .2Z" />
+    <path d="m8.5 12 2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const ClockSmall = (p: IconProps) => (
+  <Svg strokeWidth={2} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Svg>
+);
+
+export const ImageIcon = (p: IconProps) => (
+  <Svg strokeWidth={1.8} {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="3" />
+    <circle cx="8.5" cy="9.5" r="1.5" />
+    <path d="m3 17 5-5 4 4 3-3 6 6" />
+  </Svg>
+);
+
+export const Paperclip = (p: IconProps) => (
+  <Svg strokeWidth={1.8} {...p}>
+    <path d="M21 11.5 12.5 20a5 5 0 0 1-7-7l8-8a3.5 3.5 0 1 1 5 5l-8 8a2 2 0 0 1-3-3l7.5-7.5" />
+  </Svg>
+);
+
+export const Send = (p: IconProps) => (
+  <Svg strokeWidth={2} {...p}>
+    <path d="m4 12 16-8-6 16-2.5-6Z" />
+  </Svg>
+);
+
