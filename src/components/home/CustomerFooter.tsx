@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import wordmark from '../../assets/dashfixe-wordmark.png';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const LINK = 'text-[13.5px] font-semibold text-ink-60 transition hover:text-ink';
 
@@ -14,8 +14,8 @@ export default function CustomerFooter() {
             <span className="text-[13.5px] font-semibold text-ink-40">© 2026 Dashfixe</span>
           </span>
           <div className="flex flex-wrap gap-[22px]">
-            <a href={ROUTES.help} className={LINK}>Help</a>
-            <Link to={ROUTES.artisans} className={LINK}>For artisans</Link>
+            <a href={link('help')} className={LINK}>Help</a>
+            <Link to={link('forArtisans')} className={LINK}>For artisans</Link>
             <a href="#privacy" className={LINK}>Privacy</a>
             <a href="#terms" className={LINK}>Terms</a>
           </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 export default function ArtisanBlock() {
   return (
@@ -24,13 +24,13 @@ export default function ArtisanBlock() {
             </p>
             <div className="flex flex-wrap items-center gap-[26px]">
               <Link
-                to={ROUTES.artisans}
+                to={link('forArtisans')}
                 className="flex h-14 items-center rounded-btn bg-ink px-[30px] text-base font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 Get started
               </Link>
               <Link
-                to={ROUTES.artisans}
+                to={link('forArtisans')}
                 className="border-b border-[#c8d1e0] pb-1 text-base font-semibold text-ink transition hover:border-ink hover:text-ink"
               >
                 Already applied? Sign in

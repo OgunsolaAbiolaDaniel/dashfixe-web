@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Phone, Wrench } from '../icons';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const CARD =
   'flex items-center gap-6 rounded-[20px] bg-panel p-[clamp(24px,3vw,36px)] text-left transition hover:bg-brand-tint';
@@ -28,7 +28,7 @@ export default function Apps({ onAuth }: { onAuth: () => void }) {
             <ArrowRight size={24} className="flex-none text-ink" />
           </button>
 
-          <Link to={ROUTES.artisans} className={CARD + ' hover:text-ink'}>
+          <Link to={link('forArtisans')} className={CARD + ' hover:text-ink'}>
             <span className="grid h-[84px] w-[84px] flex-none place-items-center rounded-card bg-well">
               <Wrench size={38} strokeWidth={1.5} className="text-ink" />
             </span>

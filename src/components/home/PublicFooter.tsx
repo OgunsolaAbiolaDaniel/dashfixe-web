@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import wordmarkLight from '../../assets/dashfixe-wordmark-light.png';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const LINK = 'text-[13.5px] font-semibold text-onink transition hover:text-white';
 const HEAD = 'mb-4 text-label text-onink-strong';
@@ -41,7 +41,7 @@ export default function PublicFooter() {
             <div className={HEAD}>Company</div>
             <div className="flex flex-col gap-[11px]">
               {COMPANY.map((s) => (
-                <a key={s} href="#about" className={LINK}>{s}</a>
+                <a key={s} href={link('about')} className={LINK}>{s}</a>
               ))}
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function PublicFooter() {
             <div className={HEAD}>For artisans</div>
             <div className="flex flex-col gap-[11px]">
               {ARTISANS.map((s) => (
-                <Link key={s} to={ROUTES.artisans} className={LINK}>{s}</Link>
+                <Link key={s} to={link('forArtisans')} className={LINK}>{s}</Link>
               ))}
             </div>
           </div>
@@ -59,7 +59,7 @@ export default function PublicFooter() {
             <div className={HEAD}>Support</div>
             <div className="flex flex-col gap-[11px]">
               {SUPPORT.map((s) => (
-                <a key={s} href={ROUTES.help} className={LINK}>{s}</a>
+                <a key={s} href={link('help')} className={LINK}>{s}</a>
               ))}
             </div>
           </div>

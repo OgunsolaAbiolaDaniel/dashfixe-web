@@ -1,5 +1,5 @@
 import { Calendar, ChevronDown, Clock, Close, ReceiptSlim } from '../icons';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const BENEFITS = [
   { Icon: Calendar, text: 'Choose a two-hour window up to 30 days ahead.' },
@@ -79,7 +79,7 @@ export default function BookAhead({ onAuth }: { onAuth: () => void }) {
               </div>
             ))}
             <a
-              href={ROUTES.help}
+              href={link('help')}
               className="mt-6 inline-block border-b border-[#c8d1e0] pb-[3px] text-[15px] font-bold text-ink transition hover:border-ink hover:text-ink"
             >
               See terms

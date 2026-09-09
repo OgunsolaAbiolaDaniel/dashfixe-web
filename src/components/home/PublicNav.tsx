@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
 import { Globe } from '../icons';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const NAV = 'rounded-xl px-[15px] py-2.5 text-[15px] font-bold text-ink transition hover:bg-well hover:text-ink';
 
@@ -19,7 +19,7 @@ export default function PublicNav({ onAuth }: { onAuth: () => void }) {
           <nav className="flex flex-wrap items-center gap-0.5">
             <a href="#explore" className={NAV}>Fix</a>
             <a href="#later" className={NAV}>Book ahead</a>
-            <Link to={ROUTES.artisans} className={NAV}>Earn</Link>
+            <Link to={link('forArtisans')} className={NAV}>Earn</Link>
             <a href="#trades" className={NAV}>Trades</a>
           </nav>
 
@@ -31,7 +31,7 @@ export default function PublicNav({ onAuth }: { onAuth: () => void }) {
               <Globe size={17} className="text-ink-60" />
               EN
             </button>
-            <a href={ROUTES.help} className="flex h-ctl items-center rounded-xl px-[13px] text-[15px] font-bold text-ink transition hover:bg-well hover:text-ink">
+            <a href={link('help')} className="flex h-ctl items-center rounded-xl px-[13px] text-[15px] font-bold text-ink transition hover:bg-well hover:text-ink">
               Help
             </a>
             <button

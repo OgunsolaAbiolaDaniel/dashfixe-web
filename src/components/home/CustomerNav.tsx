@@ -1,7 +1,7 @@
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
 import { Bell } from '../icons';
-import { ROUTES } from '../../routes';
+import { link } from '../../routes';
 
 const LINK = 'text-[14.5px] font-semibold text-ink-60 transition hover:text-ink';
 
@@ -19,7 +19,7 @@ export default function CustomerNav({ onSignOut }: { onSignOut: () => void }) {
             <a href="#top" className="text-[14.5px] font-bold text-brand">Home</a>
             <a href="#requests" className={LINK}>My requests</a>
             <a href="#places" className={LINK}>Places</a>
-            <a href={ROUTES.help} className={LINK}>Help</a>
+            <a href={link('help')} className={LINK}>Help</a>
           </nav>
 
           <div className="flex flex-none items-center gap-2.5">
