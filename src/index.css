@@ -4,6 +4,50 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
+/* Base ground and type — designs/Dashfixe Design System - Web.dc.html */
+@layer base {
+  body {
+    margin: 0;
+    background: theme('colors.page');
+    color: theme('colors.ink.DEFAULT');
+    font-family: theme('fontFamily.sans');
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a {
+    color: theme('colors.brand.DEFAULT');
+  }
+
+  a:hover {
+    color: theme('colors.ink.DEFAULT');
+  }
+
+  /* Focus ring: 3px rgba(37,99,235,.28), offset 2. Never remove it. */
+  :focus-visible {
+    outline: none;
+    box-shadow: theme('boxShadow.focus');
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Live/availability pulse — `dfxp` in the design files */
+  .pulse-dot {
+    position: relative;
+  }
+
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: dfxp 2.4s ease-out infinite;
+  }
+}
+
+@keyframes dfxp {
+  0% { transform: scale(1); opacity: 0.5; }
+  70% { transform: scale(2.4); opacity: 0; }
+  100% { opacity: 0; }
 }
