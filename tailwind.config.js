@@ -17,12 +17,6 @@ export default {
           'tint-hover': '#DBE6FE',
           'tint-strong': '#DBE6FB',
           'on-dark': '#93B4FA',
-          // DEPRECATED aliases — old names, corrected values.
-          blue: '#2563EB',
-          navy: '#0F1B3D',   // was #0F172A
-          slate: '#5B6B8C',  // was #64748B
-          bg: '#FFFFFF',
-          alt: '#F7F9FC',    // was #F8FAFC
         },
         ink: {
           DEFAULT: '#0F1B3D',
@@ -58,29 +52,9 @@ export default {
           tint: '#FEF3C7',
         },
         star: '#F5A524',
-
-        // ── DEPRECATED ALIASES ──────────────────────────────────────────
-        // The old terracotta/cream `df-*` palette and the old `brand-*`
-        // names are still referenced across src/components. They are
-        // remapped onto the real design tokens so nothing renders in the
-        // rejected beige direction. Delete this block once every component
-        // has been migrated to the tokens above.
-        df: {
-          cream: '#F7F9FC',        // was #F7F4EE
-          primary: '#2563EB',      // was #b8462f
-          'primary-dark': '#1D4ED8',
-          black: '#0F1B3D',        // was #221F1C
-          muted: '#5B6B8C',        // was #746E62
-          border: '#E4E9F2',       // was #E4DFD4
-          surface: '#FFFFFF',      // was #fff8f6
-          'surface-warm': '#EEF3FF',
-        },
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        // DEPRECATED — both old families now resolve to the real typeface.
-        garamond: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        manrope: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         // Web scale
