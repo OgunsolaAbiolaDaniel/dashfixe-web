@@ -1,7 +1,6 @@
 import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
 import { AVAILABLE, AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan } from './artisans';
 import { DEFAULT_ADDRESS, tradeLabel, type Search, type When } from '../../search';
-import { useAuth } from '../../auth';
 
 type Props = {
   search: Search;
@@ -22,7 +21,6 @@ function ArtisanCard({
   onSelect: () => void;
   onChat: () => void;
 }) {
-  const { signedIn } = useAuth();
   return (
     <article
       onClick={onSelect}
@@ -89,11 +87,7 @@ function ArtisanCard({
               : 'bg-brand-tint text-brand-hover hover:bg-brand-tint-hover')
           }
         >
-          {!signedIn
-            ? 'Request'
-            : selected
-              ? `Chat with ${a.name.split(' ')[0]}`
-              : 'Chat'}
+          {selected ? `Chat with ${a.name.split(' ')[0]}` : 'Chat'}
         </button>
       </div>
     </article>
