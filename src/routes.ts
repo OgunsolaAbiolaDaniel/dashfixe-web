@@ -36,6 +36,12 @@ const PLANNED = {
   help: { target: '/help', fallback: '/' },
   coverage: { target: '/coverage', fallback: '/' },
   about: { target: '/about', fallback: '/' },
+
+  // Legal. No design file yet; the docs defer full terms until there are
+  // transactions, but the waitlist form still needs a GDPR privacy notice.
+  privacy: { target: '/privacy', fallback: '/' },
+  terms: { target: '/terms', fallback: '/' },
+  cookies: { target: '/cookies', fallback: '/' },
 } as const;
 
 export type PlannedRoute = keyof typeof PLANNED;
@@ -52,6 +58,9 @@ const BUILT: Record<PlannedRoute, boolean> = {
   help: false,
   coverage: false,
   about: false,
+  privacy: false,
+  terms: false,
+  cookies: false,
 };
 
 /** Resolve a planned destination to wherever it should point right now. */

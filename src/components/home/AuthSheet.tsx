@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { Apple, Close, Mail } from '../icons';
+import { link } from '../../routes';
 
 type Props = { onClose: () => void; onContinue: () => void };
 
@@ -101,8 +102,8 @@ export default function AuthSheet({ onClose, onContinue }: Props) {
         </div>
 
         <p className="mt-5 text-center text-[12.5px] font-semibold leading-[1.5] text-ink-40">
-          By continuing you agree to our <a href="#terms">Terms</a> and{' '}
-          <a href="#privacy">Privacy Policy</a>.
+          By continuing you agree to our <a href={link('terms')}>Terms</a> and{' '}
+          <a href={link('privacy')}>Privacy Policy</a>.
         </p>
       </div>
     </div>

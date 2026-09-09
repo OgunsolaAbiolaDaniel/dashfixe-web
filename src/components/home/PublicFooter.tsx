@@ -70,9 +70,9 @@ export default function PublicFooter() {
             © 2026 Dashfixe. Built by Noxa Softwares.
           </span>
           <div className="flex flex-wrap gap-[22px]">
-            <a href="#privacy" className={LINK}>Privacy</a>
-            <a href="#terms" className={LINK}>Terms</a>
-            <a href="#cookies" className={LINK}>Cookies</a>
+            <a href={link('privacy')} className={LINK}>Privacy</a>
+            <a href={link('terms')} className={LINK}>Terms</a>
+            <a href={link('cookies')} className={LINK}>Cookies</a>
           </div>
         </div>
       </div>

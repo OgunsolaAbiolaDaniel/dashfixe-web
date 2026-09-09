@@ -16,8 +16,8 @@ export default function CustomerFooter() {
           <div className="flex flex-wrap gap-[22px]">
             <a href={link('help')} className={LINK}>Help</a>
             <Link to={link('forArtisans')} className={LINK}>For artisans</Link>
-            <a href="#privacy" className={LINK}>Privacy</a>
-            <a href="#terms" className={LINK}>Terms</a>
+            <a href={link('privacy')} className={LINK}>Privacy</a>
+            <a href={link('terms')} className={LINK}>Terms</a>
           </div>
         </div>
       </div>

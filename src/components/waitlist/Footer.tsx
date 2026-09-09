@@ -1,9 +1,10 @@
 import wordmarkLight from '../../assets/dashfixe-wordmark-light.png';
+import { link } from '../../routes';
 
 const LINKS = [
-  { href: '#privacy', label: 'Privacy policy' },
-  { href: '#terms', label: 'Terms of service' },
-  { href: '#cookies', label: 'Cookie policy' },
+  { href: link('privacy'), label: 'Privacy policy' },
+  { href: link('terms'), label: 'Terms of service' },
+  { href: link('cookies'), label: 'Cookie policy' },
 ];
 
 export default function Footer() {
