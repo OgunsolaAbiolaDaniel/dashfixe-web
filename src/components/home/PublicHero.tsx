@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronDown, Clock, MapPin, Wrench } from '../icons';
+import { Link } from 'react-router-dom';
 import { exploreUrl, type When } from '../../search';
+import { link } from '../../routes';
 import { useAuth } from '../../auth';
 import { useLang } from '../../i18n';
 import type { LngLat } from '../../lib/geo';
+import { searchAddress } from '../../lib/geocode';
 import AddressField from '../shared/AddressField';
 import LiveMap from '../explore/LiveMap';
 
@@ -28,7 +31,22 @@ export default function PublicHero() {
   const [lngLat, setLngLat] = useState<LngLat | null>(null);
   const [when, setWhen] = useState<When>('now');
 
-  const search = () => navigate(exploreUrl({ need, address, lngLat, when }));
+  /**
+   * If an address was typed but no suggestion picked, look it up before leaving so
+   * /explore still opens on the right spot. Capped at 2.5 s: a slow geocoder must
+   * never block the search, it just falls back to the sample address.
+   */
+  const search = async () => {
+    let where = lngLat;
+    if (!where && address.trim().length >= 3) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 2500);
+      const [first] = await searchAddress(address, ctrl.signal);
+      clearTimeout(timer);
+      where = first?.lngLat ?? null;
+    }
+    navigate(exploreUrl({ need, address, lngLat: where, when }));
+  };
 
   return (
     <section id="top" className="bg-panel">
@@ -124,12 +142,12 @@ export default function PublicHero() {
             </div>
             <div className="relative z-[2] mx-[18px] -mt-14 flex flex-wrap items-center gap-4 rounded-[18px] bg-panel px-5 py-[18px] shadow-[0_18px_44px_-20px_rgba(15,27,61,.45)]">
               <span className="mr-auto text-[15.5px] font-bold text-ink">{t('hero.notUrgent')}</span>
-              <a
-                href="#later"
+              <Link
+                to={link('book')}
                 className="flex h-[46px] flex-none items-center rounded-full bg-well px-5 text-[15px] font-bold text-ink transition hover:bg-line hover:text-ink"
               >
                 {t('hero.bookAhead')}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

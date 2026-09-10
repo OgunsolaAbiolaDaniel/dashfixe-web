@@ -1,5 +1,12 @@
 # Dashfixe — site map and build order
 
+> **Revision 1 (2026-09-11):** `docs/ARCHITECTURE.md` is now the source of truth for
+> which pages exist and how they connect; this file is kept as the design-file index.
+> The Flow ordering below still describes the *designs*, but several of its screens were
+> deliberately cut or folded in revision 1: `/fix` and `/book` are modes of `/explore`,
+> `/coverage` is a section of `/about`, and the three artisan pages are one `/for-artisans`
+> with anchors. Cut paths redirect — see `src/AppRoutes.tsx`.
+
 The canonical ordering comes from **`Dashfixe Flow.dc.html`** in the Claude Design project
 ("Dashfixe Home Repair Design", `3b0cdabf-620a-4669-bb28-0c9eae098362`). That file is the
 designer's own map of how the pages connect — four lanes, in the order somebody actually moves

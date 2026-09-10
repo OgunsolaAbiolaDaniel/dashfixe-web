@@ -80,39 +80,54 @@ Left for later on purpose: translating `/waitlist` (locked copy, own toggle) and
 "See who's available". `/explore` should open on Seixal with Tiago at 1.2 km. Switch to PT
 from the globe button and check every section changes. At phone width, open the menu.
 
-## Phase 3 · The urgent path ⬜
+## Phase 3 · Product architecture, revision 1 ✅
 
-`Dashfixe Customer Pages.dc.html` — build as a set, they share components.
+Goal: stop assembling screens; make the flow one thing. `docs/ARCHITECTURE.md` is the new
+source of truth for pages, navigation and journeys.
 
-- ⬜ `/fix` — photo → AI diagnosis preview → trade → matches (honest "preview" labelling)
-- ⬜ `/artisan/:id` — profile, reviews, badges, "Chat" / "Book" commit points
-- ⬜ `/job/:id` — live job: on the way (map with the artisan's pin moving), approved
-  estimate, itemised receipt, rate the artisan
-- ⬜ Chat panel becomes a real component with a message store (still local; no backend)
+- ✅ `docs/ARCHITECTURE.md`: principles, the two surfaces, four journeys, route map with
+  the cuts and their reasons, navigation spec, state/data, map, testing
+- ✅ Route cuts: `/fix` and `/book` fold into `/explore` (now/later modes), coverage into
+  `/about#coverage`, the three artisan pages into one `/for-artisans` with anchors. Cut
+  paths are real routes that redirect — nothing 404s
+- ✅ One chrome per surface (`components/chrome/`): `SiteNav` + `SiteFooter` +
+  `MarketingShell` replace PublicNav/PublicFooter; nav links now point at the product
+  (`/explore`, `/explore?when=later`, `/for-artisans`, `/help`), not page anchors
+- ✅ `/for-artisans`: dark hero, three steps, commission stated plainly, vetting &
+  licensing (Lei 14/2015, Lei 15/2015), app section, inline pilot application — every
+  artisan link on the site now lands somewhere real
+- ✅ `/about` (story, belief, coverage + map), `/help` (four straight answers + contact),
+  `/privacy` `/terms` `/cookies` — the last dead links are gone
+- ✅ Book-for-later is a mode: day + two-hour-window picker inside the explore panel
+- ✅ `AppRoutes` split from `App` so tests drive real navigation; tests for redirects,
+  the artisan application, later mode, and the new route table (58 tests)
 
-## Phase 4 · Becoming an artisan ⬜
+**Owner test:** open `/fix` — you should land on `/explore`. Click "Become an artisan"
+anywhere — one page, apply at the bottom, works in PT. Footer: every link goes somewhere.
 
-`Dashfixe for Artisans.dc.html` — navy ground, its own nav.
+## Phase 4 · The job loop ⬜
 
-- ⬜ `/for-artisans` lean page · ⬜ `/for-artisans/apply` (reuse `ArtisanModal` fields)
-- ⬜ `/for-artisans/details` long version · ⬜ `/artisan-app` preview of the app
-- ⬜ Flip `BUILT.forArtisans` etc. in `src/routes.ts` so every artisan link stops detouring to
-  the waitlist
+The remaining product surface — `Dashfixe Customer Pages.dc.html`, on the AppBar chrome.
 
-## Phase 5 · Browsing path and footer pages ⬜
+- ⬜ Extract `AppBar` from ExplorePage's header into `components/chrome/` and reuse it
+- ⬜ `/artisan/:id` — profile: trust before the commit point (reviews, badges, trades)
+- ⬜ `/job/:id` — the live job: `track` variant of LiveMap (route line, moving artisan
+  pin, sample-driven), approved estimate, itemised receipt, rating
+- ⬜ Chat becomes a real component with a local message store; day/window from the later
+  mode moves into the URL and flows into the job
+- ⬜ Signed-in home links its job card and rebooks into `/job/:id` / `/artisan/:id`
 
-- ⬜ `/trade/:slug` (SEO pages per trade) · ⬜ `/book` (date + window picker)
-- ⬜ `/help`, `/coverage` (map of the pilot area, reuse LiveMap), `/about`
-- ⬜ `/privacy`, `/terms`, `/cookies` (minimal, honest, GDPR notice for the waitlist)
+## Phase 5 · Backend, launch, hardening ⬜
 
-## Phase 6 · Backend and launch ⬜
-
-- ⬜ `POST /api/waitlist` and `POST /api/artisans/apply` (Spring Boot per the handover doc,
-  or a Vercel function as a stop-gap) — the forms already hold submissions in local state
-- ⬜ Real auth (phone OTP) behind `src/auth.tsx`; the interface stays the same
-- ⬜ Playwright smoke tests against the production build; GitHub Actions running `npm run check`
-- ⬜ Analytics (privacy-preserving), error reporting, `robots.txt`, OG images
-- ⬜ Redirect decision: waitlist vs home as the front door at launch
+- ⬜ `POST /api/waitlist` + `POST /api/artisans/apply` (Spring Boot per `../Dashfixe.md`,
+  or a serverless stop-gap); the forms already collect and segment the data
+- ⬜ Real auth (phone OTP) behind the unchanged `auth.tsx` interface
+- ⬜ CI: GitHub Actions running `npm run check` + build on every PR — no red merges;
+  Playwright smoke on the built app
+- ⬜ Perf: code-split MapLibre (~500 kB) behind `React.lazy`; image weight pass
+- ⬜ SEO: `/trade/:slug` pages, sitemap.xml, OG images, robots.txt
+- ⬜ Launch switch: `/waitlist` redirects to `/`; honesty badges come off only as real
+  supply replaces sample data
 
 ---
 

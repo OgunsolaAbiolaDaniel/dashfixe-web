@@ -1,70 +1,68 @@
 /**
- * The site's route table.
+ * The site's route table — docs/ARCHITECTURE.md §4 is the authority on what exists.
  *
- * Ordering comes from `Dashfixe Flow.dc.html` in the Claude Design project — the designer's
- * own map of how the pages connect. See SITEMAP.md for the full lane-by-lane breakdown.
- *
- * Every cross-page link in the app resolves through here, so an unbuilt destination can be
- * pointed somewhere sensible in exactly one place and repointed when its page lands.
+ * Every cross-page link in the app resolves through here, so a destination can be
+ * re-pointed in exactly one place. Revision 1 (the Uber-style consolidation) cut the
+ * duplicate pages: there is ONE product surface (/explore) with a now/later mode,
+ * one artisan page with anchored depth, and coverage lives on /about.
  */
 
-/** Routes that exist today. */
+/** Routes that exist. Marketing surface + product surface (ARCHITECTURE.md §2). */
 export const ROUTES = {
-  /** Lane 1 · Home, signed out and signed in. */
+  /** Marketing home for visitors; the app home once signed in. */
   home: '/',
-  /** Lane 1 · Pre-launch front door. */
+  /** Pre-launch front door. At launch this redirects to home. */
   waitlist: '/waitlist',
+  /** THE product surface: search + map, `?when=later` for booking ahead. */
+  explore: '/explore',
+  /** Supply landing + pilot application. */
+  forArtisans: '/for-artisans',
+  about: '/about',
+  help: '/help',
+  privacy: '/privacy',
+  terms: '/terms',
+  cookies: '/cookies',
 } as const;
 
 /**
- * Lane 2 and 3 destinations that are designed but not implemented.
- *
- * `target` is where the link goes once the page is built; `fallback` is where it goes today.
- * Use `link()` rather than reading these directly.
+ * Named destinations. Some are routes, some are anchors into a route, and the cut
+ * pages (ARCHITECTURE.md §4) point at wherever their job moved to. Components use
+ * `link(name)` and never hard-code a path, so a future re-cut is a one-file change.
  */
-const PLANNED = {
-  // Lane 3 · Becoming an artisan — Dashfixe for Artisans.dc.html
-  forArtisans: { target: '/for-artisans', fallback: '/waitlist#artisans' },
-  artisanApply: { target: '/for-artisans/apply', fallback: '/waitlist#artisans' },
-  artisanApp: { target: '/artisan-app', fallback: '/waitlist#artisans' },
-  artisanDetails: { target: '/for-artisans/details', fallback: '/waitlist#artisans' },
+const DESTINATIONS = {
+  home: ROUTES.home,
+  waitlist: ROUTES.waitlist,
+  explore: ROUTES.explore,
 
-  // Lane 2 · Getting something fixed — Dashfixe Customer Pages.dc.html
-  fix: { target: '/fix', fallback: '/' },
-  book: { target: '/book', fallback: '/#later' },
-  explore: { target: '/explore', fallback: '/' },
-  help: { target: '/help', fallback: '/' },
-  coverage: { target: '/coverage', fallback: '/' },
-  about: { target: '/about', fallback: '/' },
+  // The artisan world: one page, anchored depth.
+  forArtisans: ROUTES.forArtisans,
+  artisanApply: `${ROUTES.forArtisans}#apply`,
+  artisanPay: `${ROUTES.forArtisans}#pay`,
+  artisanVetting: `${ROUTES.forArtisans}#vetting`,
+  artisanApp: `${ROUTES.forArtisans}#app`,
+  /** Cut page: the long version folded into the one artisan page. */
+  artisanDetails: ROUTES.forArtisans,
 
-  // Legal. No design file yet; the docs defer full terms until there are
-  // transactions, but the waitlist form still needs a GDPR privacy notice.
-  privacy: { target: '/privacy', fallback: '/' },
-  terms: { target: '/terms', fallback: '/' },
-  cookies: { target: '/cookies', fallback: '/' },
+  // Cut pages: one product surface, two modes.
+  fix: ROUTES.explore,
+  book: `${ROUTES.explore}?when=later`,
+
+  // Info + legal.
+  about: ROUTES.about,
+  /** Cut page: one pilot area is a section, not a page. */
+  coverage: `${ROUTES.about}#coverage`,
+  help: ROUTES.help,
+  safety: `${ROUTES.help}#safety`,
+  cancellations: `${ROUTES.help}#cancellations`,
+  contact: `${ROUTES.help}#contact`,
+  privacy: ROUTES.privacy,
+  terms: ROUTES.terms,
+  cookies: ROUTES.cookies,
 } as const;
 
-export type PlannedRoute = keyof typeof PLANNED;
+export type Destination = keyof typeof DESTINATIONS;
 
-/** Flip to true per route as its page lands. */
-const BUILT: Record<PlannedRoute, boolean> = {
-  forArtisans: false,
-  artisanApply: false,
-  artisanApp: false,
-  artisanDetails: false,
-  fix: false,
-  book: false,
-  explore: true,
-  help: false,
-  coverage: false,
-  about: false,
-  privacy: false,
-  terms: false,
-  cookies: false,
-};
-
-/** Resolve a planned destination to wherever it should point right now. */
-export function link(name: PlannedRoute): string {
-  const route = PLANNED[name];
-  return BUILT[name] ? route.target : route.fallback;
+/** Resolve a named destination to its current path. */
+export function link(name: Destination): string {
+  return DESTINATIONS[name];
 }

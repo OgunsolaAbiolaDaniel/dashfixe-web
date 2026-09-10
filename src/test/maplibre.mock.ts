@@ -42,6 +42,7 @@ export function mapLibreStub() {
       isStyleLoaded = () => true;
       getLayer = vi.fn(() => undefined);
       setPaintProperty = vi.fn();
+      getSource = vi.fn(() => ({ setData: vi.fn() }));
       addSource = vi.fn();
       addLayer = vi.fn();
       fitBounds = vi.fn();

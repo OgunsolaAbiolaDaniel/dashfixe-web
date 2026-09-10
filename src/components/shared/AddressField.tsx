@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Crosshair, MapPin } from '../icons';
 import { useLang } from '../../i18n';
-import { locate, reverseGeocode, searchAddress, type Place } from '../../lib/geocode';
+import { inPilotArea, locate, reverseGeocode, searchAddress, type Place } from '../../lib/geocode';
 
 type Props = {
   value: string;
@@ -62,6 +62,12 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
     setLocating(true);
     try {
       const lngLat = await locate();
+      // The sample supply only exists around Amora; a pin in Lisbon would put every
+      // artisan 30 km away. Say so instead of pretending.
+      if (!inPilotArea(lngLat)) {
+        setNotice(t('hero.outsideArea'));
+        return;
+      }
       pick(await reverseGeocode(lngLat));
     } catch {
       setNotice(t('hero.locationDenied'));
