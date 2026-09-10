@@ -5,26 +5,30 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-09 · **Branch:** `feat/site-rebuild-from-designs` ·
+**Last updated:** 2026-09-10 · **Branch:** `main` ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phase 0 (foundations) and Phase 1 (live map) of `docs/BUILD_PLAN.md` are complete and green,
-**uncommitted** — the owner commits. Next up is Phase 2 (home page: map-peek hero, mobile nav,
-address autocomplete, EN/PT copy).
+Phase 0 (foundations) and Phase 1 (live map) of `docs/BUILD_PLAN.md` are complete and green.
+Phase 2 is part-landed: the map-peek hero, i18n and address autocomplete are in and working.
 
-What changed in this pass, in one screen:
+This pass picked up Phase 2 work that arrived from a second machine half-finished and would not
+build. What changed:
 
 | Area | Change |
 |---|---|
-| Tooling | Vitest + Testing Library; `npm run check`; TS pinned to 5.x so ESLint works; `scripts/shot.mjs` |
-| Type | New `display / h2 / h3 / lead / nav` tokens; every home section moved off ad-hoc `clamp()` sizes |
-| Map | `LiveMap.tsx` on MapLibre + OpenFreeMap; `lib/geo.ts`; coordinates on every sample artisan |
-| Explore | Map pins to the viewport on desktop, panel scrolls; header collapses on small screens |
-| Fixes | MapLibre worker never loaded in dev **or** prod (silent); `auth.tsx` lint; unused var in WaitlistPage |
+| Hero | `LiveMap`/`MapCanvas` gained `variant="peek"`: non-interactive backdrop centred on `home`, no key panel, no controls. `PublicHero` had been calling this before it existed — that was the build break |
+| i18n | `LangProvider` was written but never mounted; every page using `useLang()` crashed at runtime. Now wrapped in `App.tsx`. `translate()` moved to `strings.ts` (Fast Refresh needs component-only modules) |
+| Address | `AddressField` no longer calls `setState` synchronously in an effect; suggestion visibility is derived (`showSuggestions`) |
+| Fixes | `search.test.ts` expectation missing the new `lngLat` field; waitlist `Footer` gave three links the same key (`link()` returns `/` for unbuilt routes) |
+
+`npm run check` is green (37 tests) and `npm run build` — what Vercel runs — succeeds.
+
+> **Careful:** a runtime-only failure like the missing `LangProvider` passes both `tsc` and the
+> test suite. Screenshot the real pages (`scripts/shot.mjs` prints console errors) before shipping.
 
 ## Run
 

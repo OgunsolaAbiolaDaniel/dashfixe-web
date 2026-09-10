@@ -5,6 +5,8 @@
  * grouped by surface; a key missing in PT falls back to EN at runtime and fails
  * the i18n test, so the two lists cannot drift apart silently.
  */
+import type { Lang } from '../types';
+
 export const en = {
   // Navigation
   'nav.fix': 'Fix',
@@ -342,3 +344,10 @@ export const pt: Record<StringKey, string> = {
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;
+
+/** Translate a key, substituting `{name}` placeholders. Falls back to EN, then the key. */
+export function translate(lang: Lang, key: StringKey, vars?: Record<string, string | number>): string {
+  const text = dictionaries[lang][key] ?? dictionaries.EN[key] ?? key;
+  if (!vars) return text;
+  return text.replace(/\{(\w+)\}/g, (_, name: string) => (name in vars ? String(vars[name]) : `{${name}}`));
+}

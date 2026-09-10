@@ -1,7 +1,7 @@
 import { Crosshair, HomeSolid } from '../icons';
 import { AVAILABLE, MAP_ONLY, ON_JOB } from './artisans';
 
-type Props = { selectedId: string; onSelect: (id: string) => void };
+type Props = { variant?: 'explore'; selectedId: string; onSelect: (id: string) => void } | { variant: 'peek' };
 
 const at = (p: { left: number; top: number }) => ({
   left: `${p.left}%`,
@@ -13,15 +13,19 @@ const at = (p: { left: number; top: number }) => ({
  * The drawn-city fallback for LiveMap — designs/Dashfixe Web.dc.html.
  *
  * Shown only when the vector tiles cannot load (offline, blocked network, no WebGL).
- * Same markers, same key, same controls, so the page keeps its shape.
+ * Same markers, same key, same controls, so the page keeps its shape. `variant="peek"`
+ * mirrors LiveMap's non-interactive hero backdrop: no key, no controls, inert markers.
  */
-export default function MapCanvas({ selectedId, onSelect }: Props) {
+export default function MapCanvas(props: Props) {
+  const isPeek = props.variant === 'peek';
+  const selectedId = isPeek ? undefined : props.selectedId;
+  const onSelect = isPeek ? undefined : props.onSelect;
   const selected = AVAILABLE.find((a) => a.id === selectedId);
 
   return (
     // Fills the positioned cell in ExplorePage. Every child is absolute, so this
     // must not size itself from content or the map collapses to zero height.
-    <div className="absolute inset-0 overflow-hidden bg-[#e8edf6]">
+    <div className={`absolute inset-0 overflow-hidden bg-[#e8edf6]${isPeek ? ' pointer-events-none' : ''}`}>
       <svg
         viewBox="0 0 900 900"
         preserveAspectRatio="xMidYMid slice"
@@ -75,46 +79,50 @@ export default function MapCanvas({ selectedId, onSelect }: Props) {
         />
       </svg>
 
-      {/* Key — frosted, allowed here because it sits over the map */}
-      <div className="absolute left-6 top-6 rounded-[18px] border border-white/90 bg-white/[.86] px-[17px] py-[15px] shadow-map backdrop-blur-[14px]">
-        <div className="mb-[11px] text-label text-ink-40">Map key</div>
-        <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-md bg-brand" />
-          Available now
-        </div>
-        <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-md border-[1.5px] border-dashed border-ink-30 bg-panel" />
-          On a job
-        </div>
-        <div className="flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-full bg-ink" />
-          Your address
-        </div>
-      </div>
+      {!isPeek && (
+        <>
+          {/* Key — frosted, allowed here because it sits over the map */}
+          <div className="absolute left-6 top-6 rounded-[18px] border border-white/90 bg-white/[.86] px-[17px] py-[15px] shadow-map backdrop-blur-[14px]">
+            <div className="mb-[11px] text-label text-ink-40">Map key</div>
+            <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-md bg-brand" />
+              Available now
+            </div>
+            <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-md border-[1.5px] border-dashed border-ink-30 bg-panel" />
+              On a job
+            </div>
+            <div className="flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-full bg-ink" />
+              Your address
+            </div>
+          </div>
 
-      <div className="absolute right-6 top-6 flex flex-col gap-[9px]">
-        <button
-          type="button"
-          aria-label="Centre on my location"
-          className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
-        >
-          <Crosshair size={18} className="text-brand" />
-        </button>
-        <button
-          type="button"
-          aria-label="Zoom in"
-          className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
-        >
-          +
-        </button>
-        <button
-          type="button"
-          aria-label="Zoom out"
-          className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
-        >
-          −
-        </button>
-      </div>
+          <div className="absolute right-6 top-6 flex flex-col gap-[9px]">
+            <button
+              type="button"
+              aria-label="Centre on my location"
+              className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
+            >
+              <Crosshair size={18} className="text-brand" />
+            </button>
+            <button
+              type="button"
+              aria-label="Zoom in"
+              className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
+            >
+              +
+            </button>
+            <button
+              type="button"
+              aria-label="Zoom out"
+              className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
+            >
+              −
+            </button>
+          </div>
+        </>
+      )}
 
       {/* On a job — dashed, not selectable */}
       {ON_JOB.map((m) => (
@@ -134,7 +142,8 @@ export default function MapCanvas({ selectedId, onSelect }: Props) {
           <button
             key={m.id}
             type="button"
-            onClick={() => onSelect(m.id)}
+            tabIndex={isPeek ? -1 : 0}
+            onClick={() => onSelect?.(m.id)}
             style={at(m.at)}
             aria-label={m.initials}
             className="absolute grid h-10 w-10 place-items-center rounded-[13px] border-2 border-brand bg-panel text-xs font-extrabold text-brand shadow-marker transition hover:bg-brand-tint"

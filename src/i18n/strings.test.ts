@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { en, pt } from './strings';
-import { translate } from './index';
+import { translate } from './strings';
 
 describe('dictionaries', () => {
   it('have the same keys in both languages', () => {

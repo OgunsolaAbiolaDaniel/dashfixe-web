@@ -21,7 +21,7 @@ export default function Footer() {
           <nav className="flex flex-wrap gap-6">
             {LINKS.map((l) => (
               <a
-                key={l.href}
+                key={l.label}
                 href={l.href}
                 className="text-[13.5px] font-semibold text-onink transition hover:text-white"
               >

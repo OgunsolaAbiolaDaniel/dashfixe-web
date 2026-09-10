@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Lang } from '../types';
-import { dictionaries, type StringKey } from './strings';
+import { translate, type StringKey } from './strings';
 
 /**
  * Language for the whole site. Persisted per browser and mirrored onto
@@ -30,12 +30,6 @@ function initialLang(): Lang {
     /* private mode, or no storage */
   }
   return typeof navigator !== 'undefined' && navigator.language?.toLowerCase().startsWith('pt') ? 'PT' : 'EN';
-}
-
-export function translate(lang: Lang, key: StringKey, vars?: Vars): string {
-  const text = dictionaries[lang][key] ?? dictionaries.EN[key] ?? key;
-  if (!vars) return text;
-  return text.replace(/\{(\w+)\}/g, (_, name: string) => (name in vars ? String(vars[name]) : `{${name}}`));
 }
 
 export function LangProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {

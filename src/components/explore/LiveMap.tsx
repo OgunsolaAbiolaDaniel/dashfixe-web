@@ -14,7 +14,9 @@ import { AVAILABLE, MAP_ONLY, ON_JOB, type Artisan, type Marker as MapMarker } f
 import { HOME, SEARCH_RADIUS_KM, bounds, circlePolygon, midpoint, type LngLat } from '../../lib/geo';
 import MapCanvas from './MapCanvas';
 
-type Props = { selectedId: string; onSelect: (id: string) => void };
+type Props =
+  | { variant?: 'explore'; selectedId: string; onSelect: (id: string) => void }
+  | { variant: 'peek'; home?: LngLat };
 
 /**
  * Vector tiles from OpenFreeMap — free, no key, OpenStreetMap data. Positron is
@@ -33,8 +35,17 @@ const CONTROL =
  * MapLibre positions, so they use the same Tailwind tokens as everything else. If
  * the tiles cannot load (offline, blocked, no WebGL) the drawn city from
  * MapCanvas takes over, so the page never shows an empty grey box.
+ *
+ * `variant="peek"` is the non-interactive hero backdrop (BUILD_PLAN Phase 2): same
+ * markers and radius, centred on the visitor's resolved address when known, no key
+ * panel, no zoom/locate controls, clicks do nothing.
  */
-export default function LiveMap({ selectedId, onSelect }: Props) {
+export default function LiveMap(props: Props) {
+  const isPeek = props.variant === 'peek';
+  const selectedId = isPeek ? undefined : props.selectedId;
+  const onSelect = isPeek ? undefined : props.onSelect;
+  const center = isPeek ? (props.home ?? HOME) : HOME;
+
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
   const [ready, setReady] = useState(false);
@@ -59,7 +70,7 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
 
     let map: MapLibre;
     try {
-      map = createMap(container.current);
+      map = createMap(container.current, center);
     } catch {
       // No WebGL (or a blocked constructor): fall back on the next tick so React
       // is not asked to set state from inside the effect body.
@@ -78,7 +89,7 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
 
     map.on('load', () => {
       tintBasemap(map);
-      const circle = circlePolygon(HOME, SEARCH_RADIUS_KM);
+      const circle = circlePolygon(center, SEARCH_RADIUS_KM);
       map.addSource('radius', { type: 'geojson', data: circle });
       map.addLayer({
         id: 'radius-fill',
@@ -98,7 +109,7 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
         },
       });
 
-      const points: LngLat[] = [HOME, ...AVAILABLE.map((a) => a.lngLat), ...MAP_ONLY.map((m) => m.lngLat), ...ON_JOB.map((m) => m.lngLat)];
+      const points: LngLat[] = [center, ...AVAILABLE.map((a) => a.lngLat), ...MAP_ONLY.map((m) => m.lngLat), ...ON_JOB.map((m) => m.lngLat)];
       map.fitBounds(bounds(points), {
         padding: { top: 110, right: 90, bottom: 80, left: 200 },
         duration: 0,
@@ -108,7 +119,7 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
       for (const m of [...AVAILABLE, ...MAP_ONLY, ...ON_JOB]) {
         new maplibregl.Marker({ element: nodes.get(m.id)!, anchor: 'center' }).setLngLat(m.lngLat).addTo(map);
       }
-      new maplibregl.Marker({ element: nodes.get('home')!, anchor: 'bottom' }).setLngLat(HOME).addTo(map);
+      new maplibregl.Marker({ element: nodes.get('home')!, anchor: 'bottom' }).setLngLat(center).addTo(map);
       setReady(true);
     });
 
@@ -116,54 +127,68 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
       map.remove();
       mapRef.current = null;
     };
-  }, [nodes]);
+    // Mounts once (guarded above); centre is only read for that first paint.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, center[0], center[1]]);
 
   // Selecting a card glides the map so both the artisan and the address stay in view.
   useEffect(() => {
     const map = mapRef.current;
     const artisan = AVAILABLE.find((a) => a.id === selectedId) ?? MAP_ONLY.find((m) => m.id === selectedId);
     if (!map || !ready || !artisan) return;
-    map.easeTo({ center: midpoint(HOME, artisan.lngLat), duration: 650, essential: false });
-  }, [selectedId, ready]);
+    map.easeTo({ center: midpoint(center, artisan.lngLat), duration: 650, essential: false });
+  }, [selectedId, ready, center]);
 
-  if (failed) return <MapCanvas selectedId={selectedId} onSelect={onSelect} />;
+  if (failed) {
+    return isPeek ? <MapCanvas variant="peek" /> : <MapCanvas selectedId={selectedId!} onSelect={onSelect!} />;
+  }
 
   const selected = AVAILABLE.find((a) => a.id === selectedId);
   const zoom = (delta: number) => mapRef.current?.zoomTo((mapRef.current.getZoom() ?? 13) + delta, { duration: 240 });
-  const locate = () => mapRef.current?.flyTo({ center: HOME, zoom: 14, duration: 800 });
+  const locate = () => mapRef.current?.flyTo({ center, zoom: 14, duration: 800 });
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#e8edf6]">
-      <div ref={container} className="live-map absolute inset-0" aria-label="Map of available artisans" role="region" />
+    <div className={`absolute inset-0 overflow-hidden bg-[#e8edf6]${isPeek ? ' pointer-events-none' : ''}`}>
+      <div
+        ref={container}
+        className="live-map absolute inset-0"
+        aria-label="Map of available artisans"
+        role="region"
+        aria-hidden={isPeek}
+      />
 
-      {/* Key — frosted, allowed here because it sits over the map */}
-      <div className="absolute left-6 top-6 rounded-[18px] border border-white/90 bg-white/[.86] px-[17px] py-[15px] shadow-map backdrop-blur-[14px]">
-        <div className="mb-[11px] text-label text-ink-40">Map key</div>
-        <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-md bg-brand" />
-          Available now
-        </div>
-        <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-md border-[1.5px] border-dashed border-ink-30 bg-panel" />
-          On a job
-        </div>
-        <div className="flex items-center gap-[9px] text-[13px] font-semibold">
-          <i className="block h-[15px] w-[15px] flex-none rounded-full bg-ink" />
-          Your address
-        </div>
-      </div>
+      {!isPeek && (
+        <>
+          {/* Key — frosted, allowed here because it sits over the map */}
+          <div className="absolute left-6 top-6 rounded-[18px] border border-white/90 bg-white/[.86] px-[17px] py-[15px] shadow-map backdrop-blur-[14px]">
+            <div className="mb-[11px] text-label text-ink-40">Map key</div>
+            <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-md bg-brand" />
+              Available now
+            </div>
+            <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-md border-[1.5px] border-dashed border-ink-30 bg-panel" />
+              On a job
+            </div>
+            <div className="flex items-center gap-[9px] text-[13px] font-semibold">
+              <i className="block h-[15px] w-[15px] flex-none rounded-full bg-ink" />
+              Your address
+            </div>
+          </div>
 
-      <div className="absolute right-6 top-6 flex flex-col gap-[9px]">
-        <button type="button" aria-label="Centre on my address" onClick={locate} className={CONTROL}>
-          <Crosshair size={18} className="text-brand" />
-        </button>
-        <button type="button" aria-label="Zoom in" onClick={() => zoom(1)} className={`${CONTROL} text-lg font-extrabold text-ink-60`}>
-          +
-        </button>
-        <button type="button" aria-label="Zoom out" onClick={() => zoom(-1)} className={`${CONTROL} text-lg font-extrabold text-ink-60`}>
-          −
-        </button>
-      </div>
+          <div className="absolute right-6 top-6 flex flex-col gap-[9px]">
+            <button type="button" aria-label="Centre on my address" onClick={locate} className={CONTROL}>
+              <Crosshair size={18} className="text-brand" />
+            </button>
+            <button type="button" aria-label="Zoom in" onClick={() => zoom(1)} className={`${CONTROL} text-lg font-extrabold text-ink-60`}>
+              +
+            </button>
+            <button type="button" aria-label="Zoom out" onClick={() => zoom(-1)} className={`${CONTROL} text-lg font-extrabold text-ink-60`}>
+              −
+            </button>
+          </div>
+        </>
+      )}
 
       <span className="pointer-events-none absolute bottom-6 left-6 rounded-full bg-warning-tint px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[.06em] text-warning">
         Sample artisans · real map
@@ -188,7 +213,8 @@ export default function LiveMap({ selectedId, onSelect }: Props) {
           <Portal key={m.id} node={nodes.get(m.id)!}>
             <button
               type="button"
-              onClick={() => onSelect(m.id)}
+              tabIndex={isPeek ? -1 : 0}
+              onClick={() => onSelect?.(m.id)}
               aria-label={isArtisan(m) ? m.name : m.initials}
               title={isArtisan(m) ? `${m.name} · ${m.eta} min` : m.initials}
               className="grid h-10 w-10 place-items-center rounded-[13px] border-2 border-brand bg-panel text-xs font-extrabold text-brand shadow-marker transition hover:scale-105 hover:bg-brand-tint"
@@ -245,11 +271,11 @@ function tintBasemap(map: MapLibre) {
   }
 }
 
-function createMap(container: HTMLElement): MapLibre {
+function createMap(container: HTMLElement, center: LngLat): MapLibre {
   return new maplibregl.Map({
     container,
     style: MAP_STYLE,
-    center: HOME,
+    center,
     zoom: 13,
     minZoom: 10,
     maxZoom: 17,

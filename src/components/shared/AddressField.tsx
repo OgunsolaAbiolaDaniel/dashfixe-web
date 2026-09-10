@@ -34,11 +34,7 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
 
   useEffect(() => {
     if (chosen.current === value) return; // a pick, not typing
-    if (value.trim().length < 3) {
-      setPlaces([]);
-      setOpen(false);
-      return;
-    }
+    if (value.trim().length < 3) return; // too short to search; showSuggestions hides any stale list
     const timer = setTimeout(() => {
       abort.current?.abort();
       const ctrl = new AbortController();
@@ -74,8 +70,10 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
     }
   };
 
+  const showSuggestions = open && value.trim().length >= 3;
+
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || !places.length) return;
+    if (!showSuggestions || !places.length) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActive((i) => (i + 1) % places.length);
@@ -102,7 +100,7 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
         <input
           type="text"
           role="combobox"
-          aria-expanded={open}
+          aria-expanded={showSuggestions}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
@@ -132,7 +130,7 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
         </button>
       </div>
 
-      {open && (
+      {showSuggestions && (
         <ul
           id={listId}
           role="listbox"

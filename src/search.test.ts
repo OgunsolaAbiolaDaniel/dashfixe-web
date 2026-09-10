@@ -18,6 +18,7 @@ describe('exploreUrl', () => {
       need: 'kitchen tap',
       address: 'Rua X 1',
       trade: '',
+      lngLat: null,
       when: 'later',
       artisan: 'tf',
     });
