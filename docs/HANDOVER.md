@@ -54,7 +54,7 @@ Optional 6th argument is a JS expression evaluated in the page and printed, e.g.
 1. Clone the repo and `npm install` (Node 24 is what this was built on; 20+ should work).
 2. Copy the parent folder's `designs/`, `Dashfixe.md`, `Dashfixemarklatest.md` alongside the
    repo if you want the design context — the code does not depend on them.
-3. `npm run check` — 26 tests should pass.
+3. `npm run check` — 48 tests should pass.
 4. `npm run dev` and open `/`, `/waitlist`, `/explore`.
 5. No env vars, no API keys. The map uses OpenFreeMap's public tiles (fair-use, attribution is
    rendered). If they ever rate-limit, `MAP_STYLE` in `LiveMap.tsx` is the one line to change.
@@ -68,6 +68,10 @@ src/
   search.ts          the search carried in the URL between home and /explore
   auth.tsx           in-memory session; gate() is the commit point
   lib/geo.ts         LngLat helpers: distance, ETA, bounds, radius polygon
+  lib/geocode.ts     address search + reverse geocode (Nominatim, offline fallback)
+  i18n/              EN/PT dictionaries, LangProvider/useLang, translate()
+  components/shared  MobileMenu · LangToggle · AddressField
+  i18n/Rich.tsx      translated sentences with links or other nodes inside
   pages/             HomePage · WaitlistPage · ExplorePage
   components/home    public + signed-in home sections
   components/waitlist
@@ -100,6 +104,13 @@ docs/                BUILD_PLAN · HANDOVER · DESIGN
 - **`legacy-peer-deps=true`** is in `.npmrc` for Vercel. `@testing-library/dom` had to be
   installed explicitly because of it.
 - `window.__dfxMap` is exposed in dev only, for the screenshot probes.
+- **`scripts/shot.mjs` can fail to spawn Playwright's Chromium** (`spawn UNKNOWN`) in some
+  sandboxed sessions. Point it at Edge: `CHROME_PATH="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"`.
+- **Nominatim's usage policy** allows light, debounced, attributed use only. Fine for the
+  pilot; swap `ENDPOINT` in `lib/geocode.ts` for a paid geocoder before real traffic.
+- **React lint is strict** (`react-hooks/set-state-in-effect`): clear state in event handlers,
+  not synchronously inside an effect. Non-component exports live in their own file
+  (`i18n/translate.ts`) so fast refresh keeps working.
 
 ## Honesty rules that shape the code
 

@@ -1,13 +1,24 @@
 import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
-import { AVAILABLE, AVAILABLE_COUNT, MEDIAN_ETA, TOTAL_ONLINE, type Artisan } from './artisans';
-import { DEFAULT_ADDRESS, tradeLabel, type Search, type When } from '../../search';
+import { AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan, type Supply } from './artisans';
+import { DEFAULT_ADDRESS, TRADES, type Search, type When } from '../../search';
+import { useLang } from '../../i18n';
+import type { StringKey } from '../../i18n/strings';
 
 type Props = {
   search: Search;
+  /** The sample supply as seen from the customer's address. */
+  supply: Supply;
   onWhen: (when: When) => void;
   selectedId: string;
   onSelect: (id: string) => void;
   onChat: (id: string) => void;
+};
+
+/** Sample badges are stored in English; show them in the reader's language. */
+const BADGE_KEYS: Record<string, StringKey> = {
+  'ID verified': 'badge.idVerified',
+  Insured: 'badge.insured',
+  Certified: 'badge.certified',
 };
 
 function ArtisanCard({
@@ -21,14 +32,13 @@ function ArtisanCard({
   onSelect: () => void;
   onChat: () => void;
 }) {
+  const { t } = useLang();
   return (
     <article
       onClick={onSelect}
       className={
         'cursor-pointer rounded-card bg-panel p-4 transition ' +
-        (selected
-          ? 'border-[1.5px] border-brand shadow-selected'
-          : 'border border-line-soft hover:border-line')
+        (selected ? 'border-[1.5px] border-brand shadow-selected' : 'border border-line-soft hover:border-line')
       }
     >
       <div className="flex items-start gap-[13px]">
@@ -42,37 +52,34 @@ function ArtisanCard({
           </span>
           <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-60">
             <Star size={12} className="flex-none text-star" />
-            {a.rating} · {a.jobs} jobs · {a.km} km
+            {`${a.rating} · ${a.jobs} ${t('search.jobs')} · ${a.km} km`}
           </span>
         </span>
         <span className="flex-none text-right">
           <span className="block text-[19px] font-extrabold tracking-[-.02em] text-ink">{a.price}</span>
-          <span className="mt-px block text-[11.5px] text-ink-40">estimated</span>
+          <span className="mt-px block text-[11.5px] text-ink-40">{t('search.estimated')}</span>
         </span>
       </div>
 
       {a.badges && (
         <div className="mt-3 flex flex-wrap gap-1.5">
-          {a.badges.map((b) => (
-            <span
-              key={b}
-              className="rounded-full bg-brand-tint px-[11px] py-1.5 text-xs font-semibold text-brand-hover"
-            >
-              {b}
-            </span>
-          ))}
+          {a.badges.map((b) => {
+            const key = BADGE_KEYS[b];
+            return (
+              <span key={b} className="rounded-full bg-brand-tint px-[11px] py-1.5 text-xs font-semibold text-brand-hover">
+                {key ? t(key) : b}
+              </span>
+            );
+          })}
         </div>
       )}
 
       <div className="mt-3.5 flex items-center gap-[11px] border-t border-line-rule pt-[13px]">
         <span
-          className={
-            'mr-auto flex items-center gap-1.5 text-[13.5px] font-bold ' +
-            (selected ? 'text-brand' : 'text-ink-60')
-          }
+          className={'mr-auto flex items-center gap-1.5 text-[13.5px] font-bold ' + (selected ? 'text-brand' : 'text-ink-60')}
         >
           <ClockSmall size={14} />
-          {a.eta} min away
+          {t('nearby.minAway', { min: a.eta })}
         </span>
         <button
           type="button"
@@ -82,20 +89,20 @@ function ArtisanCard({
           }}
           className={
             'rounded-[13px] px-5 py-[11px] text-[14.5px] font-bold transition ' +
-            (selected
-              ? 'bg-brand text-white hover:bg-brand-hover'
-              : 'bg-brand-tint text-brand-hover hover:bg-brand-tint-hover')
+            (selected ? 'bg-brand text-white hover:bg-brand-hover' : 'bg-brand-tint text-brand-hover hover:bg-brand-tint-hover')
           }
         >
-          {selected ? `Chat with ${a.name.split(' ')[0]}` : 'Chat'}
+          {selected ? t('search.chatWith', { name: a.name.split(' ')[0]! }) : t('search.chat')}
         </button>
       </div>
     </article>
   );
 }
 
-export default function SearchPanel({ search, onWhen, selectedId, onSelect, onChat }: Props) {
-  const need = search.need || tradeLabel(search.trade);
+export default function SearchPanel({ search, supply, onWhen, selectedId, onSelect, onChat }: Props) {
+  const { t } = useLang();
+  const trade = TRADES.find((x) => x.slug === search.trade)?.slug;
+  const need = search.need || (trade ? t(`trades.${trade}` as const) : t('hero.needPlaceholder'));
   const address = search.address || DEFAULT_ADDRESS;
 
   return (
@@ -103,24 +110,19 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
       <div>
         <div className="mb-3.5 flex w-fit items-center gap-2 rounded-full bg-brand-tint px-3.5 py-2">
           <span className="pulse-dot block h-[7px] w-[7px] rounded-full bg-brand text-brand" />
-          <span className="text-[12.5px] font-bold text-brand-hover">Amora &amp; Seixal · live</span>
+          <span className="text-[12.5px] font-bold text-brand-hover">{t('search.live')}</span>
         </div>
-        <h1 className="mb-2 text-[30px] font-extrabold leading-[1.06] tracking-[-.035em] text-ink">
-          Who is free
-          <br />
-          right now
+        <h1 className="mb-2 max-w-[7em] text-[30px] font-extrabold leading-[1.06] tracking-[-.035em] text-ink [text-wrap:balance]">
+          {t('search.title')}
         </h1>
-        <p className="text-[14.5px] leading-[1.5] text-ink-60">
-          Nine vetted artisans are online within 5 km of you. Pick one, agree the price in chat, and they
-          travel once.
-        </p>
+        <p className="text-[14.5px] leading-[1.5] text-ink-60">{t('search.intro')}</p>
       </div>
 
       <div className="flex gap-px overflow-hidden rounded-[20px] border border-[#e6ebf3] bg-[#e6ebf3]">
         {[
-          { v: String(TOTAL_ONLINE), unit: '', label: 'Online' },
-          { v: String(MEDIAN_ETA), unit: ' min', label: 'Median arrival' },
-          { v: '4.8', unit: '', label: 'Cohort rating' },
+          { v: String(TOTAL_ONLINE), unit: '', label: t('search.online') },
+          { v: String(supply.medianEta), unit: ' min', label: t('search.median') },
+          { v: '4.8', unit: '', label: t('search.rating') },
         ].map((s) => (
           <span key={s.label} className="flex-1 bg-panel px-3 py-3.5 text-center">
             <span className="block text-[21px] font-extrabold tracking-[-.02em] text-ink">
@@ -133,7 +135,7 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
       </div>
 
       <div className="rounded-card border border-line-soft bg-panel p-[18px]">
-        <div className="mb-[11px] text-label text-ink-40">What do you need?</div>
+        <div className="mb-[11px] text-label text-ink-40">{t('search.what')}</div>
         <button
           type="button"
           className="mb-2.5 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
@@ -157,12 +159,10 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
               onClick={() => onWhen(v)}
               className={
                 'flex-1 rounded-[10px] p-2.5 text-center text-sm transition ' +
-                (search.when === v
-                  ? 'bg-panel font-bold text-ink shadow-card'
-                  : 'font-semibold text-ink-40 hover:text-ink-60')
+                (search.when === v ? 'bg-panel font-bold text-ink shadow-card' : 'font-semibold text-ink-40 hover:text-ink-60')
               }
             >
-              {v === 'now' ? 'Now' : 'Book for later'}
+              {v === 'now' ? t('search.now') : t('search.later')}
             </button>
           ))}
         </div>
@@ -170,15 +170,15 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
 
       <div className="-mb-2 flex items-baseline">
         <span className="mr-auto text-label text-ink-40">
-          Available · {AVAILABLE_COUNT} of {TOTAL_ONLINE}
+          {t('search.available', { n: AVAILABLE_COUNT, total: TOTAL_ONLINE })}
         </span>
         <button type="button" className="text-[13px] font-bold text-brand">
-          Sort: arrival
+          {t('search.sort')}
         </button>
       </div>
 
       <div className="flex flex-col gap-[11px]">
-        {AVAILABLE.map((a) => (
+        {supply.available.map((a) => (
           <ArtisanCard
             key={a.id}
             a={a}
@@ -189,10 +189,7 @@ export default function SearchPanel({ search, onWhen, selectedId, onSelect, onCh
         ))}
       </div>
 
-      <p className="text-[12.5px] leading-[1.5] text-ink-40">
-        Estimates are a range until they have seen the photo and talked to you. The exact itemised
-        total is approved in chat, before anyone travels.
-      </p>
+      <p className="text-[12.5px] leading-[1.5] text-ink-40">{t('search.disclaimer')}</p>
     </div>
   );
 }

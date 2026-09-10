@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef } from 'react';
 import { Apple, Close, Mail } from '../icons';
 import { link } from '../../routes';
+import { useLang } from '../../i18n';
+import Rich from '../../i18n/Rich';
 
 type Props = { onClose: () => void; onContinue: () => void };
 
@@ -12,6 +14,7 @@ const SOCIAL =
  * page into its signed-in state so the customer home can be reviewed.
  */
 export default function AuthSheet({ onClose, onContinue }: Props) {
+  const { t } = useLang();
   const id = useId();
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -38,23 +41,21 @@ export default function AuthSheet({ onClose, onContinue }: Props) {
         ref={cardRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Log in or sign up"
+        aria-label={t('auth.title')}
         onClick={(e) => e.stopPropagation()}
         className="m-auto w-full max-w-[420px] rounded-card bg-panel p-[clamp(22px,4vw,28px)] shadow-panel"
       >
         <div className="mb-[22px] flex items-start gap-3.5">
           <div className="mr-auto">
             <h3 className="mb-[7px] text-[22px] font-extrabold leading-[1.15] tracking-[-.025em] text-ink">
-              Log in or sign up
+              {t('auth.title')}
             </h3>
-            <p className="text-[14.5px] font-medium leading-[1.5] text-ink-60">
-              We'll text a code to confirm it's you. No password to remember.
-            </p>
+            <p className="text-[14.5px] font-medium leading-[1.5] text-ink-60">{t('auth.body')}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('auth.close')}
             className="grid h-[34px] w-[34px] flex-none place-items-center rounded-xl bg-well transition hover:bg-line"
           >
             <Close size={16} className="text-ink-60" />
@@ -62,7 +63,7 @@ export default function AuthSheet({ onClose, onContinue }: Props) {
         </div>
 
         <label htmlFor={id} className="mb-[7px] block text-label text-ink-40">
-          Phone number
+          {t('auth.phone')}
         </label>
         <div className="flex h-12 items-center gap-3 rounded-input border border-line bg-page px-[15px]">
           <span className="flex-none text-[14.5px] font-bold text-ink-60">+351</span>
@@ -71,7 +72,6 @@ export default function AuthSheet({ onClose, onContinue }: Props) {
             id={id}
             type="tel"
             placeholder="912 345 678"
-            aria-label="Phone number"
             className="min-w-0 flex-1 border-0 bg-transparent text-[14.5px] font-semibold text-ink outline-offset-[6px] placeholder:text-ink-30"
           />
         </div>
@@ -81,29 +81,34 @@ export default function AuthSheet({ onClose, onContinue }: Props) {
           onClick={onContinue}
           className="mt-[18px] h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover"
         >
-          Continue
+          {t('auth.continue')}
         </button>
 
         <div className="my-5 flex items-center gap-3.5">
           <span className="block h-px flex-1 bg-line-soft" />
-          <span className="text-xs font-bold text-ink-30">or</span>
+          <span className="text-xs font-bold text-ink-30">{t('auth.or')}</span>
           <span className="block h-px flex-1 bg-line-soft" />
         </div>
 
         <div className="flex flex-col gap-2.5">
           <button type="button" onClick={onContinue} className={SOCIAL}>
             <Mail size={18} className="text-ink-60" />
-            Continue with email
+            {t('auth.email')}
           </button>
           <button type="button" onClick={onContinue} className={SOCIAL}>
             <Apple size={18} />
-            Continue with Apple
+            {t('auth.apple')}
           </button>
         </div>
 
         <p className="mt-5 text-center text-[12.5px] font-semibold leading-[1.5] text-ink-40">
-          By continuing you agree to our <a href={link('terms')}>Terms</a> and{' '}
-          <a href={link('privacy')}>Privacy Policy</a>.
+          <Rich
+            text={t('auth.legal')}
+            parts={{
+              terms: <a href={link('terms')}>{t('auth.terms')}</a>,
+              privacy: <a href={link('privacy')}>{t('auth.privacyPolicy')}</a>,
+            }}
+          />
         </p>
       </div>
     </div>

@@ -63,7 +63,7 @@ export default function PublicHero() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                search();
+                void search();
               }}
               className="flex max-w-[540px] flex-col gap-2.5"
             >

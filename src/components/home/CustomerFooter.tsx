@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import wordmark from '../../assets/dashfixe-wordmark.png';
 import { link } from '../../routes';
+import { useLang } from '../../i18n';
 
 const LINK = 'text-[13.5px] font-semibold text-ink-60 transition hover:text-ink';
 
 export default function CustomerFooter() {
+  const { t } = useLang();
   return (
     <footer className="border-t border-line-soft bg-panel">
       <div className="mx-auto max-w-[1240px] px-[clamp(18px,4vw,32px)] py-[26px]">
@@ -14,10 +16,18 @@ export default function CustomerFooter() {
             <span className="text-[13.5px] font-semibold text-ink-40">© 2026 Dashfixe</span>
           </span>
           <div className="flex flex-wrap gap-[22px]">
-            <a href={link('help')} className={LINK}>Help</a>
-            <Link to={link('forArtisans')} className={LINK}>For artisans</Link>
-            <a href={link('privacy')} className={LINK}>Privacy</a>
-            <a href={link('terms')} className={LINK}>Terms</a>
+            <a href={link('help')} className={LINK}>
+              {t('nav.help')}
+            </a>
+            <Link to={link('forArtisans')} className={LINK}>
+              {t('footer.forArtisans')}
+            </Link>
+            <a href={link('privacy')} className={LINK}>
+              {t('footer.privacy')}
+            </a>
+            <a href={link('terms')} className={LINK}>
+              {t('footer.terms')}
+            </a>
           </div>
         </div>
       </div>

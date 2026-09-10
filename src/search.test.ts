@@ -17,11 +17,26 @@ describe('exploreUrl', () => {
     expect(parseSearch(params)).toEqual({
       need: 'kitchen tap',
       address: 'Rua X 1',
+      lngLat: null,
       trade: '',
       lngLat: null,
       when: 'later',
       artisan: 'tf',
     });
+  });
+});
+
+describe('coordinates in the URL', () => {
+  it('carry a resolved address as rounded lng/lat', () => {
+    const url = exploreUrl({ address: 'Rua X', lngLat: [-9.1165, 38.6283] });
+    expect(url).toBe('/explore?address=Rua+X&lng=-9.11650&lat=38.62830');
+    expect(parseSearch(new URLSearchParams(url.split('?')[1])).lngLat).toEqual([-9.1165, 38.6283]);
+  });
+
+  it('are ignored when half-missing, non-numeric or out of range', () => {
+    expect(parseSearch(new URLSearchParams('lng=-9.1')).lngLat).toBeNull();
+    expect(parseSearch(new URLSearchParams('lng=abc&lat=38')).lngLat).toBeNull();
+    expect(parseSearch(new URLSearchParams('lng=-200&lat=38')).lngLat).toBeNull();
   });
 });
 
