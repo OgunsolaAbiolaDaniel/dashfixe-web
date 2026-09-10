@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { reverseGeocode, searchAddress, searchFallback } from './geocode';
+import { inPilotArea, reverseGeocode, searchAddress, searchFallback } from './geocode';
+import { HOME } from './geo';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -11,6 +12,18 @@ describe('searchFallback', () => {
 
   it('is empty for an empty query', () => {
     expect(searchFallback('  ')).toEqual([]);
+  });
+
+  it('only lists streets inside the pilot area', () => {
+    for (const p of searchFallback('a')) expect(inPilotArea(p.lngLat), p.label).toBe(true);
+  });
+});
+
+describe('inPilotArea', () => {
+  it('accepts Amora and Seixal and refuses Lisbon', () => {
+    expect(inPilotArea(HOME)).toBe(true);
+    expect(inPilotArea([-9.1012, 38.6403])).toBe(true);
+    expect(inPilotArea([-9.1393, 38.7223])).toBe(false);
   });
 });
 
@@ -37,7 +50,12 @@ describe('searchAddress', () => {
   });
 
   it('falls back to the pilot list when the network fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      }),
+    );
     const places = await searchAddress('seixal');
     expect(places.length).toBeGreaterThan(0);
     expect(places.every((p) => p.label.includes('Seixal'))).toBe(true);

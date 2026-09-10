@@ -50,7 +50,7 @@ Goal: the search-and-map surface from `Dashfixe Web.dc.html` on real geography.
 **Owner test:** `/explore?need=kitchen%20tap` — tiles load, 8 pins, click pins and cards,
 zoom, locate; `Chat` opens the auth sheet when signed out. Try `?artisan=mc`.
 
-## Phase 2 · Home page, Uber grade 🔄 (in progress)
+## Phase 2 · Home page, Uber grade ✅
 
 Goal: the signed-out and signed-in home from `Dashfixe Home v2(real).dc.html`, polished.
 
@@ -62,14 +62,23 @@ Goal: the signed-out and signed-in home from `Dashfixe Home v2(real).dc.html`, p
 - ✅ EN/PT dictionary in `src/i18n/` with a key-parity test; provider mounted, persisted
 - ✅ Supply derived per location (`getSupply(home)`); search URL carries `lng`/`lat`
 
-**Phase 2 · still to do**
+**Phase 2 · second half**
 
-- ⬜ `/explore` reads `lng`/`lat` from the URL and centres the map and ETAs on it
-- ⬜ Mobile menu in CustomerNav and the `/explore` header
-- ⬜ Move the remaining sections onto `t()`: Explore cards, AccountSplit, BookAhead, Trades,
-  Nearby, ArtisanBlock, Apps, footers, SearchPanel, AuthSheet (strings already in the dictionary)
-- ⬜ "Nearby" cards show the derived ETA from `getSupply()` rather than hand-typed values
-- ⬜ Page-level tests: composer → `/explore` URL, address pick, language switch, mobile menu
+- ✅ `/explore` reads `lng`/`lat` from the URL; map, list, distances and ETAs follow it
+- ✅ Phone menu on CustomerNav and the `/explore` header; language toggle on every nav
+- ✅ Every customer-facing section on `t()`, including the signed-in home, chat, the auth
+  sheet and the map fallback
+- ✅ "Nearby" cards use derived distance and ETA (`getNearby()`)
+- ✅ Typed addresses are looked up on submit; out-of-area locations are refused honestly
+- ✅ Page-level tests: composer → `/explore` URL, typed lookup, language switch, phone menu,
+  out-of-area location, derived cards, URL-driven distances on `/explore`
+
+Left for later on purpose: translating `/waitlist` (locked copy, own toggle) and a real
+"Change area" picker.
+
+**Owner test:** on `/`, type "seixal" in the address, pick the suggestion, press
+"See who's available". `/explore` should open on Seixal with Tiago at 1.2 km. Switch to PT
+from the globe button and check every section changes. At phone width, open the menu.
 
 ## Phase 3 · The urgent path ⬜
 

@@ -1,5 +1,6 @@
 import { Crosshair, HomeSolid } from '../icons';
 import { AVAILABLE, MAP_ONLY, ON_JOB } from './artisans';
+import { useLang } from '../../i18n';
 
 type Props = { selectedId: string; onSelect: (id: string) => void };
 
@@ -16,6 +17,7 @@ const at = (p: { left: number; top: number }) => ({
  * Same markers, same key, same controls, so the page keeps its shape.
  */
 export default function MapCanvas({ selectedId, onSelect }: Props) {
+  const { t } = useLang();
   const selected = AVAILABLE.find((a) => a.id === selectedId);
 
   return (
@@ -77,39 +79,39 @@ export default function MapCanvas({ selectedId, onSelect }: Props) {
 
       {/* Key — frosted, allowed here because it sits over the map */}
       <div className="absolute left-6 top-6 rounded-[18px] border border-white/90 bg-white/[.86] px-[17px] py-[15px] shadow-map backdrop-blur-[14px]">
-        <div className="mb-[11px] text-label text-ink-40">Map key</div>
+        <div className="mb-[11px] text-label text-ink-40">{t('map.key')}</div>
         <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
           <i className="block h-[15px] w-[15px] flex-none rounded-md bg-brand" />
-          Available now
+          {t('map.available')}
         </div>
         <div className="mb-[7px] flex items-center gap-[9px] text-[13px] font-semibold">
           <i className="block h-[15px] w-[15px] flex-none rounded-md border-[1.5px] border-dashed border-ink-30 bg-panel" />
-          On a job
+          {t('map.onJob')}
         </div>
         <div className="flex items-center gap-[9px] text-[13px] font-semibold">
           <i className="block h-[15px] w-[15px] flex-none rounded-full bg-ink" />
-          Your address
+          {t('map.you')}
         </div>
       </div>
 
       <div className="absolute right-6 top-6 flex flex-col gap-[9px]">
         <button
           type="button"
-          aria-label="Centre on my location"
+          aria-label={t('map.centre')}
           className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
         >
           <Crosshair size={18} className="text-brand" />
         </button>
         <button
           type="button"
-          aria-label="Zoom in"
+          aria-label={t('map.zoomIn')}
           className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
         >
           +
         </button>
         <button
           type="button"
-          aria-label="Zoom out"
+          aria-label={t('map.zoomOut')}
           className="grid h-[42px] w-[42px] place-items-center rounded-well bg-panel text-lg font-extrabold text-ink-60 shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)]"
         >
           −

@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from '../auth';
 import { LangProvider } from '../i18n';
 import AuthSheet from '../components/home/AuthSheet';
 import ExplorePage from './ExplorePage';
-import { AVAILABLE } from '../components/explore/artisans';
+import { AVAILABLE, getSupply } from '../components/explore/artisans';
 
 vi.mock('maplibre-gl', async () => (await import('../test/maplibre.mock')).mapLibreStub());
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
@@ -47,10 +47,19 @@ describe('ExplorePage', () => {
   it('pre-selects the artisan named in the URL', async () => {
     const target = AVAILABLE[1]!;
     renderExplore(`/explore?artisan=${target.id}`);
-    await waitFor(() =>
-      expect(screen.getByText(`${target.price} · ${target.eta} min`)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(`${target.price} · ${target.eta} min`)).toBeInTheDocument());
     expect(screen.getByRole('button', { name: `Chat with ${target.name.split(' ')[0]}` })).toBeInTheDocument();
+  });
+
+  it('works distances out from the address carried in the URL', () => {
+    const seixal: [number, number] = [-9.1012, 38.6403];
+    renderExplore(`/explore?address=Seixal&lng=${seixal[0]}&lat=${seixal[1]}`);
+    const tiago = getSupply(seixal).available.find((a) => a.id === 'tf')!;
+
+    // Guard: the test only means something if the two homes give different answers.
+    expect(tiago.km).not.toBe(AVAILABLE.find((a) => a.id === 'tf')!.km);
+    expect(screen.getByText(`${tiago.rating} · ${tiago.jobs} jobs · ${tiago.km} km`)).toBeInTheDocument();
+    expect(screen.getByText('Seixal')).toBeInTheDocument();
   });
 
   it('gates chat behind the auth sheet for a signed-out visitor', async () => {

@@ -12,37 +12,46 @@
 
 ## Where we stopped
 
-Phases 0 and 1 of `docs/BUILD_PLAN.md` are done. **Phase 2 is part-way**: the pieces below
-are built, green (`npm run check`, 39 tests) and committed; the rest is listed under
-"Phase 2 · still to do" in the build plan.
+Phases 0, 1 and 2 of `docs/BUILD_PLAN.md` are done. The first half of Phase 2 shipped in
+pull request #3. The second half is green (`npm run check`, 48 tests) and **uncommitted**: the
+owner reviews it in a browser and commits. Next up is Phase 3, the urgent path.
 
-Phase 2 so far:
+Phase 2 as a whole:
 
-- **Map-peek hero.** The stock photo on `/` is now the live map (`LiveMap variant="peek"`:
-  no chrome, no interaction). Picking an address in the composer re-centres it.
-- **Mobile nav.** `components/shared/MobileMenu.tsx` (hamburger sheet, Escape/overlay close,
-  scroll lock). Wired into `PublicNav` only so far.
-- **Address autocomplete.** `components/shared/AddressField.tsx` + `lib/geocode.ts`:
-  Nominatim bounded to the pilot area, 350 ms debounce, offline fallback list of pilot
-  streets, "use my location" via Geolocation + reverse geocode.
-- **EN/PT.** `src/i18n/` holds every public string in both languages (a test fails if the
-  two drift). `LangProvider` is mounted in `App.tsx`; the choice persists in localStorage
-  and sets `<html lang>`. Only the nav, hero, map and mobile menu read from it yet.
-- **Supply by location.** `getSupply(home)` in `explore/artisans.ts` derives distance and
-  ETA from wherever the customer is; the search URL now carries `lng`/`lat`.
+- **Map-peek hero.** The stock photo on `/` is the live map (`LiveMap variant="peek"`: no
+  chrome, no interaction). Picking an address re-centres it.
+- **One address, everywhere.** A picked address, or a typed one looked up on submit, rides
+  into `/explore` as `lng`/`lat`. The map, the list, distances and arrival times are all worked
+  out from it with `getSupply(home)`. "Use my location" refuses a position outside the pilot
+  box rather than pinning the customer 30 km from every sample artisan.
+- **Phone menu.** `components/shared/MobileMenu.tsx` on the public nav, the signed-in nav and
+  the `/explore` header. The language toggle is on all three.
+- **Address autocomplete.** `components/shared/AddressField.tsx` + `lib/geocode.ts`: Nominatim
+  bounded to the pilot area, 350 ms debounce, an offline list of pilot streets, and "use my
+  location" via Geolocation + reverse geocode.
+- **EN/PT across the customer side.** Every string on `/`, the signed-in home, `/explore`,
+  chat, the auth sheet and the map fallback reads from `src/i18n/`. A test fails if keys or
+  `{placeholders}` drift between languages. `i18n/Rich.tsx` handles sentences with links in
+  them. The choice persists in localStorage and sets `<html lang>`.
+- **Derived sample data.** The "Free in Amora" cards use `getNearby()`. The signed-in home's
+  buttons (find, rebook, open chat, quick request) open `/explore` at the saved address.
 
-Known gap: the hero writes `lng`/`lat` into the `/explore` URL, but `ExplorePage` does not
-read them yet, so `/explore` still centres on the sample address.
+Known gaps, on purpose:
 
-What changed in this pass, in one screen:
+- **`/waitlist` is not translated.** It keeps its own local EN/PT toggle and English copy. It
+  is a separate page with locked copy (`../Dashfixe.md` §6); translating it is its own task.
+- **"Change area"** in the hero still opens the auth sheet. It needs a real area picker once
+  there is more than one pilot area.
+
+What changed in the latest pass (Phase 2, second half):
 
 | Area | Change |
 |---|---|
-| Tooling | Vitest + Testing Library; `npm run check`; TS pinned to 5.x so ESLint works; `scripts/shot.mjs` |
-| Type | New `display / h2 / h3 / lead / nav` tokens; every home section moved off ad-hoc `clamp()` sizes |
-| Map | `LiveMap.tsx` on MapLibre + OpenFreeMap; `lib/geo.ts`; coordinates on every sample artisan |
-| Explore | Map pins to the viewport on desktop, panel scrolls; header collapses on small screens |
-| Fixes | MapLibre worker never loaded in dev **or** prod (silent); `auth.tsx` lint; unused var in WaitlistPage |
+| `/explore` | Reads `lng`/`lat`; map, list, ETAs and median follow the address; header has the phone menu and shared language toggle |
+| i18n | Remaining home sections, footers, signed-in home, search panel, chat, auth sheet and map fallback moved onto `t()` |
+| Hero | Typed-but-unpicked addresses are looked up on submit (2.5 s cap); locations outside the pilot area are refused with a notice |
+| Data | `getNearby(home)` for the home cards; signed-in home actions carry the saved address into `/explore` |
+| Tests | New `HomePage.test.tsx` (composer, typed lookup, PT switch, phone menu, out-of-area location, derived cards) and URL-location test on `/explore` |
 
 ## Run
 
@@ -68,7 +77,7 @@ Optional 6th argument is a JS expression evaluated in the page and printed, e.g.
 1. Clone the repo and `npm install` (Node 24 is what this was built on; 20+ should work).
 2. Copy the parent folder's `designs/`, `Dashfixe.md`, `Dashfixemarklatest.md` alongside the
    repo if you want the design context — the code does not depend on them.
-3. `npm run check` — 39 tests should pass.
+3. `npm run check` — 48 tests should pass.
 4. `npm run dev` and open `/`, `/waitlist`, `/explore`.
 5. No env vars, no API keys. The map uses OpenFreeMap's public tiles (fair-use, attribution is
    rendered). If they ever rate-limit, `MAP_STYLE` in `LiveMap.tsx` is the one line to change.
@@ -85,6 +94,7 @@ src/
   lib/geocode.ts     address search + reverse geocode (Nominatim, offline fallback)
   i18n/              EN/PT dictionaries, LangProvider/useLang, translate()
   components/shared  MobileMenu · LangToggle · AddressField
+  i18n/Rich.tsx      translated sentences with links or other nodes inside
   pages/             HomePage · WaitlistPage · ExplorePage
   components/home    public + signed-in home sections
   components/waitlist
