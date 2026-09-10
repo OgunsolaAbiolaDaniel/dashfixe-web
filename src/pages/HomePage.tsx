@@ -8,30 +8,19 @@ import Trades from '../components/home/Trades';
 import Nearby from '../components/home/Nearby';
 import ArtisanBlock from '../components/home/ArtisanBlock';
 import Apps from '../components/home/Apps';
-import CustomerNav from '../components/home/CustomerNav';
-import CustomerHome from '../components/home/CustomerHome';
-import CustomerFooter from '../components/home/CustomerFooter';
+import AppHome from '../components/home/AppHome';
 import { useAuth } from '../auth';
 
 /**
  * Two worlds behind one route — ARCHITECTURE.md §2. The marketing home for a
- * visitor; the app home once signed in (Uber's m.uber.com move). Session state
- * lives in AuthProvider so it survives navigation to /explore and back.
+ * visitor; the map-first app home once signed in (Uber's m.uber.com move: the
+ * signed-in home IS the map and the composer, not a dashboard — the lists live
+ * on /activity). Session state survives navigation via AuthProvider.
  */
 export default function HomePage() {
-  const { signedIn, requireAuth, signOut } = useAuth();
+  const { signedIn, requireAuth } = useAuth();
 
-  if (signedIn) {
-    return (
-      <div className="min-h-screen bg-page">
-        <CustomerNav onSignOut={signOut} />
-        <main>
-          <CustomerHome />
-        </main>
-        <CustomerFooter />
-      </div>
-    );
-  }
+  if (signedIn) return <AppHome />;
 
   const openAuth = () => requireAuth();
 

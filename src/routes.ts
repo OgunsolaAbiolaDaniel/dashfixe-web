@@ -15,6 +15,8 @@ export const ROUTES = {
   waitlist: '/waitlist',
   /** THE product surface: search + map, `?when=later` for booking ahead. */
   explore: '/explore',
+  /** Signed-in only: past requests and saved places (Uber's Activity). */
+  activity: '/activity',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
   about: '/about',
@@ -33,6 +35,7 @@ const DESTINATIONS = {
   home: ROUTES.home,
   waitlist: ROUTES.waitlist,
   explore: ROUTES.explore,
+  activity: ROUTES.activity,
 
   // The artisan world: one page, anchored depth.
   forArtisans: ROUTES.forArtisans,

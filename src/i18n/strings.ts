@@ -22,6 +22,7 @@ export const en = {
   'nav.howItWorks': 'How it works',
   'nav.becomeArtisan': 'Become an artisan',
   'nav.language': 'Language',
+  'nav.activity': 'Activity',
 
   // Hero
   'hero.area': 'Amora, PT',
@@ -352,6 +353,7 @@ export const pt: Record<StringKey, string> = {
   'nav.howItWorks': 'Como funciona',
   'nav.becomeArtisan': 'Ser profissional',
   'nav.language': 'Idioma',
+  'nav.activity': 'Atividade',
 
   'hero.area': 'Amora, PT',
   'hero.changeArea': 'Mudar de zona',

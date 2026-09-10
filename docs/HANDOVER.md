@@ -12,13 +12,13 @@
 
 ## Where we stopped
 
-Phases 0–3 of `docs/BUILD_PLAN.md` are done. Phase 3 (the architecture revision) lives on
-branch `feat/product-architecture`, based on `fix/restore-phase2-finish` (PR #4) because
-`main` is broken until #4 merges. Merge order: **#4 first, then the architecture PR.**
+Phases 0–3 of `docs/BUILD_PLAN.md` are done and merged (#4, #5); `main` is green.
 
-Start any new session by reading `docs/ARCHITECTURE.md` — it now defines the pages, the
-two surfaces, the journeys and the navigation. Next work: Phase 4, the job loop
-(`AppBar` extraction, `/artisan/:id`, `/job/:id`, the `track` map variant).
+Revision 1.1 (branch `feat/map-first-app-home`) made the signed-in home map-first per
+Uber: `AppHome` (map + composer + active job), `/activity` for the lists, and one
+auth-aware `AppBar` for every product screen (CustomerNav/CustomerFooter/CustomerHome
+are gone). Start any new session by reading `docs/ARCHITECTURE.md`. Next work: Phase 4,
+the job loop (`/artisan/:id`, `/job/:id`, the `track` map variant).
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
