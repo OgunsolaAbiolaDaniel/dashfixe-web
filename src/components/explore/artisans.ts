@@ -119,37 +119,3 @@ export function getSupply(home: LngLat = HOME): Supply {
 /** Convenience for the sample home, used by the home page and tests. */
 export const AVAILABLE: Artisan[] = getSupply(HOME).available;
 export const MEDIAN_ETA = getSupply(HOME).medianEta;
-
-/** A card in the home page's "Free in Amora right now" row. */
-export type NearbyPro = {
-  id: string;
-  initials: string;
-  name: string;
-  trade: Trade;
-  price: string;
-  /** Free right now, or free from `from`. */
-  free: boolean;
-  from?: string;
-  lngLat: LngLat;
-  km: number;
-  eta: number;
-  /** Also listed on /explore, so the card can pre-select them there. */
-  listed: boolean;
-};
-
-type NearbySeed = Omit<NearbyPro, 'km' | 'eta' | 'listed'>;
-
-const NEARBY_SEEDS: NearbySeed[] = [
-  { id: 'tf', initials: 'TF', name: 'Tiago Ferreira', trade: 'plumbing', price: '€60–75', free: true, lngLat: SEEDS[0]!.lngLat },
-  { id: 'ri', initials: 'RA', name: 'Rita Almeida', trade: 'electrical', price: '€70–90', free: true, lngLat: [-9.133, 38.63] },
-  { id: 'cp', initials: 'CP', name: 'Carla Pinto', trade: 'cleaning', price: '€40–60', free: true, lngLat: [-9.115, 38.62] },
-  { id: 'ms', initials: 'MS', name: 'Miguel Santos', trade: 'carpentry', price: '€55–70', free: false, from: '17:00', lngLat: [-9.105, 38.616] },
-];
-
-/** The home page's sample row, with distance and arrival worked out from `home`. */
-export function getNearby(home: LngLat = HOME): NearbyPro[] {
-  return NEARBY_SEEDS.map((seed) => {
-    const km = Math.round(distanceKm(home, seed.lngLat) * 10) / 10;
-    return { ...seed, km, eta: etaMinutes(km), listed: SEEDS.some((s) => s.id === seed.id) };
-  });
-}

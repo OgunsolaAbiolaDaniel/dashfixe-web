@@ -35,27 +35,27 @@ export default function App() {
   return (
     <BrowserRouter>
       <LangProvider>
-      <AuthProvider>
-        <HashScroll />
-        <Routes>
-          {/* Lane 1 · Arriving */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/waitlist" element={<WaitlistPage />} />
+        <AuthProvider>
+          <HashScroll />
+          <Routes>
+            {/* Lane 1 · Arriving */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/waitlist" element={<WaitlistPage />} />
 
-          {/* Lane 2 · Search + map — Dashfixe Web.dc.html */}
-          <Route path="/explore" element={<ExplorePage />} />
+            {/* Lane 2 · Search + map — Dashfixe Web.dc.html */}
+            <Route path="/explore" element={<ExplorePage />} />
 
-          {/* Lane 2 · Getting something fixed — Dashfixe Customer Pages.dc.html */}
-          {/* TODO /fix  /artisan/:id  /job/:id  /trade/:slug  /book */}
-          {/* TODO /help  /coverage  /about */}
+            {/* Lane 2 · Getting something fixed — Dashfixe Customer Pages.dc.html */}
+            {/* TODO /fix  /artisan/:id  /job/:id  /trade/:slug  /book */}
+            {/* TODO /help  /coverage  /about */}
 
-          {/* Lane 3 · Becoming an artisan — Dashfixe for Artisans.dc.html */}
-          {/* TODO /for-artisans  /for-artisans/apply  /for-artisans/details  /artisan-app */}
+            {/* Lane 3 · Becoming an artisan — Dashfixe for Artisans.dc.html */}
+            {/* TODO /for-artisans  /for-artisans/apply  /for-artisans/details  /artisan-app */}
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <GlobalAuthSheet />
-      </AuthProvider>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <GlobalAuthSheet />
+        </AuthProvider>
       </LangProvider>
     </BrowserRouter>
   );

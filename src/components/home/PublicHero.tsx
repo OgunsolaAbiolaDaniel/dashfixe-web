@@ -5,7 +5,6 @@ import { exploreUrl, type When } from '../../search';
 import { useAuth } from '../../auth';
 import { useLang } from '../../i18n';
 import type { LngLat } from '../../lib/geo';
-import { searchAddress } from '../../lib/geocode';
 import AddressField from '../shared/AddressField';
 import LiveMap from '../explore/LiveMap';
 
@@ -29,22 +28,7 @@ export default function PublicHero() {
   const [lngLat, setLngLat] = useState<LngLat | null>(null);
   const [when, setWhen] = useState<When>('now');
 
-  /**
-   * If an address was typed but no suggestion picked, look it up before leaving so
-   * /explore still opens on the right spot. Capped at 2.5 s: a slow geocoder must
-   * never block the search, it just falls back to the sample address.
-   */
-  const search = async () => {
-    let where = lngLat;
-    if (!where && address.trim().length >= 3) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 2500);
-      const [first] = await searchAddress(address, ctrl.signal);
-      clearTimeout(timer);
-      where = first?.lngLat ?? null;
-    }
-    navigate(exploreUrl({ need, address, lngLat: where, when }));
-  };
+  const search = () => navigate(exploreUrl({ need, address, lngLat, when }));
 
   return (
     <section id="top" className="bg-panel">

@@ -5,53 +5,30 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-10 · **Branch:** `feat/site-rebuild-from-designs` ·
+**Last updated:** 2026-09-10 · **Branch:** `main` ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0, 1 and 2 of `docs/BUILD_PLAN.md` are done. The first half of Phase 2 shipped in
-pull request #3. The second half is green (`npm run check`, 48 tests) and **uncommitted**: the
-owner reviews it in a browser and commits. Next up is Phase 3, the urgent path.
+Phase 0 (foundations) and Phase 1 (live map) of `docs/BUILD_PLAN.md` are complete and green.
+Phase 2 is part-landed: the map-peek hero, i18n and address autocomplete are in and working.
 
-Phase 2 as a whole:
-
-- **Map-peek hero.** The stock photo on `/` is the live map (`LiveMap variant="peek"`: no
-  chrome, no interaction). Picking an address re-centres it.
-- **One address, everywhere.** A picked address, or a typed one looked up on submit, rides
-  into `/explore` as `lng`/`lat`. The map, the list, distances and arrival times are all worked
-  out from it with `getSupply(home)`. "Use my location" refuses a position outside the pilot
-  box rather than pinning the customer 30 km from every sample artisan.
-- **Phone menu.** `components/shared/MobileMenu.tsx` on the public nav, the signed-in nav and
-  the `/explore` header. The language toggle is on all three.
-- **Address autocomplete.** `components/shared/AddressField.tsx` + `lib/geocode.ts`: Nominatim
-  bounded to the pilot area, 350 ms debounce, an offline list of pilot streets, and "use my
-  location" via Geolocation + reverse geocode.
-- **EN/PT across the customer side.** Every string on `/`, the signed-in home, `/explore`,
-  chat, the auth sheet and the map fallback reads from `src/i18n/`. A test fails if keys or
-  `{placeholders}` drift between languages. `i18n/Rich.tsx` handles sentences with links in
-  them. The choice persists in localStorage and sets `<html lang>`.
-- **Derived sample data.** The "Free in Amora" cards use `getNearby()`. The signed-in home's
-  buttons (find, rebook, open chat, quick request) open `/explore` at the saved address.
-
-Known gaps, on purpose:
-
-- **`/waitlist` is not translated.** It keeps its own local EN/PT toggle and English copy. It
-  is a separate page with locked copy (`../Dashfixe.md` §6); translating it is its own task.
-- **"Change area"** in the hero still opens the auth sheet. It needs a real area picker once
-  there is more than one pilot area.
-
-What changed in the latest pass (Phase 2, second half):
+This pass picked up Phase 2 work that arrived from a second machine half-finished and would not
+build. What changed:
 
 | Area | Change |
 |---|---|
-| `/explore` | Reads `lng`/`lat`; map, list, ETAs and median follow the address; header has the phone menu and shared language toggle |
-| i18n | Remaining home sections, footers, signed-in home, search panel, chat, auth sheet and map fallback moved onto `t()` |
-| Hero | Typed-but-unpicked addresses are looked up on submit (2.5 s cap); locations outside the pilot area are refused with a notice |
-| Data | `getNearby(home)` for the home cards; signed-in home actions carry the saved address into `/explore` |
-| Tests | New `HomePage.test.tsx` (composer, typed lookup, PT switch, phone menu, out-of-area location, derived cards) and URL-location test on `/explore` |
+| Hero | `LiveMap`/`MapCanvas` gained `variant="peek"`: non-interactive backdrop centred on `home`, no key panel, no controls. `PublicHero` had been calling this before it existed — that was the build break |
+| i18n | `LangProvider` was written but never mounted; every page using `useLang()` crashed at runtime. Now wrapped in `App.tsx`. `translate()` moved to `strings.ts` (Fast Refresh needs component-only modules) |
+| Address | `AddressField` no longer calls `setState` synchronously in an effect; suggestion visibility is derived (`showSuggestions`) |
+| Fixes | `search.test.ts` expectation missing the new `lngLat` field; waitlist `Footer` gave three links the same key (`link()` returns `/` for unbuilt routes) |
+
+`npm run check` is green (37 tests) and `npm run build` — what Vercel runs — succeeds.
+
+> **Careful:** a runtime-only failure like the missing `LangProvider` passes both `tsc` and the
+> test suite. Screenshot the real pages (`scripts/shot.mjs` prints console errors) before shipping.
 
 ## Run
 

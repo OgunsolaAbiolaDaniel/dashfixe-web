@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Crosshair, MapPin } from '../icons';
 import { useLang } from '../../i18n';
-import { inPilotArea, locate, reverseGeocode, searchAddress, type Place } from '../../lib/geocode';
+import { locate, reverseGeocode, searchAddress, type Place } from '../../lib/geocode';
 
 type Props = {
   value: string;
@@ -32,10 +32,9 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
   const chosen = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
 
-  // Debounced lookup. Short input is cleared in the change handler, so this effect
-  // only ever talks to the network and sets state from the async callback.
   useEffect(() => {
-    if (chosen.current === value || value.trim().length < 3) return; // a pick, or too short
+    if (chosen.current === value) return; // a pick, not typing
+    if (value.trim().length < 3) return; // too short to search; showSuggestions hides any stale list
     const timer = setTimeout(() => {
       abort.current?.abort();
       const ctrl = new AbortController();
@@ -63,12 +62,6 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
     setLocating(true);
     try {
       const lngLat = await locate();
-      // The sample supply only exists around Amora; a pin in Lisbon would put every
-      // artisan 30 km away. Say so instead of pretending.
-      if (!inPilotArea(lngLat)) {
-        setNotice(t('hero.outsideArea'));
-        return;
-      }
       pick(await reverseGeocode(lngLat));
     } catch {
       setNotice(t('hero.locationDenied'));
@@ -77,8 +70,10 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
     }
   };
 
+  const showSuggestions = open && value.trim().length >= 3;
+
   const onKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || !places.length) return;
+    if (!showSuggestions || !places.length) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setActive((i) => (i + 1) % places.length);
@@ -105,21 +100,16 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
         <input
           type="text"
           role="combobox"
-          aria-expanded={open}
+          aria-expanded={showSuggestions}
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           autoComplete="off"
           value={value}
           onChange={(e) => {
-            const next = e.target.value;
             chosen.current = null;
             setNotice(null);
-            if (next.trim().length < 3) {
-              setPlaces([]);
-              setOpen(false);
-            }
-            onChange(next);
+            onChange(e.target.value);
           }}
           onFocus={() => places.length && setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 120)}
@@ -140,7 +130,7 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
         </button>
       </div>
 
-      {open && (
+      {showSuggestions && (
         <ul
           id={listId}
           role="listbox"

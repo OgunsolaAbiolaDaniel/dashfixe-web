@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Lang } from '../types';
-import type { StringKey } from './strings';
-import { translate, type Vars } from './translate';
+import { translate, type StringKey } from './strings';
 
 /**
  * Language for the whole site. Persisted per browser and mirrored onto
@@ -12,6 +11,7 @@ import { translate, type Vars } from './translate';
  */
 const STORAGE_KEY = 'dfx.lang';
 
+type Vars = Record<string, string | number>;
 
 type LangValue = {
   lang: Lang;

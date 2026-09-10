@@ -18,12 +18,6 @@ export const PILOT_VIEWBOX = [-9.19, 38.58, -9.05, 38.67] as const;
 
 const ENDPOINT = 'https://nominatim.openstreetmap.org';
 
-/** Whether a point falls inside the pilot area (the same box the search is bounded to). */
-export function inPilotArea([lng, lat]: LngLat): boolean {
-  const [w, south, e, n] = PILOT_VIEWBOX;
-  return lng >= w && lng <= e && lat >= south && lat <= n;
-}
-
 const FALLBACK: Place[] = [
   { label: 'Rua da Cooperativa 14, Amora', lngLat: [-9.1165, 38.6283] },
   { label: 'Avenida da Liberdade, Amora', lngLat: [-9.1181, 38.6275] },
