@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import WaitlistPage from './pages/WaitlistPage';
 import ExplorePage from './pages/ExplorePage';
+import ActivityPage from './pages/ActivityPage';
 import ForArtisansPage from './pages/ForArtisansPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         {/* Product surface (ARCHITECTURE.md §2) */}
         <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.explore} element={<ExplorePage />} />
+        <Route path={ROUTES.activity} element={<ActivityPage />} />
         {/* Phase 4: /artisan/:id and /job/:id join here. */}
 
         {/* Marketing surface */}

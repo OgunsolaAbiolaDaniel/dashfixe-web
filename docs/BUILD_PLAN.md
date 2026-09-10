@@ -105,11 +105,27 @@ source of truth for pages, navigation and journeys.
 **Owner test:** open `/fix` — you should land on `/explore`. Click "Become an artisan"
 anywhere — one page, apply at the bottom, works in PT. Footer: every link goes somewhere.
 
+### Revision 1.1 · The signed-in home goes map-first ✅
+
+The signed-in `/` looked like a dashboard; Uber's signed-in home is the map. Fixed:
+
+- ✅ `AppHome`: map fills the screen (interactive; tapping a pin opens `/explore` with
+  that artisan selected), panel = greeting + composer + active job + rebooks + quick trades
+- ✅ `/activity` (signed-in only, visitors redirected home): recent requests + saved
+  places — the lists that used to crowd the home, Uber's Activity
+- ✅ `AppBar` extracted to `components/chrome/`, auth-aware (visitor: explore links +
+  log in/sign up; customer: Home · Activity · Help + bell + account chip); used by the
+  app home, `/explore` and `/activity`. CustomerNav/CustomerFooter/CustomerHome deleted
+- ✅ Tests: 63 — map-first home, composer → `/explore`, pin-tap → pre-selected artisan,
+  Activity via the app bar, signed-out `/activity` redirect
+
+**Owner test:** log in (Continue) — the home should be the map with the composer, not a
+dashboard. Tap a pin. Open Activity from the top bar. Sign out from the account chip.
+
 ## Phase 4 · The job loop ⬜
 
 The remaining product surface — `Dashfixe Customer Pages.dc.html`, on the AppBar chrome.
 
-- ⬜ Extract `AppBar` from ExplorePage's header into `components/chrome/` and reuse it
 - ⬜ `/artisan/:id` — profile: trust before the commit point (reviews, badges, trades)
 - ⬜ `/job/:id` — the live job: `track` variant of LiveMap (route line, moving artisan
   pin, sample-driven), approved estimate, itemised receipt, rating

@@ -6,7 +6,7 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-11 · Revision 1 — the Uber-style consolidation.
+**Last revised:** 2026-09-11 · Revision 1.1 — the signed-in home went map-first.
 
 ---
 
@@ -45,15 +45,17 @@ chrome.
 | | **Marketing surface** | **Product surface (the app)** |
 |---|---|---|
 | Job | Persuade and route | Get a repair done |
-| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | `/explore`, `/artisan/:id`*, `/job/:id`*, signed-in home |
+| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`*, `/job/:id`* |
 | Chrome | `SiteNav` + `SiteFooter` | `AppBar`, no footer (map fills the viewport) |
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
 \* designed, next to build (Phase 4).
 
-The signed-in home is the app's home screen (Uber's m.uber.com home): it replaces the
-marketing home entirely for a signed-in customer, same route, different world.
+The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
+different world — the **map fills the screen** with the supply around the saved address,
+and the panel carries the composer, the active job and the rebook shortcuts. It is not a
+dashboard; the lists (recent requests, saved places) live on `/activity`, Uber's Activity.
 
 ## 3. The journeys
 
@@ -68,8 +70,10 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 3. **Artisan Tiago** — heard about the pilot. Any page → *Become an artisan* →
    `/for-artisans` (how it pays, vetting, the app) → applies with name + WhatsApp + trade →
    a human calls him on WhatsApp within 48 h. Supply acquisition is manual by design.
-4. **Returning Rita** — signed in. `/` is her dashboard: track the active job, rebook the
-   plumber she liked, fire a quick request. Everything lands on `/explore` or `/job/:id`.
+4. **Returning Rita** — signed in. `/` is the map with her composer, her active job and
+   her rebook shortcuts; tapping a pin opens `/explore` with that artisan selected. Her
+   history and saved places live under `/activity`. Everything lands on `/explore` or
+   `/job/:id`.
 
 ## 4. The route map
 
@@ -79,6 +83,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 |---|---|---|---|
 | `/` | marketing / app | Composer + map hero; signed-in → app home | built |
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
+| `/activity` | app | Signed-in: past requests, saved places (redirects visitors home) | built (rev 1.1) |
 | `/artisan/:id` | app | Profile: trust before the commit point | Phase 4 |
 | `/job/:id` | app | Live job: tracking, approved estimate, receipt, rating | Phase 4 |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
@@ -120,10 +125,11 @@ directly — no prop drilling.
 Contact → `/help#contact`), *For artisans* (Join → `/for-artisans#apply`, payouts/vetting/app
 anchors), *Support* (Help, Safety, Cancellations → `/help` anchors). Legal row at the bottom.
 
-**`AppBar`** — product surface. Slim, 69 px: logo → `/`, contextual links, language,
-account chip / login, `MobileMenu`. `/explore` uses it today; `/artisan/:id` and `/job/:id`
-reuse it in Phase 4. The signed-in home's bar (`CustomerNav`) is the AppBar with dashboard
-anchors; it migrates into `chrome/` when Phase 4 touches it.
+**`AppBar`** — product surface. Slim, 69 px, **auth-aware** like Uber's: a visitor sees
+*Find an artisan · How it works · Become an artisan* plus Log in / Sign up; a signed-in
+customer sees *Home · Activity · Help* with the bell and the account chip (sign out).
+Used by the signed-in home, `/explore` and `/activity` today; `/artisan/:id` and
+`/job/:id` reuse it in Phase 4. The current route's link renders brand-bold.
 
 Sections on `/` remain reachable by scrolling and by `/#anchor` links (the router's
 `HashScroll` makes these work from any page), but the nav's job is to move people into the
