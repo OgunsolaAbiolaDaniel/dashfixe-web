@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider, useAuth } from '../auth';
+import { LangProvider } from '../i18n';
 import AuthSheet from '../components/home/AuthSheet';
 import ExplorePage from './ExplorePage';
 import { AVAILABLE } from '../components/explore/artisans';
@@ -19,10 +20,12 @@ function Sheet() {
 function renderExplore(url = '/explore?need=kitchen%20tap') {
   return render(
     <MemoryRouter initialEntries={[url]}>
-      <AuthProvider>
-        <ExplorePage />
-        <Sheet />
-      </AuthProvider>
+      <LangProvider initial="EN">
+        <AuthProvider>
+          <ExplorePage />
+          <Sheet />
+        </AuthProvider>
+      </LangProvider>
     </MemoryRouter>,
   );
 }
@@ -36,7 +39,7 @@ describe('ExplorePage', () => {
 
   it('mounts the markers once the map loads', async () => {
     renderExplore();
-    await waitFor(() => expect(screen.getByTitle('Rua da Cooperativa 14, Amora')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTitle('Your address')).toBeInTheDocument());
     const others = AVAILABLE.filter((a) => a.id !== AVAILABLE[0]!.id);
     for (const a of others) expect(screen.getByRole('button', { name: a.name })).toBeInTheDocument();
   });

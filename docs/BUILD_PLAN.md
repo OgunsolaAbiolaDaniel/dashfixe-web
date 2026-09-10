@@ -50,19 +50,26 @@ Goal: the search-and-map surface from `Dashfixe Web.dc.html` on real geography.
 **Owner test:** `/explore?need=kitchen%20tap` — tiles load, 8 pins, click pins and cards,
 zoom, locate; `Chat` opens the auth sheet when signed out. Try `?artisan=mc`.
 
-## Phase 2 · Home page, Uber grade 🔄 (next)
+## Phase 2 · Home page, Uber grade 🔄 (in progress)
 
 Goal: the signed-out and signed-in home from `Dashfixe Home v2(real).dc.html`, polished.
 
-- ⬜ Hero: swap the stock photo for a **live map peek** (same LiveMap, non-interactive,
-  centred on the visitor's area) with the composer floating over it — the Uber move
-- ⬜ Real mobile navigation (hamburger sheet) for PublicNav, CustomerNav, Explore header
-- ⬜ Address field: autocomplete against OpenStreetMap Nominatim (free) or a static list of
-  Seixal-council streets; "Use my location" via the Geolocation API with a permission fallback
-- ⬜ "Nearby" cards link into `/explore` with the artisan pre-selected (already wired) and
-  show the derived ETA rather than a hand-typed one
-- ⬜ Language toggle actually switches copy (EN/PT dictionary in `src/i18n/`)
-- ⬜ Page-level tests: composer → `/explore` URL, trade tiles, auth gate on account links
+- ✅ Hero: the stock photo is now a **live map peek** (same LiveMap, non-interactive);
+  picking an address re-centres it
+- ✅ Mobile navigation sheet (`shared/MobileMenu`), wired into PublicNav
+- ✅ Address field: Nominatim autocomplete bounded to the pilot area, offline street list,
+  "use my location" with a permission fallback
+- ✅ EN/PT dictionary in `src/i18n/` with a key-parity test; provider mounted, persisted
+- ✅ Supply derived per location (`getSupply(home)`); search URL carries `lng`/`lat`
+
+**Phase 2 · still to do**
+
+- ⬜ `/explore` reads `lng`/`lat` from the URL and centres the map and ETAs on it
+- ⬜ Mobile menu in CustomerNav and the `/explore` header
+- ⬜ Move the remaining sections onto `t()`: Explore cards, AccountSplit, BookAhead, Trades,
+  Nearby, ArtisanBlock, Apps, footers, SearchPanel, AuthSheet (strings already in the dictionary)
+- ⬜ "Nearby" cards show the derived ETA from `getSupply()` rather than hand-typed values
+- ⬜ Page-level tests: composer → `/explore` URL, address pick, language switch, mobile menu
 
 ## Phase 3 · The urgent path ⬜
 

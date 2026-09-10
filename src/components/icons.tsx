@@ -325,3 +325,22 @@ export const Send = (p: IconProps) => (
   </Svg>
 );
 
+
+export const Menu = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Svg>
+);
+
+export const Navigation = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="m3 11 18-8-8 18-2-8-8-2Z" />
+  </Svg>
+);
+
+export const Search = (p: IconProps) => (
+  <Svg {...p}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </Svg>
+);

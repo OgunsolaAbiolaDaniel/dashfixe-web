@@ -5,6 +5,7 @@ import WaitlistPage from './pages/WaitlistPage';
 import ExplorePage from './pages/ExplorePage';
 import AuthSheet from './components/home/AuthSheet';
 import { AuthProvider, useAuth } from './auth';
+import { LangProvider } from './i18n';
 
 /**
  * Routing follows the site map in SITEMAP.md, which mirrors `Dashfixe Flow.dc.html`.
@@ -33,6 +34,7 @@ function GlobalAuthSheet() {
 export default function App() {
   return (
     <BrowserRouter>
+      <LangProvider>
       <AuthProvider>
         <HashScroll />
         <Routes>
@@ -54,6 +56,7 @@ export default function App() {
         </Routes>
         <GlobalAuthSheet />
       </AuthProvider>
+      </LangProvider>
     </BrowserRouter>
   );
 }
