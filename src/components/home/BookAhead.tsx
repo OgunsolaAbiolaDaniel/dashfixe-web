@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Calendar, ChevronDown, Clock, Close, ReceiptSlim } from '../icons';
 import { link } from '../../routes';
 import { useLang } from '../../i18n';
@@ -12,7 +13,7 @@ const FIELD = 'flex h-[54px] min-w-0 flex-[1_1_150px] items-center gap-[11px] ro
 const INPUT =
   'min-w-0 flex-1 border-0 bg-transparent text-[15.5px] font-semibold text-ink outline-offset-8 placeholder:text-ink-30';
 
-export default function BookAhead({ onAuth }: { onAuth: () => void }) {
+export default function BookAhead() {
   const { t } = useLang();
   return (
     <section id="later" className="scroll-mt-[88px] bg-panel">
@@ -36,13 +37,12 @@ export default function BookAhead({ onAuth }: { onAuth: () => void }) {
                   <ChevronDown size={15} className="flex-none text-ink-40" />
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onAuth}
-                className="h-[52px] w-full max-w-[340px] rounded-btn bg-ink text-[15px] font-bold text-white transition hover:bg-ink-80"
+              <Link
+                to={link('book')}
+                className="flex h-[52px] w-full max-w-[340px] items-center justify-center rounded-btn bg-ink text-[15px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 {t('later.next')}
-              </button>
+              </Link>
             </div>
             <div className="min-h-[220px] self-stretch bg-[#c7d7f2]">
               <img

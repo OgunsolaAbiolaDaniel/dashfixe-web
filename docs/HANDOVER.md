@@ -5,15 +5,21 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-10 · **Branch:** `main` ·
+**Last updated:** 2026-09-11 · **Branch:** `main` ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0, 1 and 2 of `docs/BUILD_PLAN.md` are done. They are all on `main` once the restore
-pull request (`fix/restore-phase2-finish`) is merged. Next up is Phase 3, the urgent path.
+Phases 0–3 of `docs/BUILD_PLAN.md` are done. Phase 3 (the architecture revision) lives on
+branch `feat/product-architecture`, based on `fix/restore-phase2-finish` (PR #4) because
+`main` is broken until #4 merges. Merge order: **#4 first, then the architecture PR.**
+
+Start any new session by reading `docs/ARCHITECTURE.md` — it now defines the pages, the
+two surfaces, the journeys and the navigation. Next work: Phase 4, the job loop
+(`AppBar` extraction, `/artisan/:id`, `/job/:id`, the `track` map variant).
+
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
 > copy synced its half-finished state straight onto `main`. When `main` was then merged back into

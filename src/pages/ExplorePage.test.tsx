@@ -62,6 +62,13 @@ describe('ExplorePage', () => {
     expect(screen.getByText('Seixal')).toBeInTheDocument();
   });
 
+  it('shows the day and window picker in later mode', () => {
+    renderExplore('/explore?when=later');
+    expect(screen.getByText('Hold a slot that suits you')).toBeInTheDocument();
+    expect(screen.getByLabelText('Day')).toBeInTheDocument();
+    expect(screen.getByLabelText('Window')).toBeInTheDocument();
+  });
+
   it('gates chat behind the auth sheet for a signed-out visitor', async () => {
     const user = userEvent.setup();
     renderExplore();
