@@ -19,7 +19,6 @@ describe('exploreUrl', () => {
       address: 'Rua X 1',
       lngLat: null,
       trade: '',
-      lngLat: null,
       when: 'later',
       artisan: 'tf',
     });

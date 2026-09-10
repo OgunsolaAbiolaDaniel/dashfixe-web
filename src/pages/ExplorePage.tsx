@@ -1,21 +1,26 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import mark from '../assets/dashfixe-mark.png';
 import wordmark from '../assets/dashfixe-wordmark.png';
 import SearchPanel from '../components/explore/SearchPanel';
 import LiveMap from '../components/explore/LiveMap';
 import ChatPanel from '../components/explore/ChatPanel';
-import { AVAILABLE } from '../components/explore/artisans';
+import LangToggle from '../components/shared/LangToggle';
+import MobileMenu from '../components/shared/MobileMenu';
+import { getSupply } from '../components/explore/artisans';
 import { ROUTES, link } from '../routes';
-import { parseSearch, type When } from '../search';
+import { DEFAULT_ADDRESS, parseSearch, type When } from '../search';
+import { HOME, type LngLat } from '../lib/geo';
 import { useAuth } from '../auth';
-import type { Lang } from '../types';
+import { useLang } from '../i18n';
 
 /**
  * Search and map — designs/Dashfixe Web.dc.html.
  *
  * The search arrives in the URL from the home composer, a trade tile or a nearby card,
- * so a search is shareable and survives reload and the back button.
+ * so a search is shareable and survives reload and the back button. When the composer
+ * resolved an address, `lng`/`lat` ride along and everything here — the map, the list,
+ * distances and arrival times — is worked out from that point.
  *
  * Browsing is open — search, availability and estimates need no account. Opening a
  * chat is the commit point: the docked panel never appears for a signed-out visitor,
@@ -26,10 +31,17 @@ import type { Lang } from '../types';
 export default function ExplorePage() {
   const [params, setParams] = useSearchParams();
   const search = parseSearch(params);
-  const { signedIn, gate } = useAuth();
-  const [lang, setLang] = useState<Lang>('EN');
+  const { signedIn, gate, requireAuth, signOut } = useAuth();
+  const { t } = useLang();
 
-  const arriving = AVAILABLE.find((a) => a.id === search.artisan)?.id ?? AVAILABLE[0].id;
+  // parseSearch builds a fresh tuple on every render, and the map refits whenever the
+  // home reference changes — so key the memo on the numbers, not the array.
+  const lng = search.lngLat?.[0];
+  const lat = search.lngLat?.[1];
+  const home = useMemo<LngLat>(() => (lng !== undefined && lat !== undefined ? [lng, lat] : HOME), [lng, lat]);
+  const supply = getSupply(home);
+
+  const arriving = supply.available.find((a) => a.id === search.artisan)?.id ?? supply.available[0]!.id;
   const [selectedId, setSelectedId] = useState(arriving);
   const [chatWith, setChatWith] = useState<string | null>(null);
 
@@ -52,7 +64,13 @@ export default function ExplorePage() {
   };
 
   // The docked chat is for signed-in customers only. Signing out closes it.
-  const chatArtisan = signedIn ? (AVAILABLE.find((a) => a.id === chatWith) ?? null) : null;
+  const chatArtisan = signedIn ? (supply.available.find((a) => a.id === chatWith) ?? null) : null;
+
+  const links = [
+    { label: t('nav.findArtisan'), to: '#find' },
+    { label: t('nav.howItWorks'), to: '/#explore' },
+    { label: t('nav.becomeArtisan'), to: link('forArtisans') },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
@@ -64,39 +82,50 @@ export default function ExplorePage() {
 
         <nav className="mr-auto hidden gap-6 md:flex">
           <a href="#find" className="text-[14.5px] font-bold text-brand">
-            Find an artisan
+            {t('nav.findArtisan')}
           </a>
           <Link to="/#explore" className="text-[14.5px] font-semibold text-ink-60 hover:text-ink">
-            How it works
+            {t('nav.howItWorks')}
           </Link>
-          <Link
-            to={link('forArtisans')}
-            className="text-[14.5px] font-semibold text-ink-60 hover:text-ink"
-          >
-            Become an artisan
+          <Link to={link('forArtisans')} className="text-[14.5px] font-semibold text-ink-60 hover:text-ink">
+            {t('nav.becomeArtisan')}
           </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-[11px]">
-          <div className="hidden rounded-xl bg-well p-[3px] sm:flex">
-            {(['EN', 'PT'] as const).map((code) => (
-              <button
-                key={code}
-                type="button"
-                onClick={() => setLang(code)}
-                aria-pressed={lang === code}
-                className={
-                  'rounded-[9px] px-[13px] py-[7px] text-[13px] transition ' +
-                  (lang === code
-                    ? 'bg-panel font-bold text-ink shadow-card'
-                    : 'font-semibold text-ink-40 hover:text-ink-60')
-                }
-              >
-                {code}
-              </button>
-            ))}
-          </div>
+          <LangToggle className="hidden sm:flex" />
           <AuthButtons />
+          <MobileMenu
+            links={links}
+            actions={
+              signedIn ? (
+                <button
+                  type="button"
+                  onClick={signOut}
+                  className="h-ctl-lg rounded-btn border border-line bg-panel text-[15px] font-bold text-ink"
+                >
+                  {t('nav.signOut')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => requireAuth()}
+                    className="h-ctl-lg rounded-btn bg-brand text-[15px] font-bold text-white"
+                  >
+                    {t('nav.signup')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => requireAuth()}
+                    className="h-ctl-lg rounded-btn border border-line bg-panel text-[15px] font-bold text-ink"
+                  >
+                    {t('nav.login')}
+                  </button>
+                </>
+              )
+            }
+          />
         </div>
       </header>
 
@@ -108,14 +137,21 @@ export default function ExplorePage() {
       >
         <SearchPanel
           search={search}
+          supply={supply}
           onWhen={setWhen}
           selectedId={selectedId}
           onSelect={select}
           onChat={openChat}
         />
         <div className="relative min-h-[520px] min-w-0 lg:min-h-0">
-          <LiveMap selectedId={selectedId} onSelect={select} />
-          {chatArtisan && <ChatPanel artisan={chatArtisan} onClose={() => setChatWith(null)} />}
+          <LiveMap home={home} selectedId={selectedId} onSelect={select} />
+          {chatArtisan && (
+            <ChatPanel
+              artisan={chatArtisan}
+              address={search.address || DEFAULT_ADDRESS}
+              onClose={() => setChatWith(null)}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -124,12 +160,15 @@ export default function ExplorePage() {
 
 function AuthButtons() {
   const { signedIn, requireAuth, signOut } = useAuth();
+  const { t } = useLang();
 
   if (signedIn) {
     return (
       <button
         type="button"
         onClick={signOut}
+        aria-label={t('nav.signOut')}
+        title={t('nav.signOut')}
         className="flex h-ctl items-center gap-2.5 rounded-well border border-line bg-panel px-1.5 transition hover:bg-page"
       >
         <span className="grid h-8 w-8 flex-none place-items-center rounded-[11px] bg-avatar text-xs font-extrabold text-brand">
@@ -141,21 +180,17 @@ function AuthButtons() {
   }
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => requireAuth()}
-        className="text-[14.5px] font-bold text-ink"
-      >
-        Log in
+    <div className="hidden items-center gap-[11px] md:flex">
+      <button type="button" onClick={() => requireAuth()} className="text-[14.5px] font-bold text-ink">
+        {t('nav.login')}
       </button>
       <button
         type="button"
         onClick={() => requireAuth()}
         className="rounded-btn bg-brand px-5 py-3 text-[14.5px] font-bold text-white transition hover:bg-brand-hover"
       >
-        Sign up
+        {t('nav.signup')}
       </button>
-    </>
+    </div>
   );
 }
