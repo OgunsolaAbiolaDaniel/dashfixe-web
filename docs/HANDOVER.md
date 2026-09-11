@@ -12,14 +12,19 @@
 
 ## Where we stopped
 
-Phases 0–4 of `docs/BUILD_PLAN.md` are done; 0–3 are merged (#4–#6) and `main` is green.
+Phases 0–4 are done and Phase 5's functional core is in; 0–3 are merged (#4–#6), `main` is green.
 
-Phase 4 (branch `feat/job-loop`) closed the job loop: `/artisan/:id` (public trust
-page), `/job/:id` (tracking with `TrackMap`, receipts with rating), a real chat store,
-the shared map kit in `components/map/kit.ts` (**the worker gotcha lives THERE now**),
-and the later-mode slot in the URL. Start any new session by reading
-`docs/ARCHITECTURE.md` (rev 1.2). Next work: Phase 5 — backend endpoints, phone-OTP
-auth, CI, the MapLibre code-split, SEO and the launch switch.
+Revision 1.3 (branch `feat/functional-core`, on top of the Phase 4 branch — merge #7
+then #8): **the product is functional.** The pilot API is real and in-repo (waitlist,
+artisan applications, full phone-OTP auth with httpOnly sessions; Postgres via
+`DATABASE_URL`, in-memory in dev; SMS adapter with labelled on-screen pilot codes),
+`/login` is a page and the auth modal is deleted, every form POSTs with busy/error
+states, and the dead-button sweep landed (sort, editable search fields, real booking
+slot, bell popover, photo attach, saved places). CI runs check+build on every PR, and
+vercel.json adds the SPA rewrite. Start any new session by reading
+`docs/ARCHITECTURE.md` (rev 1.3 — §6 has the endpoints and the env table, §7 the maps
+decision). Next: the "Still open in Phase 5" list (ops env vars in Vercel, MapLibre
+code-split, SEO, Playwright, launch switch), then Phase 6.
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
@@ -78,7 +83,7 @@ What changed in the latest pass (Phase 2, second half):
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173  (also on your LAN IP)
+npm run dev        # http://localhost:5173 — including the FULL pilot API, zero secrets
 npm run check      # typecheck + lint + tests — must be green before a commit
 npm run build      # typechecks, then bundles to dist/
 npm run preview    # serves dist/ on 4173
@@ -125,6 +130,18 @@ src/
 scripts/shot.mjs     headless screenshot via CDP
 docs/                BUILD_PLAN · HANDOVER · DESIGN
 ```
+
+## Going live (Vercel env)
+
+| Variable | Required for | Notes |
+|---|---|---|
+| `DATABASE_URL` | persistence | Neon connection string; tables auto-create on first use |
+| `AUTH_SECRET` | sessions | any long random string; rotating it logs everyone out |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | real SMS codes | without them login shows labelled pilot codes on screen |
+| `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes |
+
+After setting the first two: deploy, join the waitlist in production, log in once, and
+check the rows in Neon. That is the go-live smoke test.
 
 ## Gotchas (each one cost real time)
 

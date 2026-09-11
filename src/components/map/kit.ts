@@ -18,7 +18,8 @@ export type { MapLibre };
  * the light, desaturated look the design system asks for: the map recedes and
  * our markers carry the colour.
  */
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
+export const MAP_STYLE: string =
+  import.meta.env.VITE_MAP_STYLE ?? 'https://tiles.openfreemap.org/styles/positron';
 
 export function createMap(container: HTMLElement, center: LngLat, interactive: boolean): MapLibre {
   return new maplibregl.Map({

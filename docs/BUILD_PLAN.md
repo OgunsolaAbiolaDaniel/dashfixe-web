@@ -149,17 +149,53 @@ The product moment after "Chat", built on the AppBar chrome.
 send a message → Activity → open the €48.00 receipt → rate it → tap an artisan's name
 from any search card.
 
-## Phase 5 · Backend, launch, hardening ⬜
+## Phase 5 · Backend, launch, hardening 🔄
 
-- ⬜ `POST /api/waitlist` + `POST /api/artisans/apply` (Spring Boot per `../Dashfixe.md`,
-  or a serverless stop-gap); the forms already collect and segment the data
-- ⬜ Real auth (phone OTP) behind the unchanged `auth.tsx` interface
-- ⬜ CI: GitHub Actions running `npm run check` + build on every PR — no red merges;
-  Playwright smoke on the built app
+### Revision 1.3 · The functional core ✅
+
+- ✅ The pilot API, in-repo and serverless: waitlist + artisan applications persist
+  (Postgres via `DATABASE_URL`/Neon, in-memory in dev), full phone-OTP auth
+  (request-code → verify → httpOnly session), one handler core across Vercel, the dev
+  server and the tests. SMS behind an adapter — real texts are three env vars away;
+  pilot mode shows the code on screen, labelled
+- ✅ `/login` is a page (the modal is deleted): one phone-first flow for log in and
+  sign up, `?next=` returns to the commit point (Chat on /explore round-trips and
+  reopens)
+- ✅ Both waitlist forms, the artisan modal and `/for-artisans` submit for real, with
+  busy/disabled/error states
+- ✅ The dead-button sweep: sort (URL-backed), editable need + address on /explore,
+  real date/window on Book-ahead deep-linking the slot, the bell's honest popover,
+  photo attach with preview everywhere (chat images too), saved places on /activity
+  (localStorage until accounts), honest links for Change-area and the app card
+- ✅ CI (GitHub Actions: check + build on every PR) and the Vercel SPA rewrite so deep
+  links stop 404ing
+- ✅ Maps decision written down (ARCHITECTURE §7): MapLibre stays; style env-switchable;
+  real-time = our backend pushing positions (Phase 6); licensed geocoder before scale
+
+**Owner test:** with no env vars, `npm run dev` → join the waitlist (network tab shows the
+POST), log in with the on-screen pilot code from the Chat gate, add a saved place, sort by
+price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and watch rows land.
+
+### Still open in Phase 5
+
+- ⬜ Ops to go live: set `DATABASE_URL`, `AUTH_SECRET` (and `TWILIO_*` when ready) in
+  Vercel; verify a production login and a waitlist row
 - ⬜ Perf: code-split MapLibre (~500 kB) behind `React.lazy`; image weight pass
 - ⬜ SEO: `/trade/:slug` pages, sitemap.xml, OG images, robots.txt
+- ⬜ Playwright smoke on the built app in CI
 - ⬜ Launch switch: `/waitlist` redirects to `/`; honesty badges come off only as real
   supply replaces sample data
+
+## Phase 6 · Live operations ⬜
+
+The parts that need real supply and real infrastructure, in honesty order:
+
+- ⬜ Real artisans: `GET /api/artisans` replaces the sample supply; the sample badges
+  come off screen by screen as real data replaces them
+- ⬜ Live positions over WebSocket/SSE into the existing reactive markers; real jobs
+  (`POST /api/jobs`), chat backend, photo upload to storage
+- ⬜ Notifications backend behind the bell; saved places move from localStorage to the
+  account; payments (in-app only, per the business model)
 
 ---
 

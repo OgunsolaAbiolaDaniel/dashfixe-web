@@ -6,7 +6,7 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-11 · Revision 1.2 — the job loop landed (Phase 4).
+**Last revised:** 2026-09-11 · Revision 1.3 — the pilot backend is real; auth is a page.
 
 ---
 
@@ -90,6 +90,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
 | `/privacy` `/terms` `/cookies` | marketing | Minimal, honest, GDPR-aware | built (rev 1) |
 | `/waitlist` | marketing | Pre-launch front door; at launch → redirect to `/` | built |
+| `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
 
 ### Cut in revision 1, and why
 
@@ -151,14 +152,38 @@ product, so nav links point at routes.
   Everything renders from it, always badged. When the backend arrives (Phase 5), this file's
   exports become the API client's return shape — the components don't change.
 
-### Future backend contract (Phase 5, Spring Boot per `../Dashfixe.md` §7)
+### The pilot backend (rev 1.3 — live)
+
+One framework-agnostic handler core (`src/server/handlers.ts`) runs in three hosts: the
+Vercel functions (`api/[...path].ts`), the Vite dev server (middleware — `npm run dev`
+serves the full API with zero secrets), and the tests (called directly, and the UI tests'
+fetch mock routes through it). Server code lives under `src/server/` and is never imported
+by client code.
 
 ```
-POST /api/waitlist            { email }                          → 202
-POST /api/artisans/apply      { fullName, phone, email, trade }  → 202
-GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)
-POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat       → Phase 5+
+POST /api/waitlist            { email, userType }                → 200   live
+POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
+POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
+POST /api/auth/verify         { phone, code } → session cookie   → 200   live
+GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)         Phase 6
+POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat               Phase 6
 ```
+
+Sessions are HMAC-signed tokens in an httpOnly SameSite cookie. Codes: 6 digits, 5-minute
+TTL, five attempts then burned. Storage is an adapter: Postgres when `DATABASE_URL` is set
+(Neon as-is, tables created on first use), in-memory otherwise. SMS is an adapter: real
+texts when `TWILIO_*` is configured; until then **pilot mode** returns the code and the
+login page shows it, clearly labelled.
+
+### Environment (all optional in dev; production sets the first two)
+
+| Variable | Effect |
+|---|---|
+| `DATABASE_URL` | Postgres persistence (Neon). Absent → in-memory, with a startup warning |
+| `AUTH_SECRET` | Session signing key. Absent → insecure dev secret, loudly warned |
+| `TWILIO_ACCOUNT_SID` `TWILIO_AUTH_TOKEN` `TWILIO_FROM` | Real SMS delivery; absent → on-screen pilot codes |
+| `VITE_MAP_STYLE` | Swap the map style URL (e.g. MapTiler with a key) without a code change |
 
 ## 7. The map
 
@@ -174,6 +199,17 @@ in HANDOVER — it broke silently twice.
 route with the artisan's pin easing along it — sample-driven until the backend, and
 badged as such. Phase 5 code-splits MapLibre (~500 kB) behind `React.lazy` so marketing
 pages stop paying for it.
+
+### The maps decision (rev 1.3)
+
+**Rendering stays MapLibre GL** — open-source, no per-load billing, and the launch-cost
+profile a marketplace wants. Tiles: OpenFreeMap for the pilot; the style URL is
+env-switchable (`VITE_MAP_STYLE`) so moving to a keyed provider with an SLA (MapTiler) or
+a self-hosted OpenFreeMap is configuration, not a rewrite. **"Real time" is not a tile
+question**: live artisan positions are OUR data, pushed by OUR backend (WebSocket/SSE,
+Phase 6) into markers that are already reactive — `TrackMap` moving its pin is exactly
+that pipeline with sample data. Geocoding: Nominatim within its fair-use policy now; swap
+`ENDPOINT` in `lib/geocode.ts` for a licensed geocoder before real traffic.
 
 ## 8. Testing
 
