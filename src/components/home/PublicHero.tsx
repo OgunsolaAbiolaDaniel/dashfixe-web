@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ChevronDown, Clock, MapPin, Wrench } from '../icons';
+import { ChevronDown, Clock, MapPin, Wrench } from '../icons';
+import PhotoPick from '../shared/PhotoPick';
 import { Link } from 'react-router-dom';
 import { exploreUrl, type When } from '../../search';
 import { link } from '../../routes';
@@ -24,7 +25,7 @@ const INPUT =
  */
 export default function PublicHero() {
   const navigate = useNavigate();
-  const { requireAuth, gate } = useAuth();
+  const { requireAuth } = useAuth();
   const { t } = useLang();
   const [need, setNeed] = useState('');
   const [address, setAddress] = useState('');
@@ -56,13 +57,12 @@ export default function PublicHero() {
             <div className="mb-[22px] flex flex-wrap items-center gap-2.5">
               <MapPin size={18} className="flex-none text-ink" />
               <span className="text-[14.5px] font-bold text-ink">{t('hero.area')}</span>
-              <button
-                type="button"
-                onClick={() => requireAuth()}
+              <Link
+                to={link('coverage')}
                 className="text-[14.5px] font-semibold text-ink-60 underline underline-offset-4 transition hover:text-ink"
               >
                 {t('hero.changeArea')}
-              </button>
+              </Link>
             </div>
 
             <h1 className="mb-6 max-w-[12ch] text-display text-ink [text-wrap:balance]">{t('hero.title')}</h1>
@@ -95,14 +95,7 @@ export default function PublicHero() {
                   aria-label={t('hero.needLabel')}
                   className={INPUT}
                 />
-                <button
-                  type="button"
-                  onClick={() => gate(() => {})}
-                  aria-label={t('hero.attachPhoto')}
-                  className="grid h-[38px] w-[38px] flex-none place-items-center rounded-full bg-panel text-brand transition hover:bg-brand-tint"
-                >
-                  <Camera size={18} />
-                </button>
+                <PhotoPick variant="round" />
               </div>
 
               <AddressField

@@ -35,7 +35,7 @@ export default function HomePage() {
         <Trades />
         <Nearby />
         <ArtisanBlock />
-        <Apps onAuth={openAuth} />
+        <Apps />
       </main>
       <SiteFooter />
     </div>

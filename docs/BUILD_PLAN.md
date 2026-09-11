@@ -122,28 +122,80 @@ The signed-in `/` looked like a dashboard; Uber's signed-in home is the map. Fix
 **Owner test:** log in (Continue) — the home should be the map with the composer, not a
 dashboard. Tap a pin. Open Activity from the top bar. Sign out from the account chip.
 
-## Phase 4 · The job loop ⬜
+## Phase 4 · The job loop ✅
 
-The remaining product surface — `Dashfixe Customer Pages.dc.html`, on the AppBar chrome.
+The product moment after "Chat", built on the AppBar chrome.
 
-- ⬜ `/artisan/:id` — profile: trust before the commit point (reviews, badges, trades)
-- ⬜ `/job/:id` — the live job: `track` variant of LiveMap (route line, moving artisan
-  pin, sample-driven), approved estimate, itemised receipt, rating
-- ⬜ Chat becomes a real component with a local message store; day/window from the later
-  mode moves into the URL and flows into the job
-- ⬜ Signed-in home links its job card and rebooks into `/job/:id` / `/artisan/:id`
+- ✅ `/artisan/:id` — the public trust page: identity + verification, about (EN/PT),
+  stats, languages, sample reviews (PT on purpose, badged), and a commit CTA that drops
+  back into `/explore` with the artisan selected. Artisan names on cards and in chat
+  link here
+- ✅ `/job/:id` — one route, two states. Travelling: step timeline, the approved
+  itemised estimate, chat docked over `TrackMap` — a curved sample route on real tiles
+  with the artisan's pin easing along it. Done: itemised receipt, paid-in-app, star
+  rating, rebook. Unknown jobs → Activity; visitors → home
+- ✅ Shared map kit (`components/map/kit.ts`) owns the MapLibre worker wiring, tint and
+  curve helpers; `LiveMap` and `TrackMap` both build on it
+- ✅ Chat is real state (`chatStore`): sending appends, threads survive close/reopen,
+  one canned walkthrough reply per thread
+- ✅ The later-mode day/window rides in the URL (`day`, `win`)
+- ✅ Wiring: the home job banner opens the job (`?chat=1` deep-links chat), Activity's
+  completed rows open their receipts, `lib/jobs.ts` keeps every receipt summing to its
+  total (tested)
+- ✅ Tests: 76 — receipt maths, profile journey, live-job chat send, rating, guards,
+  Activity → receipt, slot round-trip
 
-## Phase 5 · Backend, launch, hardening ⬜
+**Owner test:** sign in → Track on the job banner (watch the pin move) → Open chat and
+send a message → Activity → open the €48.00 receipt → rate it → tap an artisan's name
+from any search card.
 
-- ⬜ `POST /api/waitlist` + `POST /api/artisans/apply` (Spring Boot per `../Dashfixe.md`,
-  or a serverless stop-gap); the forms already collect and segment the data
-- ⬜ Real auth (phone OTP) behind the unchanged `auth.tsx` interface
-- ⬜ CI: GitHub Actions running `npm run check` + build on every PR — no red merges;
-  Playwright smoke on the built app
+## Phase 5 · Backend, launch, hardening 🔄
+
+### Revision 1.3 · The functional core ✅
+
+- ✅ The pilot API, in-repo and serverless: waitlist + artisan applications persist
+  (Postgres via `DATABASE_URL`/Neon, in-memory in dev), full phone-OTP auth
+  (request-code → verify → httpOnly session), one handler core across Vercel, the dev
+  server and the tests. SMS behind an adapter — real texts are three env vars away;
+  pilot mode shows the code on screen, labelled
+- ✅ `/login` is a page (the modal is deleted): one phone-first flow for log in and
+  sign up, `?next=` returns to the commit point (Chat on /explore round-trips and
+  reopens)
+- ✅ Both waitlist forms, the artisan modal and `/for-artisans` submit for real, with
+  busy/disabled/error states
+- ✅ The dead-button sweep: sort (URL-backed), editable need + address on /explore,
+  real date/window on Book-ahead deep-linking the slot, the bell's honest popover,
+  photo attach with preview everywhere (chat images too), saved places on /activity
+  (localStorage until accounts), honest links for Change-area and the app card
+- ✅ CI (GitHub Actions: check + build on every PR) and the Vercel SPA rewrite so deep
+  links stop 404ing
+- ✅ Maps decision written down (ARCHITECTURE §7): MapLibre stays; style env-switchable;
+  real-time = our backend pushing positions (Phase 6); licensed geocoder before scale
+
+**Owner test:** with no env vars, `npm run dev` → join the waitlist (network tab shows the
+POST), log in with the on-screen pilot code from the Chat gate, add a saved place, sort by
+price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and watch rows land.
+
+### Still open in Phase 5
+
+- ⬜ Ops to go live: set `DATABASE_URL`, `AUTH_SECRET` (and `TWILIO_*` when ready) in
+  Vercel; verify a production login and a waitlist row
 - ⬜ Perf: code-split MapLibre (~500 kB) behind `React.lazy`; image weight pass
 - ⬜ SEO: `/trade/:slug` pages, sitemap.xml, OG images, robots.txt
+- ⬜ Playwright smoke on the built app in CI
 - ⬜ Launch switch: `/waitlist` redirects to `/`; honesty badges come off only as real
   supply replaces sample data
+
+## Phase 6 · Live operations ⬜
+
+The parts that need real supply and real infrastructure, in honesty order:
+
+- ⬜ Real artisans: `GET /api/artisans` replaces the sample supply; the sample badges
+  come off screen by screen as real data replaces them
+- ⬜ Live positions over WebSocket/SSE into the existing reactive markers; real jobs
+  (`POST /api/jobs`), chat backend, photo upload to storage
+- ⬜ Notifications backend behind the bell; saved places move from localStorage to the
+  account; payments (in-app only, per the business model)
 
 ---
 

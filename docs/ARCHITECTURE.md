@@ -6,7 +6,7 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-11 · Revision 1.1 — the signed-in home went map-first.
+**Last revised:** 2026-09-11 · Revision 1.3 — the pilot backend is real; auth is a page.
 
 ---
 
@@ -45,12 +45,11 @@ chrome.
 | | **Marketing surface** | **Product surface (the app)** |
 |---|---|---|
 | Job | Persuade and route | Get a repair done |
-| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`*, `/job/:id`* |
+| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`, `/job/:id` |
 | Chrome | `SiteNav` + `SiteFooter` | `AppBar`, no footer (map fills the viewport) |
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
-\* designed, next to build (Phase 4).
 
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
@@ -84,13 +83,14 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/` | marketing / app | Composer + map hero; signed-in → app home | built |
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
 | `/activity` | app | Signed-in: past requests, saved places (redirects visitors home) | built (rev 1.1) |
-| `/artisan/:id` | app | Profile: trust before the commit point | Phase 4 |
-| `/job/:id` | app | Live job: tracking, approved estimate, receipt, rating | Phase 4 |
+| `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
+| `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
 | `/privacy` `/terms` `/cookies` | marketing | Minimal, honest, GDPR-aware | built (rev 1) |
 | `/waitlist` | marketing | Pre-launch front door; at launch → redirect to `/` | built |
+| `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
 
 ### Cut in revision 1, and why
 
@@ -152,14 +152,38 @@ product, so nav links point at routes.
   Everything renders from it, always badged. When the backend arrives (Phase 5), this file's
   exports become the API client's return shape — the components don't change.
 
-### Future backend contract (Phase 5, Spring Boot per `../Dashfixe.md` §7)
+### The pilot backend (rev 1.3 — live)
+
+One framework-agnostic handler core (`src/server/handlers.ts`) runs in three hosts: the
+Vercel functions (`api/[...path].ts`), the Vite dev server (middleware — `npm run dev`
+serves the full API with zero secrets), and the tests (called directly, and the UI tests'
+fetch mock routes through it). Server code lives under `src/server/` and is never imported
+by client code.
 
 ```
-POST /api/waitlist            { email }                          → 202
-POST /api/artisans/apply      { fullName, phone, email, trade }  → 202
-GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)
-POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat       → Phase 5+
+POST /api/waitlist            { email, userType }                → 200   live
+POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
+POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
+POST /api/auth/verify         { phone, code } → session cookie   → 200   live
+GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)         Phase 6
+POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat               Phase 6
 ```
+
+Sessions are HMAC-signed tokens in an httpOnly SameSite cookie. Codes: 6 digits, 5-minute
+TTL, five attempts then burned. Storage is an adapter: Postgres when `DATABASE_URL` is set
+(Neon as-is, tables created on first use), in-memory otherwise. SMS is an adapter: real
+texts when `TWILIO_*` is configured; until then **pilot mode** returns the code and the
+login page shows it, clearly labelled.
+
+### Environment (all optional in dev; production sets the first two)
+
+| Variable | Effect |
+|---|---|
+| `DATABASE_URL` | Postgres persistence (Neon). Absent → in-memory, with a startup warning |
+| `AUTH_SECRET` | Session signing key. Absent → insecure dev secret, loudly warned |
+| `TWILIO_ACCOUNT_SID` `TWILIO_AUTH_TOKEN` `TWILIO_FROM` | Real SMS delivery; absent → on-screen pilot codes |
+| `VITE_MAP_STYLE` | Swap the map style URL (e.g. MapTiler with a key) without a code change |
 
 ## 7. The map
 
@@ -170,9 +194,22 @@ variants so no page ever shows a grey box. Basemap tinted to brand; markers are 
 portals using design tokens. **Do not touch the worker wiring** without reading the gotcha
 in HANDOVER — it broke silently twice.
 
-Phase 4 adds the third variant, `track`: the job screen's map with a route line and the
-artisan's pin moving between waypoints (sample-driven until the backend). Phase 5 code-splits
-MapLibre (~500 kB) behind `React.lazy` so marketing pages stop paying for it.
+`TrackMap` (rev 1.2) is the third surface: the job screen's map on the same kit
+(`components/map/kit.ts`, which now owns the worker wiring), drawing a curved sample
+route with the artisan's pin easing along it — sample-driven until the backend, and
+badged as such. Phase 5 code-splits MapLibre (~500 kB) behind `React.lazy` so marketing
+pages stop paying for it.
+
+### The maps decision (rev 1.3)
+
+**Rendering stays MapLibre GL** — open-source, no per-load billing, and the launch-cost
+profile a marketplace wants. Tiles: OpenFreeMap for the pilot; the style URL is
+env-switchable (`VITE_MAP_STYLE`) so moving to a keyed provider with an SLA (MapTiler) or
+a self-hosted OpenFreeMap is configuration, not a rewrite. **"Real time" is not a tile
+question**: live artisan positions are OUR data, pushed by OUR backend (WebSocket/SSE,
+Phase 6) into markers that are already reactive — `TrackMap` moving its pin is exactly
+that pipeline with sample data. Geocoding: Nominatim within its fair-use policy now; swap
+`ENDPOINT` in `lib/geocode.ts` for a licensed geocoder before real traffic.
 
 ## 8. Testing
 

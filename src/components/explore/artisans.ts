@@ -7,6 +7,7 @@
  * copy can never disagree.
  */
 import { HOME, distanceKm, etaMinutes, type LngLat } from '../../lib/geo';
+import type { Lang } from '../../types';
 
 export type Trade = 'plumbing' | 'electrical' | 'painting' | 'carpentry' | 'cleaning';
 
@@ -152,4 +153,62 @@ export function getNearby(home: LngLat = HOME): NearbyPro[] {
     const km = Math.round(distanceKm(home, seed.lngLat) * 10) / 10;
     return { ...seed, km, eta: etaMinutes(km), listed: SEEDS.some((s) => s.id === seed.id) };
   });
+}
+
+/** A sample review — kept in Portuguese on purpose; that is what real ones will look like. */
+export type Review = { name: string; date: string; stars: number; text: string };
+
+export type Profile = {
+  about: Record<Lang, string>;
+  years: number;
+  languages: string[];
+  reviews: Review[];
+};
+
+/**
+ * Profiles for the listed sample artisans — the trust page's content
+ * (ARCHITECTURE.md §4, /artisan/:id). Illustrative, badged as sample where shown.
+ */
+const PROFILES: Record<string, Profile> = {
+  tf: {
+    about: {
+      EN: 'Plumber in Amora for 12 years. Tidy work, explains what he is doing as he goes, and carries the common cartridges and washers on the van so most small jobs finish in one visit.',
+      PT: 'Canalizador na Amora há 12 anos. Trabalho limpo, explica o que está a fazer, e leva na carrinha os cartuchos e vedantes mais comuns — a maioria dos trabalhos pequenos fica pronta numa visita.',
+    },
+    years: 12,
+    languages: ['Português', 'English'],
+    reviews: [
+      { name: 'Sofia M.', date: '28 Ago', stars: 5, text: 'Chegou à hora, preço igual ao combinado no chat, torneira como nova. Recomendo.' },
+      { name: 'James T.', date: '15 Ago', stars: 5, text: 'Explained everything in English, fixed the leak in 40 minutes. Exactly the price we agreed.' },
+      { name: 'Rui P.', date: '2 Ago', stars: 4, text: 'Bom trabalho no esquentador. Deixou tudo limpo. Só demorou um pouco mais do que o previsto.' },
+    ],
+  },
+  ra: {
+    about: {
+      EN: 'Nine years on bathrooms and kitchens around Corroios. Straight talker: sends the itemised price in chat and sticks to it.',
+      PT: 'Nove anos em casas de banho e cozinhas na zona de Corroios. Direto: envia o preço discriminado no chat e cumpre-o.',
+    },
+    years: 9,
+    languages: ['Português'],
+    reviews: [
+      { name: 'Marta L.', date: '30 Ago', stars: 5, text: 'Resolveu um entupimento difícil sem partir nada. Preço justo.' },
+      { name: 'Pedro C.', date: '11 Ago', stars: 4, text: 'Trabalho sólido na canalização da cozinha. Voltaria a chamar.' },
+    ],
+  },
+  mc: {
+    about: {
+      EN: 'Seven years in Paio Pires. Small repairs are her speciality — taps, siphons, flush mechanisms — usually same-day.',
+      PT: 'Sete anos em Paio Pires. Especialista em pequenas reparações — torneiras, sifões, autoclismos — normalmente no próprio dia.',
+    },
+    years: 7,
+    languages: ['Português', 'English'],
+    reviews: [
+      { name: 'Beatriz F.', date: '25 Ago', stars: 5, text: 'Rápida e simpática. O autoclismo ficou perfeito e o preço não mudou.' },
+      { name: 'Anna K.', date: '9 Ago', stars: 4, text: 'Came the same afternoon. Clear about the price before starting.' },
+    ],
+  },
+};
+
+export function getProfile(id: string): Profile | null {
+  return PROFILES[id] ?? null;
 }

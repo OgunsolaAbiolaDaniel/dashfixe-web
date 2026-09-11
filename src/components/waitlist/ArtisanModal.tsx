@@ -19,6 +19,8 @@ export type ArtisanApplication = {
 
 type Props = {
   done: boolean;
+  busy: boolean;
+  error: string | null;
   onClose: () => void;
   onSubmit: (application: ArtisanApplication) => void;
 };
@@ -27,7 +29,7 @@ const FIELD =
   'h-[46px] w-full rounded-input border border-line bg-page px-[15px] text-[14.5px] font-semibold text-ink placeholder:text-ink-30';
 const LABEL = 'mb-[7px] block text-label text-ink-40';
 
-export default function ArtisanModal({ done, onClose, onSubmit }: Props) {
+export default function ArtisanModal({ done, busy, error, onClose, onSubmit }: Props) {
   const [form, setForm] = useState<ArtisanApplication>({
     fullName: '',
     phone: '',
@@ -178,11 +180,13 @@ export default function ArtisanModal({ done, onClose, onSubmit }: Props) {
                 </div>
               </div>
 
+              {error && <p className="mt-4 text-[13px] font-semibold text-warning">{error}</p>}
               <button
                 type="submit"
-                className="mt-6 h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover"
+                disabled={busy}
+                className="mt-6 h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60"
               >
-                Submit application
+                {busy ? 'Sending…' : 'Submit application'}
               </button>
               <p className="mt-3 text-center text-[13px] font-semibold text-ink-40">
                 We'll contact you on WhatsApp within 48 hours.

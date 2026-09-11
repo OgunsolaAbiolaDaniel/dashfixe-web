@@ -4,10 +4,13 @@ import HomePage from './pages/HomePage';
 import WaitlistPage from './pages/WaitlistPage';
 import ExplorePage from './pages/ExplorePage';
 import ActivityPage from './pages/ActivityPage';
+import ArtisanProfilePage from './pages/ArtisanProfilePage';
+import JobPage from './pages/JobPage';
 import ForArtisansPage from './pages/ForArtisansPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
+import LoginPage from './pages/LoginPage';
 import { ROUTES, link } from './routes';
 
 /**
@@ -35,7 +38,11 @@ export default function AppRoutes() {
         <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.explore} element={<ExplorePage />} />
         <Route path={ROUTES.activity} element={<ActivityPage />} />
-        {/* Phase 4: /artisan/:id and /job/:id join here. */}
+        <Route path={ROUTES.artisan} element={<ArtisanProfilePage />} />
+        <Route path={ROUTES.job} element={<JobPage />} />
+
+        {/* Auth — its own minimal chrome */}
+        <Route path={ROUTES.login} element={<LoginPage />} />
 
         {/* Marketing surface */}
         <Route path={ROUTES.waitlist} element={<WaitlistPage />} />

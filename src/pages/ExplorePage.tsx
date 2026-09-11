@@ -6,6 +6,8 @@ import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
 import { getSupply } from '../components/explore/artisans';
 import { DEFAULT_ADDRESS, parseSearch, type When } from '../search';
+import type { Place } from '../lib/geocode';
+import { ROUTES } from '../routes';
 import { HOME, type LngLat } from '../lib/geo';
 import { useAuth } from '../auth';
 
@@ -26,7 +28,7 @@ import { useAuth } from '../auth';
 export default function ExplorePage() {
   const [params, setParams] = useSearchParams();
   const search = parseSearch(params);
-  const { signedIn, gate } = useAuth();
+  const { signedIn, requireAuth } = useAuth();
 
   // parseSearch builds a fresh tuple on every render, and the map refits whenever the
   // home reference changes — so key the memo on the numbers, not the array.
@@ -44,11 +46,23 @@ export default function ExplorePage() {
     if (chatWith) setChatWith(id);
   };
 
-  /** Chat is the commit point — this is where an account is needed. */
+  /** Chat is the commit point — the only place an account is demanded. */
   const openChat = (id: string) => {
     setSelectedId(id);
-    gate(() => setChatWith(id));
+    if (signedIn) {
+      setChatWith(id);
+      return;
+    }
+    // To /login, and back here with this artisan selected and the chat open.
+    const back = new URLSearchParams(params);
+    back.set('artisan', id);
+    back.set('chat', '1');
+    requireAuth(`${ROUTES.explore}?${back.toString()}`);
   };
+
+  // ?chat=1 (set on the way to /login) opens the chat for the selected artisan —
+  // derived from the URL, so it also survives a cold reload with a live session.
+  const wantChat = params.get('chat') === '1';
 
   const setWhen = (when: When) => {
     const next = new URLSearchParams(params);
@@ -57,8 +71,49 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
+  const toggleSort = () => {
+    const next = new URLSearchParams(params);
+    if (search.sort === 'price') next.delete('sort');
+    else next.set('sort', 'price');
+    setParams(next, { replace: true });
+  };
+
+  const setNeed = (need: string) => {
+    const next = new URLSearchParams(params);
+    if (need.trim()) next.set('need', need.trim());
+    else next.delete('need');
+    setParams(next, { replace: true });
+  };
+
+  const setPlace = (place: Place) => {
+    const next = new URLSearchParams(params);
+    next.set('address', place.label);
+    next.set('lng', place.lngLat[0].toFixed(5));
+    next.set('lat', place.lngLat[1].toFixed(5));
+    setParams(next, { replace: true });
+  };
+
+  /** The later-mode slot rides in the URL like everything else. */
+  const setSlot = (day: number, win: number) => {
+    const next = new URLSearchParams(params);
+    next.set('when', 'later');
+    next.set('day', String(day));
+    next.set('win', String(win));
+    setParams(next, { replace: true });
+  };
+
   // The docked chat is for signed-in customers only. Signing out closes it.
-  const chatArtisan = signedIn ? (supply.available.find((a) => a.id === chatWith) ?? null) : null;
+  const openId = chatWith ?? (wantChat ? arriving : null);
+  const chatArtisan = signedIn ? (supply.available.find((a) => a.id === openId) ?? null) : null;
+
+  const closeChat = () => {
+    setChatWith(null);
+    if (wantChat) {
+      const next = new URLSearchParams(params);
+      next.delete('chat');
+      setParams(next, { replace: true });
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
@@ -74,6 +129,10 @@ export default function ExplorePage() {
           search={search}
           supply={supply}
           onWhen={setWhen}
+          onSlot={setSlot}
+          onSort={toggleSort}
+          onNeed={setNeed}
+          onPlace={setPlace}
           selectedId={selectedId}
           onSelect={select}
           onChat={openChat}
@@ -82,9 +141,10 @@ export default function ExplorePage() {
           <LiveMap home={home} selectedId={selectedId} onSelect={select} />
           {chatArtisan && (
             <ChatPanel
+              key={chatArtisan.id}
               artisan={chatArtisan}
               address={search.address || DEFAULT_ADDRESS}
-              onClose={() => setChatWith(null)}
+              onClose={closeChat}
             />
           )}
         </div>

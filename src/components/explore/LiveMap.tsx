@@ -1,19 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import * as maplibregl from 'maplibre-gl';
-import type { GeoJSONSource, Map as MapLibre, Marker as MapLibreMarker } from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
-// MapLibre parses tiles in a Web Worker it locates relative to its own module URL.
-// That path survives neither Vite's dep pre-bundling nor a production build, and the
-// failure is silent (no tiles, no `load`). Hand it a URL Vite has bundled instead.
-import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
+import type { GeoJSONSource, Marker as MapLibreMarker } from 'maplibre-gl';
+import { createMap, maplibregl, tintBasemap, type MapLibre } from '../map/kit';
 import { Crosshair, HomeSolid } from '../icons';
 import { MAP_ONLY, ON_JOB, getSupply, type Artisan, type Marker as MapMarker } from './artisans';
 import { HOME, SEARCH_RADIUS_KM, bounds, circlePolygon, midpoint, type LngLat } from '../../lib/geo';
 import { useLang } from '../../i18n';
 import MapCanvas from './MapCanvas';
-
-maplibregl.setWorkerUrl(mapWorkerUrl);
 
 type Props = {
   /** Where the customer is. Defaults to the sample address in Amora. */
@@ -27,18 +20,12 @@ type Props = {
   variant?: 'full' | 'peek';
 };
 
-/**
- * Vector tiles from OpenFreeMap — free, no key, OpenStreetMap data. Positron is
- * the light, desaturated look the design system asks for: the map recedes and
- * our markers carry the colour.
- */
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron';
-
 const CONTROL =
   'grid h-[42px] w-[42px] place-items-center rounded-well bg-panel shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)] transition hover:bg-page';
 
 /**
- * The live map — designs/Dashfixe Web.dc.html, on real tiles.
+ * The live map — designs/Dashfixe Web.dc.html, on real tiles via the shared map
+ * kit (components/map/kit.ts, which also owns the worker wiring gotcha).
  *
  * Markers are ordinary React elements rendered through portals into DOM nodes that
  * MapLibre positions, so they use the same Tailwind tokens as everything else. If
@@ -271,23 +258,6 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
   );
 }
 
-function createMap(container: HTMLElement, center: LngLat, interactive: boolean): MapLibre {
-  return new maplibregl.Map({
-    container,
-    style: MAP_STYLE,
-    center,
-    zoom: 13,
-    minZoom: 10,
-    maxZoom: 17,
-    interactive,
-    attributionControl: { compact: true },
-    // The design draws its own controls.
-    dragRotate: false,
-    pitchWithRotate: false,
-    touchPitch: false,
-  });
-}
-
 function fitAll(map: MapLibre, home: LngLat, peek: boolean, duration = 0) {
   const points: LngLat[] = [
     home,
@@ -300,23 +270,6 @@ function fitAll(map: MapLibre, home: LngLat, peek: boolean, duration = 0) {
     duration,
     maxZoom: 13.6,
   });
-}
-
-/**
- * Positron ships a grey Tagus. Nudge water and parks toward the brand tints so
- * the basemap reads as part of the page rather than a screenshot dropped in.
- */
-function tintBasemap(map: MapLibre) {
-  const paint: Array<[layerId: string, prop: 'fill-color' | 'background-color', value: string]> = [
-    ['water', 'fill-color', '#d9e3f3'],
-    ['background', 'background-color', '#f4f6fa'],
-    ['landcover_grass', 'fill-color', '#e8efe6'],
-    ['landcover_wood', 'fill-color', '#e3ebe1'],
-    ['park', 'fill-color', '#e6eee4'],
-  ];
-  for (const [id, prop, value] of paint) {
-    if (map.getLayer(id)) map.setPaintProperty(id, prop, value);
-  }
 }
 
 function isArtisan(m: Artisan | MapMarker): m is Artisan {

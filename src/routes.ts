@@ -13,10 +13,16 @@ export const ROUTES = {
   home: '/',
   /** Pre-launch front door. At launch this redirects to home. */
   waitlist: '/waitlist',
+  /** Phone-first log in / sign up (one flow). Takes ?next= back to the commit point. */
+  login: '/login',
   /** THE product surface: search + map, `?when=later` for booking ahead. */
   explore: '/explore',
   /** Signed-in only: past requests and saved places (Uber's Activity). */
   activity: '/activity',
+  /** Public trust page for one artisan (Phase 4). */
+  artisan: '/artisan/:id',
+  /** Signed-in: the live job or its receipt (Phase 4). */
+  job: '/job/:id',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
   about: '/about',
@@ -36,6 +42,7 @@ const DESTINATIONS = {
   waitlist: ROUTES.waitlist,
   explore: ROUTES.explore,
   activity: ROUTES.activity,
+  login: ROUTES.login,
 
   // The artisan world: one page, anchored depth.
   forArtisans: ROUTES.forArtisans,
@@ -68,4 +75,13 @@ export type Destination = keyof typeof DESTINATIONS;
 /** Resolve a named destination to its current path. */
 export function link(name: Destination): string {
   return DESTINATIONS[name];
+}
+
+/** The parameterised app routes, filled in. */
+export function artisanUrl(id: string): string {
+  return `/artisan/${id}`;
+}
+
+export function jobUrl(id: string): string {
+  return `/job/${id}`;
 }

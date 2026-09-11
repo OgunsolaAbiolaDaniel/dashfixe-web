@@ -2,20 +2,13 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '../chrome/AppBar';
 import LiveMap from '../explore/LiveMap';
-import {
-  ArrowRightShort,
-  Bolt,
-  Camera,
-  ChevronDown,
-  MapPin,
-  Saw,
-  Spray,
-  Wrench,
-} from '../icons';
+import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
+import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
 import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
 import { HOME } from '../../lib/geo';
-import { ROUTES } from '../../routes';
+import { ROUTES, jobUrl } from '../../routes';
+import { ACTIVE_JOB_ID } from '../../lib/jobs';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -62,10 +55,13 @@ export default function AppHome() {
             <h1 className="mb-2 text-[26px] font-extrabold leading-[1.08] tracking-[-.03em] text-ink">
               {t('customer.greeting', { name: 'Alex' })}
             </h1>
-            <span className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60">
+            <Link
+              to={ROUTES.activity}
+              className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
+            >
               <MapPin size={15} className="flex-none text-brand" />
               {DEFAULT_ADDRESS}
-            </span>
+            </Link>
           </div>
 
           {/* The composer — the "Where to?" of Dashfixe */}
@@ -94,13 +90,7 @@ export default function AppHome() {
               className="w-full resize-none rounded-input border border-line bg-page px-[15px] py-3 text-[14.5px] font-semibold leading-[1.5] text-ink placeholder:text-ink-30"
             />
             <div className="mt-2.5 flex items-center gap-2.5">
-              <button
-                type="button"
-                aria-label={t('customer.addPhoto')}
-                className="grid h-ctl w-ctl flex-none place-items-center rounded-well border border-line bg-panel text-brand transition hover:bg-page"
-              >
-                <Camera size={18} />
-              </button>
+              <PhotoPick variant="round" />
               <button
                 type="button"
                 onClick={find}
@@ -138,17 +128,17 @@ export default function AppHome() {
               </div>
               <div className="flex gap-2.5">
                 <Link
-                  to={to({ artisan: 'tf' })}
+                  to={`${jobUrl(ACTIVE_JOB_ID)}?chat=1`}
                   className="flex h-11 flex-1 items-center justify-center rounded-[13px] bg-brand text-[14px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
                 >
                   {t('customer.openChat')}
                 </Link>
-                <button
-                  type="button"
-                  className="h-11 flex-none rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16]"
+                <Link
+                  to={jobUrl(ACTIVE_JOB_ID)}
+                  className="flex h-11 flex-none items-center rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16] hover:text-onink-strong"
                 >
                   {t('customer.track')}
-                </button>
+                </Link>
               </div>
             </div>
           </section>

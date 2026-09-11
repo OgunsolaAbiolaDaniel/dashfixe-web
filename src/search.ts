@@ -18,6 +18,11 @@ export type Search = {
   /** Where the address is, when it was resolved. The map centres here. */
   lngLat: LngLat | null;
   when: When;
+  /** Later mode: chosen day offset (0–6) and two-hour window index (0–5). */
+  day: number | null;
+  win: number | null;
+  /** Result ordering. Arrival is the default and stays out of the URL. */
+  sort: 'arrival' | 'price';
   /** Artisan pre-selected on arrival, e.g. from a "book again" card. */
   artisan: string;
 };
@@ -33,6 +38,14 @@ export const TRADES = [
 
 export const DEFAULT_ADDRESS = 'Rua da Cooperativa 14, Amora';
 
+/** The bookable two-hour windows, shared by the explore picker and the home card. */
+export const WINDOWS = ['08\u201310', '10\u201312', '12\u201314', '14\u201316', '16\u201318', '18\u201320'] as const;
+
+/** '€60–75' → 60, for price ordering. */
+export function priceFrom(price: string): number {
+  return Number.parseInt(price.replace(/[^\d]/g, ' ').trim().split(' ')[0] ?? '0', 10);
+}
+
 export function tradeLabel(slug: string): string {
   return TRADES.find((t) => t.slug === slug)?.label ?? 'Any trade';
 }
@@ -45,6 +58,12 @@ function parseLngLat(params: URLSearchParams): LngLat | null {
   return [lng, lat];
 }
 
+function intParam(params: URLSearchParams, name: string, max: number): number | null {
+  if (!params.has(name)) return null;
+  const v = Number(params.get(name));
+  return Number.isInteger(v) && v >= 0 && v <= max ? v : null;
+}
+
 export function parseSearch(params: URLSearchParams): Search {
   return {
     need: params.get('need') ?? '',
@@ -52,6 +71,9 @@ export function parseSearch(params: URLSearchParams): Search {
     address: params.get('address') ?? '',
     lngLat: parseLngLat(params),
     when: params.get('when') === 'later' ? 'later' : 'now',
+    day: intParam(params, 'day', 6),
+    win: intParam(params, 'win', 5),
+    sort: params.get('sort') === 'price' ? 'price' : 'arrival',
     artisan: params.get('artisan') ?? '',
   };
 }
@@ -72,6 +94,9 @@ export function exploreUrl(search: Partial<Search>): string {
     params.set('lat', search.lngLat[1].toFixed(5));
   }
   if (search.when === 'later') params.set('when', 'later');
+  if (search.day != null) params.set('day', String(search.day));
+  if (search.win != null) params.set('win', String(search.win));
+  if (search.sort === 'price') params.set('sort', 'price');
   if (search.artisan) params.set('artisan', search.artisan);
   const qs = params.toString();
   return qs ? `/explore?${qs}` : '/explore';

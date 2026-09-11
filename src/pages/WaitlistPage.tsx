@@ -10,6 +10,7 @@ import About from '../components/waitlist/About';
 import FinalCta from '../components/waitlist/FinalCta';
 import Footer from '../components/waitlist/Footer';
 import ArtisanModal, { type ArtisanApplication } from '../components/waitlist/ArtisanModal';
+import { api } from '../lib/api';
 import type { Lang } from '../types';
 
 /**
@@ -30,11 +31,35 @@ export default function WaitlistPage() {
     setArtisanOpen(true);
   };
 
-  // TODO: POST to /api/waitlist and /api/artisans/apply once the backend exists.
-  const submitWaitlist = (_email: string, markDone: (v: boolean) => void) => markDone(true);
-  const submitArtisan = (application: ArtisanApplication) => {
-    void application; // held until POST /api/artisans/apply exists
-    setArtisanDone(true);
+  const ERR = 'Something went wrong — check the details and try again.';
+  const [heroBusy, setHeroBusy] = useState(false);
+  const [heroError, setHeroError] = useState<string | null>(null);
+  const [ctaBusy, setCtaBusy] = useState(false);
+  const [ctaError, setCtaError] = useState<string | null>(null);
+  const [artisanBusy, setArtisanBusy] = useState(false);
+  const [artisanError, setArtisanError] = useState<string | null>(null);
+
+  const submitWaitlist = async (
+    email: string,
+    markDone: (v: boolean) => void,
+    setBusy: (v: boolean) => void,
+    setError: (v: string | null) => void,
+  ) => {
+    setBusy(true);
+    setError(null);
+    const r = await api('/api/waitlist', { email, userType: 'HOMEOWNER' });
+    setBusy(false);
+    if (r.ok) markDone(true);
+    else setError(ERR);
+  };
+
+  const submitArtisan = async (application: ArtisanApplication) => {
+    setArtisanBusy(true);
+    setArtisanError(null);
+    const r = await api('/api/artisans/apply', application);
+    setArtisanBusy(false);
+    if (r.ok) setArtisanDone(true);
+    else setArtisanError(ERR);
   };
 
   return (
@@ -43,7 +68,9 @@ export default function WaitlistPage() {
       <main>
         <Hero
           done={heroDone}
-          onSubmit={(email) => submitWaitlist(email, setHeroDone)}
+          busy={heroBusy}
+          error={heroError}
+          onSubmit={(email) => void submitWaitlist(email, setHeroDone, setHeroBusy, setHeroError)}
           onOpenArtisan={openArtisan}
         />
         <TradesStrip />
@@ -54,7 +81,9 @@ export default function WaitlistPage() {
         <About />
         <FinalCta
           done={ctaDone}
-          onSubmit={(email) => submitWaitlist(email, setCtaDone)}
+          busy={ctaBusy}
+          error={ctaError}
+          onSubmit={(email) => void submitWaitlist(email, setCtaDone, setCtaBusy, setCtaError)}
           onOpenArtisan={openArtisan}
         />
       </main>
@@ -63,8 +92,10 @@ export default function WaitlistPage() {
       {artisanOpen && (
         <ArtisanModal
           done={artisanDone}
+          busy={artisanBusy}
+          error={artisanError}
           onClose={() => setArtisanOpen(false)}
-          onSubmit={submitArtisan}
+          onSubmit={(a) => void submitArtisan(a)}
         />
       )}
     </div>

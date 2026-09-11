@@ -1,0 +1,22 @@
+# The one rule that prevents another broken main: no red merges.
+# Runs the full gate (types + lint + tests) and the production build on every
+# push and pull request. docs/ARCHITECTURE.md §8.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run check
+      - run: npx vite build
