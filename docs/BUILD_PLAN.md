@@ -122,16 +122,32 @@ The signed-in `/` looked like a dashboard; Uber's signed-in home is the map. Fix
 **Owner test:** log in (Continue) — the home should be the map with the composer, not a
 dashboard. Tap a pin. Open Activity from the top bar. Sign out from the account chip.
 
-## Phase 4 · The job loop ⬜
+## Phase 4 · The job loop ✅
 
-The remaining product surface — `Dashfixe Customer Pages.dc.html`, on the AppBar chrome.
+The product moment after "Chat", built on the AppBar chrome.
 
-- ⬜ `/artisan/:id` — profile: trust before the commit point (reviews, badges, trades)
-- ⬜ `/job/:id` — the live job: `track` variant of LiveMap (route line, moving artisan
-  pin, sample-driven), approved estimate, itemised receipt, rating
-- ⬜ Chat becomes a real component with a local message store; day/window from the later
-  mode moves into the URL and flows into the job
-- ⬜ Signed-in home links its job card and rebooks into `/job/:id` / `/artisan/:id`
+- ✅ `/artisan/:id` — the public trust page: identity + verification, about (EN/PT),
+  stats, languages, sample reviews (PT on purpose, badged), and a commit CTA that drops
+  back into `/explore` with the artisan selected. Artisan names on cards and in chat
+  link here
+- ✅ `/job/:id` — one route, two states. Travelling: step timeline, the approved
+  itemised estimate, chat docked over `TrackMap` — a curved sample route on real tiles
+  with the artisan's pin easing along it. Done: itemised receipt, paid-in-app, star
+  rating, rebook. Unknown jobs → Activity; visitors → home
+- ✅ Shared map kit (`components/map/kit.ts`) owns the MapLibre worker wiring, tint and
+  curve helpers; `LiveMap` and `TrackMap` both build on it
+- ✅ Chat is real state (`chatStore`): sending appends, threads survive close/reopen,
+  one canned walkthrough reply per thread
+- ✅ The later-mode day/window rides in the URL (`day`, `win`)
+- ✅ Wiring: the home job banner opens the job (`?chat=1` deep-links chat), Activity's
+  completed rows open their receipts, `lib/jobs.ts` keeps every receipt summing to its
+  total (tested)
+- ✅ Tests: 76 — receipt maths, profile journey, live-job chat send, rating, guards,
+  Activity → receipt, slot round-trip
+
+**Owner test:** sign in → Track on the job banner (watch the pin move) → Open chat and
+send a message → Activity → open the €48.00 receipt → rate it → tap an artisan's name
+from any search card.
 
 ## Phase 5 · Backend, launch, hardening ⬜
 

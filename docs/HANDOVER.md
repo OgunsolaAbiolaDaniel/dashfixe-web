@@ -12,13 +12,14 @@
 
 ## Where we stopped
 
-Phases 0–3 of `docs/BUILD_PLAN.md` are done and merged (#4, #5); `main` is green.
+Phases 0–4 of `docs/BUILD_PLAN.md` are done; 0–3 are merged (#4–#6) and `main` is green.
 
-Revision 1.1 (branch `feat/map-first-app-home`) made the signed-in home map-first per
-Uber: `AppHome` (map + composer + active job), `/activity` for the lists, and one
-auth-aware `AppBar` for every product screen (CustomerNav/CustomerFooter/CustomerHome
-are gone). Start any new session by reading `docs/ARCHITECTURE.md`. Next work: Phase 4,
-the job loop (`/artisan/:id`, `/job/:id`, the `track` map variant).
+Phase 4 (branch `feat/job-loop`) closed the job loop: `/artisan/:id` (public trust
+page), `/job/:id` (tracking with `TrackMap`, receipts with rating), a real chat store,
+the shared map kit in `components/map/kit.ts` (**the worker gotcha lives THERE now**),
+and the later-mode slot in the URL. Start any new session by reading
+`docs/ARCHITECTURE.md` (rev 1.2). Next work: Phase 5 — backend endpoints, phone-OTP
+auth, CI, the MapLibre code-split, SEO and the launch switch.
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
