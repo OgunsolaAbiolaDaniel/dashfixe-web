@@ -1,24 +1,28 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { api } from './lib/api';
+import { ROUTES } from './routes';
 
 /**
- * Session state, shared across routes.
+ * Session state, server-backed — ARCHITECTURE.md §6.
  *
- * The flow is browse-first: searching, seeing who is available and reading estimates
- * need no account. Auth is demanded at the commit point — opening a chat with an
- * artisan, or booking — which is where a marketplace actually needs to know who you are.
+ * The flow stays browse-first: searching, availability and estimates need no
+ * account. Auth is demanded at the commit point, and it is a PAGE now, not a
+ * modal: `requireAuth(next)` sends the visitor to /login and the login page
+ * brings them back to `next` once the server has verified their code.
  *
- * NOTE: there is no auth backend. `signedIn` is in-memory only, so the customer views
- * are a walkthrough of the planned product. Wire this to a real session before launch.
+ * The session itself lives in an httpOnly cookie the JS never reads; on load we
+ * ask GET /api/auth/me who we are.
  */
 type AuthValue = {
   signedIn: boolean;
-  authOpen: boolean;
-  /** Open the auth sheet. Pass an action to run once the user is through. */
-  requireAuth: (after?: () => void) => void;
-  /** Run `action` if signed in, otherwise gate it behind the sheet. */
-  gate: (action: () => void) => void;
-  closeAuth: () => void;
-  completeAuth: () => void;
+  /** True only while the first session check is in flight on a cold load. */
+  checking: boolean;
+  phone: string | null;
+  /** Go to /login; return to `next` (default: the current URL) on success. */
+  requireAuth: (next?: string) => void;
+  /** Called by the login page once the server verified the code. */
+  completeAuth: (phone: string) => void;
   signOut: () => void;
 };
 
@@ -29,46 +33,55 @@ export function AuthProvider({
   initialSignedIn = false,
 }: {
   children: ReactNode;
-  /** Start signed in — session restore later, deterministic tests today. */
+  /** Start signed in, skipping the server check — deterministic tests. */
   initialSignedIn?: boolean;
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [signedIn, setSignedIn] = useState(initialSignedIn);
-  const [authOpen, setAuthOpen] = useState(false);
-  const [pending, setPending] = useState<(() => void) | null>(null);
+  const [phone, setPhone] = useState<string | null>(initialSignedIn ? '+351900000000' : null);
+  const [checking, setChecking] = useState(!initialSignedIn);
 
-  const requireAuth = useCallback((after?: () => void) => {
-    setPending(() => after ?? null);
-    setAuthOpen(true);
-  }, []);
+  useEffect(() => {
+    if (initialSignedIn) return;
+    let cancelled = false;
+    void api<{ signedIn: boolean; phone?: string }>('/api/auth/me').then((r) => {
+      if (cancelled) return;
+      if (r.ok && r.data.signedIn) {
+        setSignedIn(true);
+        setPhone(r.data.phone ?? null);
+      }
+      setChecking(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialSignedIn]);
 
-  const gate = useCallback(
-    (action: () => void) => {
-      if (signedIn) action();
-      else requireAuth(action);
+  const requireAuth = useCallback(
+    (next?: string) => {
+      const target = next ?? location.pathname + location.search;
+      navigate(`${ROUTES.login}?next=${encodeURIComponent(target)}`);
     },
-    [signedIn, requireAuth],
+    [navigate, location.pathname, location.search],
   );
 
-  const completeAuth = useCallback(() => {
+  const completeAuth = useCallback((verifiedPhone: string) => {
     setSignedIn(true);
-    setAuthOpen(false);
-    pending?.();
-    setPending(null);
-  }, [pending]);
-
-  const closeAuth = useCallback(() => {
-    setAuthOpen(false);
-    setPending(null);
+    setPhone(verifiedPhone);
+    setChecking(false);
   }, []);
 
   const signOut = useCallback(() => {
+    void api('/api/auth/logout', {});
     setSignedIn(false);
-    window.scrollTo(0, 0);
-  }, []);
+    setPhone(null);
+    navigate(ROUTES.home);
+  }, [navigate]);
 
   const value = useMemo(
-    () => ({ signedIn, authOpen, requireAuth, gate, closeAuth, completeAuth, signOut }),
-    [signedIn, authOpen, requireAuth, gate, closeAuth, completeAuth, signOut],
+    () => ({ signedIn, checking, phone, requireAuth, completeAuth, signOut }),
+    [signedIn, checking, phone, requireAuth, completeAuth, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

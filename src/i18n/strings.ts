@@ -359,6 +359,22 @@ export const en = {
   'job.star': 'Rate {n} stars',
   'job.help': 'Get help',
   'job.cancelNote': 'Cancelling is free until {name} sets off. After that a fair call-out applies.',
+
+  // /login (rev 1.3 — auth is a page)
+  'auth.sendCode': 'Send code',
+  'auth.codeTitle': 'Enter the code',
+  'auth.codeBody': 'We sent a 6-digit code to {phone}.',
+  'auth.codeLabel': 'Code',
+  'auth.verify': 'Log in',
+  'auth.resend': 'Send a new code',
+  'auth.changePhone': 'Change number',
+  'auth.pilot': 'Pilot mode — SMS is not configured yet, so your code is shown here: {code}',
+  'auth.err.invalid_phone': 'That number does not look right — check it and try again.',
+  'auth.err.wrong_code': 'That code is not right — check it and try again.',
+  'auth.err.code_expired': 'That code expired. Send a new one.',
+  'auth.err.too_many_attempts': 'Too many tries — send a new code.',
+  'form.sending': 'Sending…',
+  'form.error': 'Something went wrong — try again.',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -690,6 +706,21 @@ export const pt: Record<StringKey, string> = {
   'job.star': 'Dar {n} estrelas',
   'job.help': 'Obter ajuda',
   'job.cancelNote': 'Cancelar é grátis até {name} sair. Depois disso aplica-se uma deslocação justa.',
+
+  'auth.sendCode': 'Enviar código',
+  'auth.codeTitle': 'Insira o código',
+  'auth.codeBody': 'Enviámos um código de 6 dígitos para {phone}.',
+  'auth.codeLabel': 'Código',
+  'auth.verify': 'Entrar',
+  'auth.resend': 'Enviar novo código',
+  'auth.changePhone': 'Mudar número',
+  'auth.pilot': 'Modo piloto — o SMS ainda não está configurado, por isso o código aparece aqui: {code}',
+  'auth.err.invalid_phone': 'Esse número não parece certo — verifique e tente de novo.',
+  'auth.err.wrong_code': 'Esse código não está certo — verifique e tente de novo.',
+  'auth.err.code_expired': 'Esse código expirou. Envie um novo.',
+  'auth.err.too_many_attempts': 'Demasiadas tentativas — envie um novo código.',
+  'form.sending': 'A enviar…',
+  'form.error': 'Algo correu mal — tente novamente.',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

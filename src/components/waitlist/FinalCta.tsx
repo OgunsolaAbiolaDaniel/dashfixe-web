@@ -2,12 +2,14 @@ import WaitlistForm from './WaitlistForm';
 
 type Props = {
   done: boolean;
+  busy: boolean;
+  error: string | null;
   onSubmit: (email: string) => void;
   onOpenArtisan: () => void;
 };
 
 /** The one dark section on the page, per the design system's "one dark thing per view". */
-export default function FinalCta({ done, onSubmit, onOpenArtisan }: Props) {
+export default function FinalCta({ done, busy, error, onSubmit, onOpenArtisan }: Props) {
   return (
     <section className="relative overflow-hidden bg-ink">
       <span
@@ -26,6 +28,8 @@ export default function FinalCta({ done, onSubmit, onOpenArtisan }: Props) {
           variant="dark"
           submitLabel="Get early access"
           done={done}
+          busy={busy}
+          error={error}
           onSubmit={onSubmit}
         />
 

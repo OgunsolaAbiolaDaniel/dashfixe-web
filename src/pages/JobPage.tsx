@@ -23,8 +23,9 @@ import { useLang } from '../i18n';
  */
 export default function JobPage() {
   const { id = '' } = useParams();
-  const { signedIn } = useAuth();
+  const { signedIn, checking } = useAuth();
 
+  if (checking) return null;
   if (!signedIn) return <Navigate to={ROUTES.home} replace />;
   const job = getJob(id);
   if (!job) return <Navigate to={ROUTES.activity} replace />;

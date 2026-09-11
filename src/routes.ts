@@ -13,6 +13,8 @@ export const ROUTES = {
   home: '/',
   /** Pre-launch front door. At launch this redirects to home. */
   waitlist: '/waitlist',
+  /** Phone-first log in / sign up (one flow). Takes ?next= back to the commit point. */
+  login: '/login',
   /** THE product surface: search + map, `?when=later` for booking ahead. */
   explore: '/explore',
   /** Signed-in only: past requests and saved places (Uber's Activity). */
@@ -40,6 +42,7 @@ const DESTINATIONS = {
   waitlist: ROUTES.waitlist,
   explore: ROUTES.explore,
   activity: ROUTES.activity,
+  login: ROUTES.login,
 
   // The artisan world: one page, anchored depth.
   forArtisans: ROUTES.forArtisans,

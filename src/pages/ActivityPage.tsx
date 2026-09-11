@@ -27,9 +27,10 @@ const PLACES = [
 const CARD = 'rounded-card border border-line-soft bg-panel';
 
 export default function ActivityPage() {
-  const { signedIn } = useAuth();
+  const { signedIn, checking } = useAuth();
   const { t } = useLang();
 
+  if (checking) return null;
   if (!signedIn) return <Navigate to={ROUTES.home} replace />;
 
   return (

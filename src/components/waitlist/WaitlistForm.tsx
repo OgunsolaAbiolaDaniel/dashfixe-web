@@ -5,6 +5,8 @@ type Props = {
   variant: 'light' | 'dark';
   submitLabel: string;
   done: boolean;
+  busy?: boolean;
+  error?: string | null;
   onSubmit: (email: string) => void;
 };
 
@@ -12,7 +14,7 @@ type Props = {
  * Email capture. Used twice — hero (light ground) and final CTA (navy ground).
  * Both collapse to a success state in place, per the design.
  */
-export default function WaitlistForm({ variant, submitLabel, done, onSubmit }: Props) {
+export default function WaitlistForm({ variant, submitLabel, done, busy = false, error = null, onSubmit }: Props) {
   const [email, setEmail] = useState('');
   const id = useId();
   const dark = variant === 'dark';
@@ -69,13 +71,17 @@ export default function WaitlistForm({ variant, submitLabel, done, onSubmit }: P
       />
       <button
         type="submit"
+        disabled={busy}
         className={
-          'h-ctl-lg flex-none rounded-btn bg-brand px-6 text-[14.5px] font-bold text-white transition hover:bg-brand-hover' +
+          'h-ctl-lg flex-none rounded-btn bg-brand px-6 text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60' +
           (dark ? ' shadow-brand' : '')
         }
       >
-        {submitLabel}
+        {busy ? 'Sending…' : submitLabel}
       </button>
+      {error && (
+        <p className={'w-full text-[13px] font-semibold ' + (dark ? 'text-[#fcd34d]' : 'text-warning')}>{error}</p>
+      )}
     </form>
   );
 }

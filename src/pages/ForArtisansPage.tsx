@@ -2,6 +2,7 @@ import { useState } from 'react';
 import MarketingShell from '../components/chrome/MarketingShell';
 import { Bolt, Check, ChevronDown, Phone, Receipt, Verified, Wrench } from '../components/icons';
 import { useLang } from '../i18n';
+import { api } from '../lib/api';
 import { TRADES } from '../search';
 
 /**
@@ -153,6 +154,8 @@ export default function ForArtisansPage() {
 function ApplyForm() {
   const { t } = useLang();
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [app, setApp] = useState<ArtisanApplication>({ fullName: '', phone: '', email: '', trade: 'plumbing' });
   const set = (k: keyof ArtisanApplication) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setApp((a) => ({ ...a, [k]: e.target.value }));
@@ -173,9 +176,14 @@ function ApplyForm() {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        // Held locally until POST /api/artisans/apply exists (ARCHITECTURE.md §6).
-        void app;
-        setDone(true);
+        void (async () => {
+          setBusy(true);
+          setError(null);
+          const r = await api('/api/artisans/apply', app);
+          setBusy(false);
+          if (r.ok) setDone(true);
+          else setError(t('form.error'));
+        })();
       }}
       className="rounded-card border border-line-soft bg-panel p-[clamp(22px,4vw,32px)] shadow-card"
     >
@@ -218,8 +226,13 @@ function ApplyForm() {
         </div>
       </div>
 
-      <button type="submit" className="mt-6 h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover">
-        {t('fa.apply.submit')}
+      {error && <p className="mt-4 text-[13px] font-semibold text-warning">{error}</p>}
+      <button
+        type="submit"
+        disabled={busy}
+        className="mt-6 h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60"
+      >
+        {busy ? t('form.sending') : t('fa.apply.submit')}
       </button>
       <p className="mt-3 text-center text-[12.5px] font-semibold text-ink-40">{t('fa.apply.micro')}</p>
     </form>

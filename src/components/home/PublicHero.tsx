@@ -24,7 +24,7 @@ const INPUT =
  */
 export default function PublicHero() {
   const navigate = useNavigate();
-  const { requireAuth, gate } = useAuth();
+  const { requireAuth } = useAuth();
   const { t } = useLang();
   const [need, setNeed] = useState('');
   const [address, setAddress] = useState('');
@@ -97,7 +97,7 @@ export default function PublicHero() {
                 />
                 <button
                   type="button"
-                  onClick={() => gate(() => {})}
+                  onClick={() => requireAuth()}
                   aria-label={t('hero.attachPhoto')}
                   className="grid h-[38px] w-[38px] flex-none place-items-center rounded-full bg-panel text-brand transition hover:bg-brand-tint"
                 >

@@ -2,28 +2,22 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../auth';
+import { AuthProvider } from '../auth';
 import { LangProvider } from '../i18n';
-import AuthSheet from '../components/home/AuthSheet';
 import ExplorePage from './ExplorePage';
 import { AVAILABLE, getSupply } from '../components/explore/artisans';
 
 vi.mock('maplibre-gl', async () => (await import('../test/maplibre.mock')).mapLibreStub());
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
 
-/** App.tsx mounts one sheet for every route; the page under test needs the same. */
-function Sheet() {
-  const { authOpen, closeAuth, completeAuth } = useAuth();
-  return authOpen ? <AuthSheet onClose={closeAuth} onContinue={completeAuth} /> : null;
-}
-
-function renderExplore(url = '/explore?need=kitchen%20tap') {
+// The auth-gate journey (Chat → /login → back with the chat open) lives in
+// AppRoutes.test.tsx, where the whole route tree is mounted.
+function renderExplore(url = '/explore?need=kitchen%20tap', signedIn = false) {
   return render(
     <MemoryRouter initialEntries={[url]}>
       <LangProvider initial="EN">
-        <AuthProvider>
+        <AuthProvider initialSignedIn={signedIn}>
           <ExplorePage />
-          <Sheet />
         </AuthProvider>
       </LangProvider>
     </MemoryRouter>,
@@ -69,14 +63,10 @@ describe('ExplorePage', () => {
     expect(screen.getByLabelText('Window')).toBeInTheDocument();
   });
 
-  it('gates chat behind the auth sheet for a signed-out visitor', async () => {
+  it('opens the chat straight away for a signed-in customer', async () => {
     const user = userEvent.setup();
-    renderExplore();
+    renderExplore('/explore', true);
     await user.click(screen.getAllByRole('button', { name: /^Chat/ })[0]!);
-    expect(screen.getByRole('dialog', { name: 'Log in or sign up' })).toBeInTheDocument();
-    expect(screen.queryByLabelText('Message')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByLabelText('Message')).toBeInTheDocument();
   });
 

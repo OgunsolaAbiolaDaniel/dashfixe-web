@@ -21,11 +21,13 @@ const ESTIMATE = [
 
 type Props = {
   done: boolean;
+  busy: boolean;
+  error: string | null;
   onSubmit: (email: string) => void;
   onOpenArtisan: () => void;
 };
 
-export default function Hero({ done, onSubmit, onOpenArtisan }: Props) {
+export default function Hero({ done, busy, error, onSubmit, onOpenArtisan }: Props) {
   return (
     <section id="top" className="bg-panel">
       <div className="mx-auto max-w-[1200px] px-[clamp(18px,4vw,32px)] pb-[clamp(40px,5vw,64px)] pt-[clamp(48px,7vw,88px)]">
@@ -51,6 +53,8 @@ export default function Hero({ done, onSubmit, onOpenArtisan }: Props) {
                 variant="light"
                 submitLabel="Join the waitlist"
                 done={done}
+                busy={busy}
+                error={error}
                 onSubmit={onSubmit}
               />
 

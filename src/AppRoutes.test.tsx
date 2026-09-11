@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -8,6 +8,12 @@ import { LangProvider } from './i18n';
 
 vi.mock('maplibre-gl', async () => (await import('./test/maplibre.mock')).mapLibreStub());
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
+
+import { installPilotApi } from './test/pilotApi.mock';
+
+// Every fetch in these tests goes through the real handlers + a fresh store.
+const pilotApi = installPilotApi();
+beforeEach(() => pilotApi.reset());
 
 function renderSignedIn(url: string) {
   return render(
@@ -135,9 +141,9 @@ describe('/activity', () => {
     expect(screen.getByText('Your places')).toBeInTheDocument();
   });
 
-  it('turns a signed-out visitor back to the home', () => {
+  it('turns a signed-out visitor back to the home', async () => {
     renderAt('/activity');
-    expect(screen.getByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
   });
 });
 
@@ -193,13 +199,80 @@ describe('/job/:id', () => {
     expect(screen.getByText('€48.00')).toBeInTheDocument();
   });
 
-  it('is signed-in only', () => {
+  it('is signed-in only', async () => {
     renderAt('/job/dfx-1042');
-    expect(screen.getByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
   });
 
   it('sends an unknown job to Activity', () => {
     renderSignedIn('/job/dfx-9999');
     expect(screen.getByRole('heading', { name: 'Activity' })).toBeInTheDocument();
+  });
+});
+
+/** Drive the real login flow: phone → pilot code shown → verify. */
+async function logIn(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+  await user.click(screen.getByRole('button', { name: 'Send code' }));
+  const pilot = await screen.findByText(/your code is shown here/);
+  const code = /(\d{6})/.exec(pilot.textContent ?? '')![1]!;
+  await user.type(screen.getByLabelText('Code'), code);
+  await user.click(screen.getByRole('button', { name: 'Log in' }));
+}
+
+describe('/login (a page, not a modal — rev 1.3)', () => {
+  it('signs in with a real code and returns to next', async () => {
+    const user = userEvent.setup();
+    renderAt('/login?next=/activity');
+    await logIn(user);
+    expect(await screen.findByRole('heading', { name: 'Activity' })).toBeInTheDocument();
+  });
+
+  it('rejects a wrong code with a readable error', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.click(screen.getByRole('button', { name: 'Send code' }));
+    await screen.findByText(/your code is shown here/);
+    await user.type(screen.getByLabelText('Code'), '000000');
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(await screen.findByText(/That code is not right/)).toBeInTheDocument();
+  });
+
+  it('gates chat on /explore and comes back with the chat open', async () => {
+    const user = userEvent.setup();
+    renderAt('/explore?artisan=ra');
+    await user.click(screen.getByRole('button', { name: 'Chat with Rui' }));
+    // The commit point sent us to the login PAGE.
+    expect(screen.getByRole('heading', { name: 'Log in or sign up' })).toBeInTheDocument();
+    await logIn(user);
+    // …and back on the search with the chat we asked for.
+    expect(await screen.findByLabelText('Message')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Who is free right now' })).toBeInTheDocument();
+  });
+});
+
+describe('the waitlist forms hit the real API', () => {
+  it('joins the waitlist and collapses to the success state', async () => {
+    const user = userEvent.setup();
+    renderAt('/waitlist');
+    const email = screen.getAllByLabelText('Email address')[0]!;
+    await user.type(email, 'ana@example.com');
+    await user.click(screen.getAllByRole('button', { name: 'Join the waitlist' })[0]!);
+    expect(await screen.findByText("You're on the list")).toBeInTheDocument();
+  });
+
+  it('shows a retryable error when the server rejects an application', async () => {
+    const user = userEvent.setup();
+    renderAt('/waitlist');
+    await user.click(screen.getByRole('button', { name: /tradesperson/ }));
+    await user.type(screen.getByLabelText('Full name'), 'Tiago Ferreira');
+    await user.type(screen.getByLabelText('WhatsApp / phone number'), 'not-a-phone');
+    await user.type(screen.getByLabelText('Email address', { selector: 'input[id$="-email"]' }), 'tiago@example.com');
+    await user.selectOptions(screen.getByLabelText('Primary trade'), 'plumbing');
+    await user.click(screen.getByRole('button', { name: 'Submit application' }));
+    expect(await screen.findByText(/Something went wrong/)).toBeInTheDocument();
+    // Still on the form — the customer can fix the number and retry.
+    expect(screen.getByRole('button', { name: 'Submit application' })).toBeInTheDocument();
   });
 });
