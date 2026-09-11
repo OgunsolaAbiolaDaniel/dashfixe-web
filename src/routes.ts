@@ -17,6 +17,10 @@ export const ROUTES = {
   explore: '/explore',
   /** Signed-in only: past requests and saved places (Uber's Activity). */
   activity: '/activity',
+  /** Public trust page for one artisan (Phase 4). */
+  artisan: '/artisan/:id',
+  /** Signed-in: the live job or its receipt (Phase 4). */
+  job: '/job/:id',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
   about: '/about',
@@ -68,4 +72,13 @@ export type Destination = keyof typeof DESTINATIONS;
 /** Resolve a named destination to its current path. */
 export function link(name: Destination): string {
   return DESTINATIONS[name];
+}
+
+/** The parameterised app routes, filled in. */
+export function artisanUrl(id: string): string {
+  return `/artisan/${id}`;
+}
+
+export function jobUrl(id: string): string {
+  return `/job/${id}`;
 }

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
+import { artisanUrl } from '../../routes';
 import { AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan, type Supply } from './artisans';
 import { DEFAULT_ADDRESS, TRADES, type Search, type When } from '../../search';
 import { useLang } from '../../i18n';
@@ -10,6 +11,8 @@ type Props = {
   /** The sample supply as seen from the customer's address. */
   supply: Supply;
   onWhen: (when: When) => void;
+  /** Later mode: the chosen slot, written back into the URL. */
+  onSlot: (day: number, win: number) => void;
   selectedId: string;
   onSelect: (id: string) => void;
   onChat: (id: string) => void;
@@ -48,7 +51,13 @@ function ArtisanCard({
         </span>
         <span className="mr-auto min-w-0">
           <span className="flex items-center gap-1.5">
-            <span className="text-[17.5px] font-bold tracking-[-.01em] text-ink">{a.name}</span>
+            <Link
+              to={artisanUrl(a.id)}
+              onClick={(e) => e.stopPropagation()}
+              className="truncate text-[17.5px] font-bold tracking-[-.01em] text-ink transition hover:text-brand"
+            >
+              {a.name}
+            </Link>
             {a.verified && <Verified size={15} className="flex-none text-brand" />}
           </span>
           <span className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-60">
@@ -100,7 +109,7 @@ function ArtisanCard({
   );
 }
 
-export default function SearchPanel({ search, supply, onWhen, selectedId, onSelect, onChat }: Props) {
+export default function SearchPanel({ search, supply, onWhen, onSlot, selectedId, onSelect, onChat }: Props) {
   const { t } = useLang();
   const trade = TRADES.find((x) => x.slug === search.trade)?.slug;
   const need = search.need || (trade ? t(`trades.${trade}` as const) : t('hero.needPlaceholder'));
@@ -168,7 +177,7 @@ export default function SearchPanel({ search, supply, onWhen, selectedId, onSele
           ))}
         </div>
 
-        {search.when === 'later' && <LaterPicker />}
+        {search.when === 'later' && <LaterPicker day={search.day ?? 0} win={search.win ?? 2} onSlot={onSlot} />}
       </div>
 
       <div className="-mb-2 flex items-baseline">
@@ -203,10 +212,8 @@ export default function SearchPanel({ search, supply, onWhen, selectedId, onSele
  */
 const WINDOWS = ['08\u201310', '10\u201312', '12\u201314', '14\u201316', '16\u201318', '18\u201320'];
 
-function LaterPicker() {
+function LaterPicker({ day, win, onSlot }: { day: number; win: number; onSlot: (day: number, win: number) => void }) {
   const { t, lang } = useLang();
-  const [day, setDay] = useState(0);
-  const [win, setWin] = useState(2);
 
   const fmt = new Intl.DateTimeFormat(lang === 'PT' ? 'pt-PT' : 'en-GB', {
     weekday: 'short',
@@ -232,7 +239,7 @@ function LaterPicker() {
         <label className="min-w-0 flex-1">
           <span className="mb-1.5 block text-label text-ink-40">{t('later.mode.day')}</span>
           <span className="relative block">
-            <select value={day} onChange={(e) => setDay(Number(e.target.value))} className={SELECT}>
+            <select value={day} onChange={(e) => onSlot(Number(e.target.value), win)} className={SELECT}>
               {Array.from({ length: 7 }, (_, i) => (
                 <option key={i} value={i}>
                   {dayLabel(i)}
@@ -245,7 +252,7 @@ function LaterPicker() {
         <label className="min-w-0 flex-1">
           <span className="mb-1.5 block text-label text-ink-40">{t('later.mode.window')}</span>
           <span className="relative block">
-            <select value={win} onChange={(e) => setWin(Number(e.target.value))} className={SELECT}>
+            <select value={win} onChange={(e) => onSlot(day, Number(e.target.value))} className={SELECT}>
               {WINDOWS.map((w, i) => (
                 <option key={w} value={i}>
                   {w}

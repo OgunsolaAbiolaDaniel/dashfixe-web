@@ -1,10 +1,10 @@
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import AppBar from '../components/chrome/AppBar';
 import { Briefcase, Check, Close, HomeSolid, Plus } from '../components/icons';
 import { useAuth } from '../auth';
 import { useLang } from '../i18n';
 import { DEFAULT_ADDRESS } from '../search';
-import { ROUTES } from '../routes';
+import { ROUTES, jobUrl } from '../routes';
 
 /**
  * Activity — Uber's trips page, ours for repairs (ARCHITECTURE.md §2/rev 1.1).
@@ -14,9 +14,9 @@ import { ROUTES } from '../routes';
  * Sample account data until the backend exists; receipts link up in Phase 4.
  */
 const RECENT = [
-  { key: 'customer.recent1', amount: '€48.00', done: true },
-  { key: 'customer.recent2', amount: '€95.00', done: true },
-  { key: 'customer.recent3', amount: null, done: false },
+  { key: 'customer.recent1', amount: '€48.00', done: true, jobId: 'dfx-1031' },
+  { key: 'customer.recent2', amount: '€95.00', done: true, jobId: 'dfx-1027' },
+  { key: 'customer.recent3', amount: null, done: false, jobId: null },
 ] as const;
 
 const PLACES = [
@@ -43,27 +43,40 @@ export default function ActivityPage() {
         <section className="mb-7">
           <h2 className="mb-3.5 text-section text-ink">{t('customer.recentTitle')}</h2>
           <div className={`${CARD} overflow-hidden`}>
-            {RECENT.map((r, i) => (
-              <div
-                key={r.key}
-                className={'flex items-center gap-4 px-5 py-[18px]' + (i < RECENT.length - 1 ? ' border-b border-line-rule' : '')}
-              >
-                <span className={'grid h-12 w-12 flex-none place-items-center rounded-input ' + (r.done ? 'bg-success-tint' : 'bg-well')}>
-                  {r.done ? <Check size={20} className="text-success" /> : <Close size={20} className="text-ink-40" />}
-                </span>
-                <span className="mr-auto min-w-0">
-                  <span className={'block text-row ' + (r.done ? 'text-ink' : 'text-ink-60')}>{t(r.key)}</span>
-                  <span className="mt-0.5 block text-meta text-ink-40">{t(`${r.key}.meta` as const)}</span>
-                </span>
-                {r.amount ? (
-                  <span className="flex-none text-[16.5px] font-extrabold tracking-[-.02em] text-ink">{r.amount}</span>
-                ) : (
-                  <span className="flex-none rounded-full bg-well px-[13px] py-2 text-[13.5px] font-bold text-ink-60">
-                    {t('customer.noCharge')}
+            {RECENT.map((r, i) => {
+              const className =
+                'flex items-center gap-4 px-5 py-[18px] text-ink' +
+                (i < RECENT.length - 1 ? ' border-b border-line-rule' : '') +
+                (r.jobId ? ' transition hover:bg-page hover:text-ink' : '');
+              const inner = (
+                <>
+                  <span className={'grid h-12 w-12 flex-none place-items-center rounded-input ' + (r.done ? 'bg-success-tint' : 'bg-well')}>
+                    {r.done ? <Check size={20} className="text-success" /> : <Close size={20} className="text-ink-40" />}
                   </span>
-                )}
-              </div>
-            ))}
+                  <span className="mr-auto min-w-0">
+                    <span className={'block text-row ' + (r.done ? 'text-ink' : 'text-ink-60')}>{t(r.key)}</span>
+                    <span className="mt-0.5 block text-meta text-ink-40">{t(`${r.key}.meta` as const)}</span>
+                  </span>
+                  {r.amount ? (
+                    <span className="flex-none text-[16.5px] font-extrabold tracking-[-.02em] text-ink">{r.amount}</span>
+                  ) : (
+                    <span className="flex-none rounded-full bg-well px-[13px] py-2 text-[13.5px] font-bold text-ink-60">
+                      {t('customer.noCharge')}
+                    </span>
+                  )}
+                </>
+              );
+              // Completed jobs open their receipts; the cancelled row has nothing to open.
+              return r.jobId ? (
+                <Link key={r.key} to={jobUrl(r.jobId)} className={className}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={r.key} className={className}>
+                  {inner}
+                </div>
+              );
+            })}
           </div>
         </section>
 

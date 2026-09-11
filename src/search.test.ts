@@ -20,6 +20,8 @@ describe('exploreUrl', () => {
       lngLat: null,
       trade: '',
       when: 'later',
+      day: null,
+      win: null,
       artisan: 'tf',
     });
   });
@@ -36,6 +38,21 @@ describe('coordinates in the URL', () => {
     expect(parseSearch(new URLSearchParams('lng=-9.1')).lngLat).toBeNull();
     expect(parseSearch(new URLSearchParams('lng=abc&lat=38')).lngLat).toBeNull();
     expect(parseSearch(new URLSearchParams('lng=-200&lat=38')).lngLat).toBeNull();
+  });
+});
+
+describe('the later-mode slot in the URL', () => {
+  it('round-trips day and window', () => {
+    const url = exploreUrl({ when: 'later', day: 2, win: 4 });
+    expect(url).toBe('/explore?when=later&day=2&win=4');
+    const parsed = parseSearch(new URLSearchParams(url.split('?')[1]));
+    expect(parsed.day).toBe(2);
+    expect(parsed.win).toBe(4);
+  });
+
+  it('rejects out-of-range or junk values', () => {
+    expect(parseSearch(new URLSearchParams('day=9&win=abc')).day).toBeNull();
+    expect(parseSearch(new URLSearchParams('day=9&win=abc')).win).toBeNull();
   });
 });
 

@@ -6,6 +6,9 @@ afterEach(() => cleanup());
 
 // jsdom has no layout engine; the map and scroll code both touch these.
 Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true });
+if (!('scrollTo' in Element.prototype)) {
+  Object.defineProperty(Element.prototype, 'scrollTo', { value: vi.fn(), writable: true });
+}
 if (!('scrollIntoView' in Element.prototype)) {
   Object.defineProperty(Element.prototype, 'scrollIntoView', { value: vi.fn(), writable: true });
 }

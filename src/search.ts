@@ -18,6 +18,9 @@ export type Search = {
   /** Where the address is, when it was resolved. The map centres here. */
   lngLat: LngLat | null;
   when: When;
+  /** Later mode: chosen day offset (0–6) and two-hour window index (0–5). */
+  day: number | null;
+  win: number | null;
   /** Artisan pre-selected on arrival, e.g. from a "book again" card. */
   artisan: string;
 };
@@ -45,6 +48,12 @@ function parseLngLat(params: URLSearchParams): LngLat | null {
   return [lng, lat];
 }
 
+function intParam(params: URLSearchParams, name: string, max: number): number | null {
+  if (!params.has(name)) return null;
+  const v = Number(params.get(name));
+  return Number.isInteger(v) && v >= 0 && v <= max ? v : null;
+}
+
 export function parseSearch(params: URLSearchParams): Search {
   return {
     need: params.get('need') ?? '',
@@ -52,6 +61,8 @@ export function parseSearch(params: URLSearchParams): Search {
     address: params.get('address') ?? '',
     lngLat: parseLngLat(params),
     when: params.get('when') === 'later' ? 'later' : 'now',
+    day: intParam(params, 'day', 6),
+    win: intParam(params, 'win', 5),
     artisan: params.get('artisan') ?? '',
   };
 }
@@ -72,6 +83,8 @@ export function exploreUrl(search: Partial<Search>): string {
     params.set('lat', search.lngLat[1].toFixed(5));
   }
   if (search.when === 'later') params.set('when', 'later');
+  if (search.day != null) params.set('day', String(search.day));
+  if (search.win != null) params.set('win', String(search.win));
   if (search.artisan) params.set('artisan', search.artisan);
   const qs = params.toString();
   return qs ? `/explore?${qs}` : '/explore';

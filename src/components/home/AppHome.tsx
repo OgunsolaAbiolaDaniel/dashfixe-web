@@ -15,7 +15,8 @@ import {
 import { useLang } from '../../i18n';
 import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
 import { HOME } from '../../lib/geo';
-import { ROUTES } from '../../routes';
+import { ROUTES, jobUrl } from '../../routes';
+import { ACTIVE_JOB_ID } from '../../lib/jobs';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -138,17 +139,17 @@ export default function AppHome() {
               </div>
               <div className="flex gap-2.5">
                 <Link
-                  to={to({ artisan: 'tf' })}
+                  to={`${jobUrl(ACTIVE_JOB_ID)}?chat=1`}
                   className="flex h-11 flex-1 items-center justify-center rounded-[13px] bg-brand text-[14px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
                 >
                   {t('customer.openChat')}
                 </Link>
-                <button
-                  type="button"
-                  className="h-11 flex-none rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16]"
+                <Link
+                  to={jobUrl(ACTIVE_JOB_ID)}
+                  className="flex h-11 flex-none items-center rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16] hover:text-onink-strong"
                 >
                   {t('customer.track')}
-                </button>
+                </Link>
               </div>
             </div>
           </section>

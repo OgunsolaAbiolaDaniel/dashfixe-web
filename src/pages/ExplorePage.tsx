@@ -57,6 +57,15 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
+  /** The later-mode slot rides in the URL like everything else. */
+  const setSlot = (day: number, win: number) => {
+    const next = new URLSearchParams(params);
+    next.set('when', 'later');
+    next.set('day', String(day));
+    next.set('win', String(win));
+    setParams(next, { replace: true });
+  };
+
   // The docked chat is for signed-in customers only. Signing out closes it.
   const chatArtisan = signedIn ? (supply.available.find((a) => a.id === chatWith) ?? null) : null;
 
@@ -74,6 +83,7 @@ export default function ExplorePage() {
           search={search}
           supply={supply}
           onWhen={setWhen}
+          onSlot={setSlot}
           selectedId={selectedId}
           onSelect={select}
           onChat={openChat}
@@ -82,6 +92,7 @@ export default function ExplorePage() {
           <LiveMap home={home} selectedId={selectedId} onSelect={select} />
           {chatArtisan && (
             <ChatPanel
+              key={chatArtisan.id}
               artisan={chatArtisan}
               address={search.address || DEFAULT_ADDRESS}
               onClose={() => setChatWith(null)}

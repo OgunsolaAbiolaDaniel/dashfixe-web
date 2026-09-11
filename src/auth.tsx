@@ -24,8 +24,15 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [signedIn, setSignedIn] = useState(false);
+export function AuthProvider({
+  children,
+  initialSignedIn = false,
+}: {
+  children: ReactNode;
+  /** Start signed in — session restore later, deterministic tests today. */
+  initialSignedIn?: boolean;
+}) {
+  const [signedIn, setSignedIn] = useState(initialSignedIn);
   const [authOpen, setAuthOpen] = useState(false);
   const [pending, setPending] = useState<(() => void) | null>(null);
 

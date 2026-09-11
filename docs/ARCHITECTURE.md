@@ -6,7 +6,7 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-11 · Revision 1.1 — the signed-in home went map-first.
+**Last revised:** 2026-09-11 · Revision 1.2 — the job loop landed (Phase 4).
 
 ---
 
@@ -45,12 +45,11 @@ chrome.
 | | **Marketing surface** | **Product surface (the app)** |
 |---|---|---|
 | Job | Persuade and route | Get a repair done |
-| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`*, `/job/:id`* |
+| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`, `/job/:id` |
 | Chrome | `SiteNav` + `SiteFooter` | `AppBar`, no footer (map fills the viewport) |
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
-\* designed, next to build (Phase 4).
 
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
@@ -84,8 +83,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/` | marketing / app | Composer + map hero; signed-in → app home | built |
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
 | `/activity` | app | Signed-in: past requests, saved places (redirects visitors home) | built (rev 1.1) |
-| `/artisan/:id` | app | Profile: trust before the commit point | Phase 4 |
-| `/job/:id` | app | Live job: tracking, approved estimate, receipt, rating | Phase 4 |
+| `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
+| `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
@@ -170,9 +169,11 @@ variants so no page ever shows a grey box. Basemap tinted to brand; markers are 
 portals using design tokens. **Do not touch the worker wiring** without reading the gotcha
 in HANDOVER — it broke silently twice.
 
-Phase 4 adds the third variant, `track`: the job screen's map with a route line and the
-artisan's pin moving between waypoints (sample-driven until the backend). Phase 5 code-splits
-MapLibre (~500 kB) behind `React.lazy` so marketing pages stop paying for it.
+`TrackMap` (rev 1.2) is the third surface: the job screen's map on the same kit
+(`components/map/kit.ts`, which now owns the worker wiring), drawing a curved sample
+route with the artisan's pin easing along it — sample-driven until the backend, and
+badged as such. Phase 5 code-splits MapLibre (~500 kB) behind `React.lazy` so marketing
+pages stop paying for it.
 
 ## 8. Testing
 
