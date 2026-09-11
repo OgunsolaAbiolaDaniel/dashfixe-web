@@ -6,6 +6,7 @@ import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
 import { getSupply } from '../components/explore/artisans';
 import { DEFAULT_ADDRESS, parseSearch, type When } from '../search';
+import type { Place } from '../lib/geocode';
 import { ROUTES } from '../routes';
 import { HOME, type LngLat } from '../lib/geo';
 import { useAuth } from '../auth';
@@ -70,6 +71,28 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
+  const toggleSort = () => {
+    const next = new URLSearchParams(params);
+    if (search.sort === 'price') next.delete('sort');
+    else next.set('sort', 'price');
+    setParams(next, { replace: true });
+  };
+
+  const setNeed = (need: string) => {
+    const next = new URLSearchParams(params);
+    if (need.trim()) next.set('need', need.trim());
+    else next.delete('need');
+    setParams(next, { replace: true });
+  };
+
+  const setPlace = (place: Place) => {
+    const next = new URLSearchParams(params);
+    next.set('address', place.label);
+    next.set('lng', place.lngLat[0].toFixed(5));
+    next.set('lat', place.lngLat[1].toFixed(5));
+    setParams(next, { replace: true });
+  };
+
   /** The later-mode slot rides in the URL like everything else. */
   const setSlot = (day: number, win: number) => {
     const next = new URLSearchParams(params);
@@ -107,6 +130,9 @@ export default function ExplorePage() {
           supply={supply}
           onWhen={setWhen}
           onSlot={setSlot}
+          onSort={toggleSort}
+          onNeed={setNeed}
+          onPlace={setPlace}
           selectedId={selectedId}
           onSelect={select}
           onChat={openChat}

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
@@ -62,14 +63,7 @@ export default function AppBar() {
 
         {signedIn ? (
           <>
-            <button
-              type="button"
-              aria-label={t('customer.notifications')}
-              className="relative grid h-ctl w-ctl place-items-center rounded-well bg-well transition hover:bg-line"
-            >
-              <Bell size={19} className="text-ink-60" />
-              <span className="absolute right-[11px] top-2.5 block h-2 w-2 rounded-full border-2 border-well bg-brand" />
-            </button>
+            <BellMenu />
             <button
               type="button"
               onClick={signOut}
@@ -131,5 +125,46 @@ export default function AppBar() {
         />
       </div>
     </header>
+  );
+}
+
+/** The bell — honest: there is no notifications backend yet, and it says so. */
+function BellMenu() {
+  const { t } = useLang();
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={wrap} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label={t('customer.notifications')}
+        aria-expanded={open}
+        className="relative grid h-ctl w-ctl place-items-center rounded-well bg-well transition hover:bg-line"
+      >
+        <Bell size={19} className="text-ink-60" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-[calc(100%+8px)] z-[80] w-[280px] rounded-[18px] border border-line-soft bg-panel p-4 shadow-panel">
+          <div className="mb-1.5 text-label text-ink-40">{t('notif.title')}</div>
+          <p className="text-[13.5px] font-medium leading-[1.5] text-ink-60">{t('notif.empty')}</p>
+        </div>
+      )}
+    </div>
   );
 }

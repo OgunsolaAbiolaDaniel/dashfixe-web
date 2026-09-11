@@ -1,6 +1,8 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ChevronDown, Clock, Close, ReceiptSlim } from '../icons';
 import { link } from '../../routes';
+import { WINDOWS, exploreUrl } from '../../search';
 import { useLang } from '../../i18n';
 
 const BENEFITS = [
@@ -13,8 +15,27 @@ const FIELD = 'flex h-[54px] min-w-0 flex-[1_1_150px] items-center gap-[11px] ro
 const INPUT =
   'min-w-0 flex-1 border-0 bg-transparent text-[15.5px] font-semibold text-ink outline-offset-8 placeholder:text-ink-30';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+/**
+ * The book-ahead explainer. The picker is real: date + window feed straight
+ * into /explore?when=later with the slot in the URL (ARCHITECTURE §6: URL as
+ * state). Booking beyond the 7-day sample horizon clamps to the last day.
+ */
 export default function BookAhead() {
   const { t } = useLang();
+  // Clocks are impure; read them once per mount.
+  const [todayIso] = useState(() => iso(new Date()));
+  const [maxIso] = useState(() => iso(new Date(Date.now() + 30 * DAY_MS)));
+  const [date, setDate] = useState(() => iso(new Date(Date.now() + DAY_MS)));
+  const [win, setWin] = useState(2);
+
+  const day = useMemo(() => {
+    const offset = Math.round((new Date(date).getTime() - new Date(todayIso).getTime()) / DAY_MS);
+    return Math.min(6, Math.max(0, offset));
+  }, [date, todayIso]);
+
   return (
     <section id="later" className="scroll-mt-[88px] bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
@@ -29,16 +50,35 @@ export default function BookAhead() {
               <div className="mb-5 flex flex-wrap gap-3">
                 <div className={FIELD}>
                   <Calendar size={18} className="flex-none text-ink-60" />
-                  <input type="text" placeholder={t('later.date')} aria-label={t('later.date')} className={INPUT} />
+                  <input
+                    type="date"
+                    value={date}
+                    min={todayIso}
+                    max={maxIso}
+                    onChange={(e) => setDate(e.target.value)}
+                    aria-label={t('later.date')}
+                    className={INPUT}
+                  />
                 </div>
                 <div className={FIELD}>
                   <Clock size={18} className="flex-none text-ink-60" />
-                  <input type="text" placeholder={t('later.time')} aria-label={t('later.time')} className={INPUT} />
+                  <select
+                    value={win}
+                    onChange={(e) => setWin(Number(e.target.value))}
+                    aria-label={t('later.time')}
+                    className={`${INPUT} appearance-none`}
+                  >
+                    {WINDOWS.map((w, i) => (
+                      <option key={w} value={i}>
+                        {w}
+                      </option>
+                    ))}
+                  </select>
                   <ChevronDown size={15} className="flex-none text-ink-40" />
                 </div>
               </div>
               <Link
-                to={link('book')}
+                to={exploreUrl({ when: 'later', day, win })}
                 className="flex h-[52px] w-full max-w-[340px] items-center justify-center rounded-btn bg-ink text-[15px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 {t('later.next')}
@@ -68,12 +108,12 @@ export default function BookAhead() {
                 <span className="text-[14.5px] font-semibold leading-[1.5] text-ink-80">{t(key)}</span>
               </div>
             ))}
-            <a
-              href={link('help')}
+            <Link
+              to={link('help')}
               className="mt-6 inline-block border-b border-[#c8d1e0] pb-[3px] text-[14.5px] font-bold text-ink transition hover:border-ink hover:text-ink"
             >
               {t('later.terms')}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

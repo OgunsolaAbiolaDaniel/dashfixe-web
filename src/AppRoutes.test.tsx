@@ -118,7 +118,7 @@ describe('the signed-in app home (map-first, ARCHITECTURE.md rev 1.1)', () => {
     await user.type(screen.getByLabelText('What needs fixing'), 'leaking tap');
     await user.click(screen.getByRole('button', { name: 'Find an artisan' }));
     expect(screen.getByRole('heading', { name: 'Who is free right now' })).toBeInTheDocument();
-    expect(screen.getByText('leaking tap')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('leaking tap')).toBeInTheDocument();
   });
 
   it('opens the search with an artisan when a map pin is tapped', async () => {

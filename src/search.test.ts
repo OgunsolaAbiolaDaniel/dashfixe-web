@@ -22,6 +22,7 @@ describe('exploreUrl', () => {
       when: 'later',
       day: null,
       win: null,
+      sort: 'arrival',
       artisan: 'tf',
     });
   });

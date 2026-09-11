@@ -27,7 +27,7 @@ function renderExplore(url = '/explore?need=kitchen%20tap', signedIn = false) {
 describe('ExplorePage', () => {
   it('lists every available artisan and shows the search from the URL', () => {
     renderExplore();
-    expect(screen.getByText('kitchen tap')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('kitchen tap')).toBeInTheDocument();
     for (const a of AVAILABLE) expect(screen.getByText(a.name)).toBeInTheDocument();
   });
 
@@ -53,7 +53,7 @@ describe('ExplorePage', () => {
     // Guard: the test only means something if the two homes give different answers.
     expect(tiago.km).not.toBe(AVAILABLE.find((a) => a.id === 'tf')!.km);
     expect(screen.getByText(`${tiago.rating} · ${tiago.jobs} jobs · ${tiago.km} km`)).toBeInTheDocument();
-    expect(screen.getByText('Seixal')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Seixal')).toBeInTheDocument();
   });
 
   it('shows the day and window picker in later mode', () => {

@@ -23,6 +23,7 @@ export default function ChatPanel({ artisan, address, onClose }: Props) {
   const [msgs, setMsgs] = useState<Msg[]>(() => getThread(artisan.id));
   const [draft, setDraft] = useState('');
   const thread = useRef<HTMLDivElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => saveThread(artisan.id, msgs), [artisan.id, msgs]);
   useEffect(() => {
@@ -78,7 +79,9 @@ export default function ChatPanel({ artisan, address, onClose }: Props) {
 
       <div ref={thread} className="flex min-h-0 flex-col gap-[9px] overflow-y-auto px-4 py-3.5">
         {msgs.map((m, i) =>
-          m.from === 'photo' ? (
+          'img' in m ? (
+            <img key={i} src={m.img} alt="" className="max-h-[180px] max-w-[70%] self-end rounded-[16px_16px_4px_16px] object-cover" />
+          ) : m.from === 'photo' ? (
             <div
               key={i}
               className="grid h-[98px] w-[148px] flex-none self-end place-items-center rounded-[16px_16px_4px_16px] bg-avatar text-[11.5px] font-semibold text-[#7d8db0]"
@@ -107,7 +110,19 @@ export default function ChatPanel({ artisan, address, onClose }: Props) {
         }}
         className="flex items-center gap-[9px] border-t border-line-rule px-4 pb-4 pt-3"
       >
-        <button type="button" aria-label={t('chat.attachImage')} className={ICON_BTN}>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          aria-label={t('chat.attachImage')}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) setMsgs((m) => [...m, { from: 'me', img: URL.createObjectURL(file) }]);
+            e.target.value = '';
+          }}
+          className="hidden"
+        />
+        <button type="button" onClick={() => fileInput.current?.click()} aria-label={t('chat.attachImage')} className={ICON_BTN}>
           <ImageIcon size={18} />
         </button>
         <button type="button" aria-label={t('chat.attachFile')} className={ICON_BTN}>

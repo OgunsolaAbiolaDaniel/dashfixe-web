@@ -2,16 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '../chrome/AppBar';
 import LiveMap from '../explore/LiveMap';
-import {
-  ArrowRightShort,
-  Bolt,
-  Camera,
-  ChevronDown,
-  MapPin,
-  Saw,
-  Spray,
-  Wrench,
-} from '../icons';
+import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
+import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
 import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
 import { HOME } from '../../lib/geo';
@@ -63,10 +55,13 @@ export default function AppHome() {
             <h1 className="mb-2 text-[26px] font-extrabold leading-[1.08] tracking-[-.03em] text-ink">
               {t('customer.greeting', { name: 'Alex' })}
             </h1>
-            <span className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60">
+            <Link
+              to={ROUTES.activity}
+              className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
+            >
               <MapPin size={15} className="flex-none text-brand" />
               {DEFAULT_ADDRESS}
-            </span>
+            </Link>
           </div>
 
           {/* The composer — the "Where to?" of Dashfixe */}
@@ -95,13 +90,7 @@ export default function AppHome() {
               className="w-full resize-none rounded-input border border-line bg-page px-[15px] py-3 text-[14.5px] font-semibold leading-[1.5] text-ink placeholder:text-ink-30"
             />
             <div className="mt-2.5 flex items-center gap-2.5">
-              <button
-                type="button"
-                aria-label={t('customer.addPhoto')}
-                className="grid h-ctl w-ctl flex-none place-items-center rounded-well border border-line bg-panel text-brand transition hover:bg-page"
-              >
-                <Camera size={18} />
-              </button>
+              <PhotoPick variant="round" />
               <button
                 type="button"
                 onClick={find}

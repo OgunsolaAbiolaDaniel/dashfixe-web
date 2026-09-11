@@ -375,6 +375,17 @@ export const en = {
   'auth.err.too_many_attempts': 'Too many tries — send a new code.',
   'form.sending': 'Sending…',
   'form.error': 'Something went wrong — try again.',
+
+  // Functional sweep (rev 1.3)
+  'search.sortArrival': 'Sort: arrival',
+  'search.sortPrice': 'Sort: price',
+  'notif.title': 'Notifications',
+  'notif.empty': 'Nothing yet — updates about your jobs will land here.',
+  'hero.photoAttached': 'Photo attached',
+  'hero.removePhoto': 'Remove photo',
+  'customer.placeName': 'Name',
+  'customer.savePlace': 'Save place',
+  'customer.removePlace': 'Remove place',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -721,6 +732,16 @@ export const pt: Record<StringKey, string> = {
   'auth.err.too_many_attempts': 'Demasiadas tentativas — envie um novo código.',
   'form.sending': 'A enviar…',
   'form.error': 'Algo correu mal — tente novamente.',
+
+  'search.sortArrival': 'Ordenar: chegada',
+  'search.sortPrice': 'Ordenar: preço',
+  'notif.title': 'Notificações',
+  'notif.empty': 'Ainda nada — as novidades dos seus trabalhos chegam aqui.',
+  'hero.photoAttached': 'Foto anexada',
+  'hero.removePhoto': 'Remover foto',
+  'customer.placeName': 'Nome',
+  'customer.savePlace': 'Guardar local',
+  'customer.removePlace': 'Remover local',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

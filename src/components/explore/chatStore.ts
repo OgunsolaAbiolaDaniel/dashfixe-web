@@ -8,6 +8,7 @@ import type { StringKey } from '../../i18n/strings';
  */
 export type Msg =
   | { from: 'photo' }
+  | { from: 'me'; img: string }
   | { from: 'me' | 'them'; key: StringKey }
   | { from: 'me' | 'them'; text: string };
 

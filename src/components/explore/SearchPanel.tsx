@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, ChevronDown, ClockSmall, MapPin, Star, Verified } from '../icons';
+import { Camera, ChevronDown, ClockSmall, Star, Verified } from '../icons';
+import AddressField from '../shared/AddressField';
+import type { Place } from '../../lib/geocode';
 import { artisanUrl } from '../../routes';
 import { AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan, type Supply } from './artisans';
-import { DEFAULT_ADDRESS, TRADES, type Search, type When } from '../../search';
+import { DEFAULT_ADDRESS, TRADES, WINDOWS, priceFrom, type Search, type When } from '../../search';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 
@@ -13,6 +16,9 @@ type Props = {
   onWhen: (when: When) => void;
   /** Later mode: the chosen slot, written back into the URL. */
   onSlot: (day: number, win: number) => void;
+  onSort: () => void;
+  onNeed: (need: string) => void;
+  onPlace: (place: Place) => void;
   selectedId: string;
   onSelect: (id: string) => void;
   onChat: (id: string) => void;
@@ -109,11 +115,16 @@ function ArtisanCard({
   );
 }
 
-export default function SearchPanel({ search, supply, onWhen, onSlot, selectedId, onSelect, onChat }: Props) {
+export default function SearchPanel({ search, supply, onWhen, onSlot, onSort, onNeed, onPlace, selectedId, onSelect, onChat }: Props) {
   const { t } = useLang();
   const trade = TRADES.find((x) => x.slug === search.trade)?.slug;
-  const need = search.need || (trade ? t(`trades.${trade}` as const) : t('hero.needPlaceholder'));
-  const address = search.address || DEFAULT_ADDRESS;
+  const needPlaceholder = trade ? t(`trades.${trade}` as const) : t('hero.needPlaceholder');
+  const [needDraft, setNeedDraft] = useState(search.need);
+  const [addressDraft, setAddressDraft] = useState(search.address || DEFAULT_ADDRESS);
+  const listed =
+    search.sort === 'price'
+      ? [...supply.available].sort((a, b) => priceFrom(a.price) - priceFrom(b.price))
+      : supply.available;
 
   return (
     <div className="flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
@@ -146,21 +157,31 @@ export default function SearchPanel({ search, supply, onWhen, onSlot, selectedId
 
       <div className="rounded-card border border-line-soft bg-panel p-[18px]">
         <div className="mb-[11px] text-label text-ink-40">{t('search.what')}</div>
-        <button
-          type="button"
-          className="mb-2.5 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onNeed(needDraft);
+          }}
+          className="mb-2.5 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3"
         >
           <Camera size={18} className="flex-none text-brand" />
-          <span className="mr-auto truncate text-[14.5px] font-bold text-ink">{need}</span>
-          <ChevronDown size={16} className="text-ink-40" />
-        </button>
-        <button
-          type="button"
-          className="mb-3 flex w-full items-center gap-3 rounded-input border border-line bg-page px-[15px] py-3.5 text-left"
-        >
-          <MapPin size={18} className="flex-none text-brand" />
-          <span className="mr-auto truncate text-[14.5px] font-semibold text-ink-80">{address}</span>
-        </button>
+          <input
+            type="text"
+            value={needDraft}
+            onChange={(e) => setNeedDraft(e.target.value)}
+            onBlur={() => onNeed(needDraft)}
+            placeholder={needPlaceholder}
+            aria-label={t('hero.needLabel')}
+            className="min-w-0 flex-1 border-0 bg-transparent text-[14.5px] font-bold text-ink outline-offset-8 placeholder:text-ink-40"
+          />
+        </form>
+        <AddressField
+          className="mb-3"
+          variant="input"
+          value={addressDraft}
+          onChange={setAddressDraft}
+          onPlace={onPlace}
+        />
         <div className="flex gap-2 rounded-well bg-well p-1">
           {(['now', 'later'] as const).map((v) => (
             <button
@@ -184,13 +205,13 @@ export default function SearchPanel({ search, supply, onWhen, onSlot, selectedId
         <span className="mr-auto text-label text-ink-40">
           {t('search.available', { n: AVAILABLE_COUNT, total: TOTAL_ONLINE })}
         </span>
-        <button type="button" className="text-[13px] font-bold text-brand">
-          {t('search.sort')}
+        <button type="button" onClick={onSort} className="text-[13px] font-bold text-brand">
+          {search.sort === 'price' ? t('search.sortPrice') : t('search.sortArrival')}
         </button>
       </div>
 
       <div className="flex flex-col gap-[11px]">
-        {supply.available.map((a) => (
+        {listed.map((a) => (
           <ArtisanCard
             key={a.id}
             a={a}
@@ -210,7 +231,7 @@ export default function SearchPanel({ search, supply, onWhen, onSlot, selectedId
  * The book-for-later mode — a day and a two-hour window, held locally until the
  * booking flow lands in Phase 4 (then it moves into the URL like everything else).
  */
-const WINDOWS = ['08\u201310', '10\u201312', '12\u201314', '14\u201316', '16\u201318', '18\u201320'];
+
 
 function LaterPicker({ day, win, onSlot }: { day: number; win: number; onSlot: (day: number, win: number) => void }) {
   const { t, lang } = useLang();
