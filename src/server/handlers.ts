@@ -1,15 +1,31 @@
 /**
  * The pilot API, framework-agnostic — ARCHITECTURE.md §6.
  *
- * One pure-ish function per route, shared by three hosts: the Vercel functions
- * in /api, the Vite dev middleware, and the tests (which call it directly, and
- * whose fetch mock routes the real UI through it). Validation is hand-rolled:
- * four fields do not need a schema library.
+ * One pure-ish function per route, shared by three hosts: the Vercel function
+ * (api/router.ts), the Vite dev/preview middleware, and the tests (which call it
+ * directly, and whose fetch mock routes the real UI through it). Validation is
+ * hand-rolled: four fields do not need a schema library.
+ *
+ * Relative imports under src/server carry `.js`: Vercel runs these files as
+ * plain Node ES modules, which do not guess extensions (TypeScript and Vite map
+ * `.js` back to the `.ts` source).
  */
 import { randomInt } from 'node:crypto';
-import { getStore } from './store';
-import { clearedSessionCookie, issueToken, sessionCookie, tokenFromCookieHeader, verifyToken } from './session';
-import { sendLoginCode } from './sms';
+import { getStore } from './store.js';
+import {
+  challengeCookie,
+  clearedChallengeCookie,
+  clearedSessionCookie,
+  codeMatches,
+  codeHash,
+  issueChallenge,
+  issueToken,
+  readChallenge,
+  sessionCookie,
+  tokenFromCookieHeader,
+  verifyToken,
+} from './session.js';
+import { sendLoginCode } from './sms.js';
 
 export type ApiRequest = {
   method: string;
@@ -21,13 +37,18 @@ export type ApiRequest = {
 export type ApiResponse = {
   status: number;
   body: Record<string, unknown>;
-  setCookie?: string;
+  /** Zero or more Set-Cookie header values. */
+  setCookie?: string[];
 };
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const MAX_VERIFY_ATTEMPTS = 5;
 
-const bad = (status: number, error: string): ApiResponse => ({ status, body: { error } });
+const bad = (status: number, error: string, setCookie?: string[]): ApiResponse => ({
+  status,
+  body: { error },
+  ...(setCookie ? { setCookie } : {}),
+});
 const ok = (body: Record<string, unknown> = { ok: true }): ApiResponse => ({ status: 200, body });
 
 function str(body: unknown, key: string, max = 200): string | null {
@@ -48,7 +69,6 @@ function normalisePhone(raw: string): string | null {
 }
 
 export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
-  const store = await getStore();
   const route = `${req.method.toUpperCase()} ${req.path.replace(/\/+$/, '')}`;
 
   switch (route) {
@@ -57,7 +77,7 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
       const userType = str(req.body, 'userType') ?? 'HOMEOWNER';
       if (!email || !EMAIL.test(email)) return bad(400, 'invalid_email');
       if (userType !== 'HOMEOWNER' && userType !== 'ARTISAN') return bad(400, 'invalid_user_type');
-      await store.addWaitlist({ email, userType, createdAt: new Date().toISOString() });
+      await (await getStore()).addWaitlist({ email, userType, createdAt: new Date().toISOString() });
       return ok();
     }
 
@@ -71,19 +91,24 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
       if (!phone) return bad(400, 'invalid_phone');
       if (!email || !EMAIL.test(email)) return bad(400, 'invalid_email');
       if (!trade) return bad(400, 'invalid_trade');
-      await store.addApplication({ fullName, phone, email, trade, createdAt: new Date().toISOString() });
+      await (await getStore()).addApplication({ fullName, phone, email, trade, createdAt: new Date().toISOString() });
       return ok();
     }
 
+    // Login needs no storage: the pending code rides in a signed, httpOnly,
+    // short-lived cookie (session.ts), so it works on serverless without a DB.
     case 'POST /api/auth/request-code': {
       const phoneRaw = str(req.body, 'phone', 32);
       const phone = phoneRaw ? normalisePhone(phoneRaw) : null;
       if (!phone) return bad(400, 'invalid_phone');
       const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-      await store.putOtp({ phone, code, expiresAt: Date.now() + OTP_TTL_MS, attempts: 0 });
+      const challenge = { phone, hash: codeHash(phone, code), exp: Math.floor((Date.now() + OTP_TTL_MS) / 1000), attempts: 0 };
       const sent = await sendLoginCode(phone, code);
-      // devCode only exists when no SMS provider is configured — pilot mode.
-      return ok({ ok: true, delivered: sent.delivered, ...(sent.devCode ? { devCode: sent.devCode } : {}) });
+      return {
+        // devCode only exists when no SMS provider is configured — pilot mode.
+        ...ok({ ok: true, delivered: sent.delivered, ...(sent.devCode ? { devCode: sent.devCode } : {}) }),
+        setCookie: [challengeCookie(issueChallenge(challenge), OTP_TTL_MS / 1000)],
+      };
     }
 
     case 'POST /api/auth/verify': {
@@ -91,16 +116,29 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
       const code = str(req.body, 'code', 10);
       const phone = phoneRaw ? normalisePhone(phoneRaw) : null;
       if (!phone || !code) return bad(400, 'invalid_request');
-      const rec = await store.getOtp(phone);
-      if (!rec || rec.expiresAt < Date.now()) return bad(401, 'code_expired');
-      if ((await store.bumpOtpAttempts(phone)) > MAX_VERIFY_ATTEMPTS) {
-        await store.clearOtp(phone);
-        return bad(429, 'too_many_attempts');
+
+      const challenge = readChallenge(req.cookieHeader);
+      if (!challenge || challenge.phone !== phone) return bad(401, 'code_expired', [clearedChallengeCookie()]);
+      if (challenge.attempts >= MAX_VERIFY_ATTEMPTS) return bad(429, 'too_many_attempts', [clearedChallengeCookie()]);
+
+      if (!codeMatches(challenge, code)) {
+        // Count the miss by re-issuing the challenge, same expiry.
+        const next = { ...challenge, attempts: challenge.attempts + 1 };
+        const left = challenge.exp - Date.now() / 1000;
+        return bad(401, 'wrong_code', [challengeCookie(issueChallenge(next), left)]);
       }
-      if (rec.code !== code) return bad(401, 'wrong_code');
-      await store.clearOtp(phone);
-      await store.ensureUser(phone);
-      return { status: 200, body: { ok: true, phone }, setCookie: sessionCookie(issueToken(phone)) };
+
+      // Recording the user is best-effort: a storage hiccup must not lock anyone out.
+      try {
+        await (await getStore()).ensureUser(phone);
+      } catch (e) {
+        console.error('[dashfixe] could not record user', e);
+      }
+      return {
+        status: 200,
+        body: { ok: true, phone },
+        setCookie: [sessionCookie(issueToken(phone)), clearedChallengeCookie()],
+      };
     }
 
     case 'GET /api/auth/me': {
@@ -109,7 +147,7 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
     }
 
     case 'POST /api/auth/logout':
-      return { status: 200, body: { ok: true }, setCookie: clearedSessionCookie() };
+      return { status: 200, body: { ok: true }, setCookie: [clearedSessionCookie()] };
 
     default:
       return bad(404, 'not_found');
