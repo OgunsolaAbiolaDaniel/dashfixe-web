@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import wordmarkLight from '../../assets/dashfixe-wordmark-light.png';
-import { link, type Destination } from '../../routes';
-import { exploreUrl } from '../../search';
+import { TRADE_SLUGS, link, tradeUrl, type Destination } from '../../routes';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 
@@ -10,10 +9,10 @@ const HEAD = 'mb-4 text-label text-onink-strong';
 
 /**
  * Marketing-surface footer — ARCHITECTURE.md §5. Every link resolves to something
- * true: trades deep-link into the product, artisan links anchor into /for-artisans,
- * support links anchor into /help. No careers, no press — nothing that doesn't exist.
+ * true: trades open their landing pages (the SEO pages, one hop from /explore),
+ * artisan links anchor into /for-artisans, support links anchor into /help. No
+ * careers, no press — nothing that doesn't exist.
  */
-const TRADES = ['plumbing', 'electrical', 'painting', 'carpentry', 'cleaning'] as const;
 const COMPANY: Array<[StringKey, Destination]> = [
   ['footer.about', 'about'],
   ['footer.coverage', 'coverage'],
@@ -60,8 +59,8 @@ export default function SiteFooter() {
           <div>
             <div className={HEAD}>{t('footer.services')}</div>
             <div className="flex flex-col gap-[11px]">
-              {TRADES.map((s) => (
-                <Link key={s} to={exploreUrl({ trade: s })} className={LINK}>
+              {TRADE_SLUGS.map((s) => (
+                <Link key={s} to={tradeUrl(s)} className={LINK}>
                   {t(`trades.${s}` as const)}
                 </Link>
               ))}

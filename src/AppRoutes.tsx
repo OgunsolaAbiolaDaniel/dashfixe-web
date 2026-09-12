@@ -11,7 +11,11 @@ import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
 import LoginPage from './pages/LoginPage';
+import TradePage from './pages/TradePage';
 import { ROUTES, link } from './routes';
+import { launched } from './config';
+import { applyMeta, pageMeta } from './seo';
+import { useLang } from './i18n';
 
 /**
  * The route tree — docs/ARCHITECTURE.md §4. Kept apart from the BrowserRouter and
@@ -29,10 +33,21 @@ function HashScroll() {
   return null;
 }
 
+/** Title, description, canonical and robots follow the route and the language (seo.ts). */
+function RouteMeta() {
+  const { pathname } = useLocation();
+  const { lang } = useLang();
+  useEffect(() => {
+    applyMeta(pageMeta(pathname, lang), window.location.origin);
+  }, [pathname, lang]);
+  return null;
+}
+
 export default function AppRoutes() {
   return (
     <>
       <HashScroll />
+      <RouteMeta />
       <Routes>
         {/* Product surface (ARCHITECTURE.md §2) */}
         <Route path={ROUTES.home} element={<HomePage />} />
@@ -44,8 +59,9 @@ export default function AppRoutes() {
         {/* Auth — its own minimal chrome */}
         <Route path={ROUTES.login} element={<LoginPage />} />
 
-        {/* Marketing surface */}
-        <Route path={ROUTES.waitlist} element={<WaitlistPage />} />
+        {/* Marketing surface. The launch switch (config.ts) retires the waitlist. */}
+        <Route path={ROUTES.waitlist} element={launched() ? <Navigate to={ROUTES.home} replace /> : <WaitlistPage />} />
+        <Route path={ROUTES.trade} element={<TradePage />} />
         <Route path={ROUTES.forArtisans} element={<ForArtisansPage />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />

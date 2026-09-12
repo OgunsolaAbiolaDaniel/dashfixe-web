@@ -4,7 +4,30 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dashfixe - When your usual person can't.</title>
+    <!-- SEO defaults = the home page. seo.ts owns the values: the app rewrites them per
+         route at runtime, and the build bakes them into a static copy per public route.
+         Keep every tag below — the build fails if one goes missing. The URLs are
+         absolute placeholders on purpose: Vite would try to bundle a root-relative
+         href/content as an asset, and every one is replaced before anything ships. -->
+    <title>Dashfixe — vetted local artisans in Amora &amp; Seixal</title>
+    <meta name="description" content="See who is free near you, agree the price in chat before anyone travels, and pay in the app. Launching as a pilot in Amora &amp; Seixal." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="http://localhost:4173/" />
+    <meta name="theme-color" content="#2563EB" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Dashfixe" />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale:alternate" content="pt_PT" />
+    <meta property="og:title" content="Dashfixe — vetted local artisans in Amora &amp; Seixal" />
+    <meta property="og:description" content="See who is free near you, agree the price in chat before anyone travels, and pay in the app. Launching as a pilot in Amora &amp; Seixal." />
+    <meta property="og:url" content="http://localhost:4173/" />
+    <meta property="og:image" content="http://localhost:4173/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Dashfixe — vetted local artisans in Amora &amp; Seixal" />
+    <meta name="twitter:description" content="See who is free near you, agree the price in chat before anyone travels, and pay in the app. Launching as a pilot in Amora &amp; Seixal." />
+    <meta name="twitter:image" content="http://localhost:4173/og.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
