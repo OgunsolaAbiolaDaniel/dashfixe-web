@@ -1,8 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import mark from '../assets/dashfixe-mark.png';
-import wordmark from '../assets/dashfixe-wordmark.png';
-import LangToggle from '../components/shared/LangToggle';
+import Header from '../components/chrome/Header';
 import Rich from '../i18n/Rich';
 import { api } from '../lib/api';
 import { ROUTES, link } from '../routes';
@@ -11,24 +9,34 @@ import { useLang } from '../i18n';
 import type { StringKey } from '../i18n/strings';
 
 /**
- * Log in / sign up as a page — ARCHITECTURE.md §5 rev 1.3. Phone-first, one
- * flow for both (first verified login IS sign-up, Uber-style), against the real
- * API: request-code → verify → httpOnly session cookie.
+ * Log in / sign up as a page — ARCHITECTURE.md §5. Phone-first, one flow for
+ * both (first verified login IS sign-up, Uber-style): request-code → verify →
+ * httpOnly session cookie, then a one-time "what should we call you?".
  *
- * `?next=` brings the visitor back to the commit point they came from. Without
- * an SMS provider configured the server returns the code and the page shows it,
- * clearly labelled as pilot behaviour.
+ * Pilot mode (no SMS provider configured): the server hands the code back, so
+ * the page verifies it straight away — pressing Send code signs you in. The code
+ * step only appears when a real text was sent. `?next=` returns the visitor to
+ * the commit point they came from.
  */
 const ERRORS: Record<string, StringKey> = {
   invalid_phone: 'auth.err.invalid_phone',
   wrong_code: 'auth.err.wrong_code',
   code_expired: 'auth.err.code_expired',
   too_many_attempts: 'auth.err.too_many_attempts',
+  invalid_name: 'auth.err.invalid_name',
 };
+
+type Step = 'phone' | 'code' | 'name';
+
+const CARD = 'w-full max-w-[420px] rounded-card border border-line-soft bg-panel p-[clamp(22px,4vw,28px)] shadow-card';
+const H1 = 'mb-[7px] text-[22px] font-extrabold leading-[1.15] tracking-[-.025em] text-ink';
+const BODY = 'text-[14.5px] font-medium leading-[1.5] text-ink-60';
+const PRIMARY =
+  'mt-[18px] h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60';
 
 export default function LoginPage() {
   const { t } = useLang();
-  const { signedIn, completeAuth } = useAuth();
+  const { signedIn, completeAuth, saveName } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const id = useId();
@@ -36,67 +44,84 @@ export default function LoginPage() {
   const nextRaw = params.get('next') ?? ROUTES.home;
   const next = nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : ROUTES.home;
 
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
+  const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<StringKey | null>(null);
-  const [devCode, setDevCode] = useState<string | null>(null);
+  const [pilot, setPilot] = useState(false);
 
-  // Already in (or just verified): straight back to the commit point.
+  // Already in (or just verified and named): straight back to the commit point.
   useEffect(() => {
-    if (signedIn) navigate(next, { replace: true });
-  }, [signedIn, navigate, next]);
+    if (signedIn && step !== 'name') navigate(next, { replace: true });
+  }, [signedIn, step, navigate, next]);
+
+  const verify = async (withCode: string) => {
+    const r = await api<{ phone: string; name?: string | null }>('/api/auth/verify', { phone, code: withCode });
+    if (!r.ok) {
+      setError(ERRORS[r.error] ?? 'form.error');
+      return;
+    }
+    // New customers get the one-time name step before leaving the page.
+    if (!r.data.name) setStep('name');
+    completeAuth(r.data.phone, r.data.name ?? null);
+  };
 
   const requestCode = async () => {
     setBusy(true);
     setError(null);
     const r = await api<{ delivered: boolean; devCode?: string }>('/api/auth/request-code', { phone });
-    setBusy(false);
     if (!r.ok) {
+      setBusy(false);
       setError(ERRORS[r.error] ?? 'form.error');
       return;
     }
-    setDevCode(r.data.devCode ?? null);
-    setCode('');
-    setStep('code');
+    if (r.data.devCode) {
+      // Pilot: no SMS was sent, so there is nothing for the customer to type.
+      setPilot(true);
+      await verify(r.data.devCode);
+    } else {
+      setCode('');
+      setStep('code');
+    }
+    setBusy(false);
   };
 
-  const verify = async () => {
+  const submitCode = async () => {
     setBusy(true);
     setError(null);
-    const r = await api<{ phone: string }>('/api/auth/verify', { phone, code });
+    await verify(code);
     setBusy(false);
-    if (!r.ok) {
-      setError(ERRORS[r.error] ?? 'form.error');
+  };
+
+  const submitName = async () => {
+    setBusy(true);
+    setError(null);
+    const saved = await saveName(firstName);
+    setBusy(false);
+    if (!saved) {
+      setError('auth.err.invalid_name');
       return;
     }
-    completeAuth(r.data.phone);
+    navigate(next, { replace: true });
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-page">
-      <header className="flex min-h-[69px] items-center justify-between gap-4 border-b border-line-soft bg-panel px-[clamp(16px,3vw,32px)] py-3">
-        <Link to={ROUTES.home} className="flex flex-none items-center gap-2.5">
-          <img src={mark} alt="" className="block h-7 w-auto" />
-          <img src={wordmark} alt="Dashfixe" className="block h-[17px] w-auto" />
-        </Link>
-        <LangToggle />
-      </header>
+      <Header layout="full" minimal />
 
       <main className="flex flex-1 items-start justify-center px-5 py-[clamp(32px,8vh,72px)]">
-        <div className="w-full max-w-[420px] rounded-card border border-line-soft bg-panel p-[clamp(22px,4vw,28px)] shadow-card">
-          {step === 'phone' ? (
+        <div className={CARD}>
+          {step === 'phone' && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 void requestCode();
               }}
             >
-              <h1 className="mb-[7px] text-[22px] font-extrabold leading-[1.15] tracking-[-.025em] text-ink">
-                {t('auth.title')}
-              </h1>
-              <p className="mb-[22px] text-[14.5px] font-medium leading-[1.5] text-ink-60">{t('auth.body')}</p>
+              <h1 className={H1}>{t('auth.title')}</h1>
+              <p className={`mb-[22px] ${BODY}`}>{t('auth.body')}</p>
 
               <label htmlFor={id} className="mb-[7px] block text-label text-ink-40">
                 {t('auth.phone')}
@@ -109,6 +134,7 @@ export default function LoginPage() {
                   type="tel"
                   autoFocus
                   required
+                  autoComplete="tel-national"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="912 345 678"
@@ -118,11 +144,7 @@ export default function LoginPage() {
 
               {error && <p className="mt-3 text-[13px] font-semibold text-warning">{t(error)}</p>}
 
-              <button
-                type="submit"
-                disabled={busy}
-                className="mt-[18px] h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60"
-              >
+              <button type="submit" disabled={busy} className={PRIMARY}>
                 {busy ? t('form.sending') : t('auth.sendCode')}
               </button>
 
@@ -136,25 +158,17 @@ export default function LoginPage() {
                 />
               </p>
             </form>
-          ) : (
+          )}
+
+          {step === 'code' && (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                void verify();
+                void submitCode();
               }}
             >
-              <h1 className="mb-[7px] text-[22px] font-extrabold leading-[1.15] tracking-[-.025em] text-ink">
-                {t('auth.codeTitle')}
-              </h1>
-              <p className="mb-4 text-[14.5px] font-medium leading-[1.5] text-ink-60">
-                {t('auth.codeBody', { phone })}
-              </p>
-
-              {devCode && (
-                <p className="mb-4 rounded-[13px] bg-warning-tint px-3.5 py-2.5 text-[12.5px] font-bold leading-[1.5] text-warning">
-                  {t('auth.pilot', { code: devCode })}
-                </p>
-              )}
+              <h1 className={H1}>{t('auth.codeTitle')}</h1>
+              <p className={`mb-4 ${BODY}`}>{t('auth.codeBody', { phone })}</p>
 
               <label htmlFor={`${id}-code`} className="mb-[7px] block text-label text-ink-40">
                 {t('auth.codeLabel')}
@@ -176,11 +190,7 @@ export default function LoginPage() {
 
               {error && <p className="mt-3 text-[13px] font-semibold text-warning">{t(error)}</p>}
 
-              <button
-                type="submit"
-                disabled={busy || code.length !== 6}
-                className="mt-[18px] h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60"
-              >
+              <button type="submit" disabled={busy || code.length !== 6} className={PRIMARY}>
                 {busy ? t('form.sending') : t('auth.verify')}
               </button>
 
@@ -193,13 +203,57 @@ export default function LoginPage() {
                   onClick={() => {
                     setStep('phone');
                     setError(null);
-                    setDevCode(null);
                   }}
                   className="text-[13px] font-bold text-ink-60 transition hover:text-ink"
                 >
                   {t('auth.changePhone')}
                 </button>
               </div>
+            </form>
+          )}
+
+          {step === 'name' && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void submitName();
+              }}
+            >
+              {pilot && (
+                <p className="mb-4 rounded-[13px] bg-warning-tint px-3.5 py-2.5 text-[12.5px] font-bold leading-[1.5] text-warning">
+                  {t('auth.pilotIn')}
+                </p>
+              )}
+              <h1 className={H1}>{t('auth.nameTitle')}</h1>
+              <p className={`mb-[22px] ${BODY}`}>{t('auth.nameBody')}</p>
+
+              <label htmlFor={`${id}-name`} className="mb-[7px] block text-label text-ink-40">
+                {t('auth.nameLabel')}
+              </label>
+              <input
+                id={`${id}-name`}
+                type="text"
+                autoFocus
+                required
+                maxLength={40}
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="h-12 w-full rounded-input border border-line bg-page px-[15px] text-[15px] font-semibold text-ink"
+              />
+
+              {error && <p className="mt-3 text-[13px] font-semibold text-warning">{t(error)}</p>}
+
+              <button type="submit" disabled={busy || !firstName.trim()} className={PRIMARY}>
+                {busy ? t('form.sending') : t('auth.nameSave')}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(next, { replace: true })}
+                className="mt-3 w-full text-center text-[13px] font-bold text-ink-60 transition hover:text-ink"
+              >
+                {t('auth.nameSkip')}
+              </button>
             </form>
           )}
         </div>

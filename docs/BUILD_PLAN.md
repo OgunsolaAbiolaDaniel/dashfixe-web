@@ -212,7 +212,52 @@ price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and wat
 4. Load `/help` with DevTools → Network open; no `LiveMap`/`MapCanvas` chunk should
    appear.
 
+### Revision 1.5 · Product polish ✅ (branch `feat/product-polish`)
+
+The owner's review asked for consistency, a location that reacts, a real chat and a login
+that just works without paid SMS:
+
+- ✅ **One header everywhere** (`components/chrome/Header.tsx`), replacing four.
+  - The same logo (always home), links per auth state, language control and account
+    area on every page.
+  - Content-width on marketing pages, edge to edge on map screens, minimal on `/login`.
+  - The waitlist logo now goes home.
+- ✅ **One-tap pilot login.** With no SMS provider, Send code signs you in, then a
+  one-time, skippable "What should we call you?".
+  - The name rides in the session. The greeting follows the time of day ("Good
+    afternoon, Ana."), and Activity has an Account card.
+  - The code step returns automatically once `TWILIO_*` is set.
+- ✅ **One shared place** (`lib/place.ts`). Picking an address anywhere moves every map,
+  pin, distance and ETA.
+  - The signed-in home can change its address.
+  - An out-of-area location snaps to the pilot area, and says so.
+- ✅ **Chat is the real flow.**
+  - The artisan asks, then an itemised estimate arrives → Approve → confirm → booked →
+    Track.
+  - Suggested questions, a typing indicator, and a full-screen sheet on phones.
+  - Labelled as scripted sample replies.
+- ✅ **Jobs are a live store** (`lib/jobs.ts`).
+  - Jobs booked in chat appear in the home banner, Activity and `/job/:id`.
+  - Booked and travelling states; "Walkthrough: finish this job" leads to the receipt,
+    and ratings persist.
+- ✅ **`/how-it-works`**, plus home tidy-ups: 2×2 cards with honest buttons, a balanced
+  "Plan it for later", and the Apps card goes to `/explore`.
+- ✅ **The waitlist is parked:** reachable, but linked from nowhere, `noindex`, and out of
+  the sitemap.
+
+**Owner test:**
+1. On `/login`, enter any number → Send code → type a name. You land where you were
+   headed, greeted by name.
+2. On `/`, pick "Seixal" in the hero: the "Free near you" ETAs change, and the
+   signed-in home shows the same address.
+3. On `/explore`, chat with Tiago, send, then Approve €63.00 → Confirm → Track Tiago.
+4. On the job, choose "Walkthrough: finish this job", then rate it. It shows in Activity.
+
 ### Still open in Phase 5 (operator steps, no code)
+
+- ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
+  signs people in on Send code; the structure (codes, attempts, signed challenge) is
+  already in place and tested.
 
 - ⬜ **Vercel env vars.** Set `DATABASE_URL` and `AUTH_SECRET` (plus `TWILIO_*` when
   ready), and `SITE_URL` once the domain is chosen. Then verify one production login and

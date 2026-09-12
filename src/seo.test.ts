@@ -33,13 +33,15 @@ describe('pageMeta', () => {
 describe('indexablePaths', () => {
   it('lists the public pages and one per trade', () => {
     const paths = indexablePaths(false);
-    expect(paths).toContain('/waitlist');
     expect(paths).toContain('/trade/cleaning');
+    expect(paths).toContain('/how-it-works');
     expect(paths).not.toContain('/login');
   });
 
-  it('drops the waitlist at launch', () => {
+  it('keeps the parked waitlist out of search, before and after launch', () => {
+    expect(indexablePaths(false)).not.toContain('/waitlist');
     expect(indexablePaths(true)).not.toContain('/waitlist');
+    expect(pageMeta('/waitlist', 'EN').noindex).toBe(true);
   });
 });
 

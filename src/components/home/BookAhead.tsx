@@ -40,7 +40,9 @@ export default function BookAhead() {
     <section id="later" className="scroll-mt-[88px] bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
         <h2 className="mb-[30px] text-h2 text-ink">{t('later.title')}</h2>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] items-stretch gap-5">
+        {/* The booking card gets the room to sit form-beside-photo; the benefits
+            column is the narrow one, so neither side is left mostly empty. */}
+        <div className="grid items-stretch gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] items-center overflow-hidden rounded-card bg-brand-tint-strong">
             <div className="p-[clamp(26px,3vw,40px)]">
               <h3 className="mb-[26px] text-[clamp(22px,2.4vw,28px)] font-extrabold leading-[1.1] tracking-[-.03em] text-ink [text-wrap:balance]">
@@ -94,7 +96,7 @@ export default function BookAhead() {
             </div>
           </div>
 
-          <div className="rounded-card bg-well p-[clamp(24px,2.6vw,32px)]">
+          <div className="flex flex-col justify-center rounded-card bg-well p-[clamp(24px,2.6vw,32px)]">
             <h3 className="mb-[18px] text-h3 text-ink">{t('later.benefits')}</h3>
             {BENEFITS.map(({ Icon, key }, i) => (
               <div
@@ -109,8 +111,8 @@ export default function BookAhead() {
               </div>
             ))}
             <Link
-              to={link('help')}
-              className="mt-6 inline-block border-b border-[#c8d1e0] pb-[3px] text-[14.5px] font-bold text-ink transition hover:border-ink hover:text-ink"
+              to={link('cancellations')}
+              className="mt-6 self-start border-b border-[#c8d1e0] pb-[3px] text-[14.5px] font-bold text-ink transition hover:border-ink hover:text-ink"
             >
               {t('later.terms')}
             </Link>

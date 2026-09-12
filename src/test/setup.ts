@@ -1,8 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { resetChatStore } from '../components/explore/chatStore';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // Per-browser state (the saved place, jobs, language, places) and the chat
+  // threads must not leak between tests.
+  localStorage.clear();
+  resetChatStore();
+});
 
 // jsdom has no layout engine; the map and scroll code both touch these.
 Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true });

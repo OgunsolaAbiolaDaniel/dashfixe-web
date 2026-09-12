@@ -5,7 +5,7 @@ import { TrackMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import { Check } from '../components/icons';
 import { AVAILABLE } from '../components/explore/artisans';
-import { formatEuro, getJob, type Job } from '../lib/jobs';
+import { finishJob, formatDate, formatEuro, rateJob, useJobs, type Job } from '../lib/jobs';
 import { HOME } from '../lib/geo';
 import { DEFAULT_ADDRESS, exploreUrl } from '../search';
 import { ROUTES, artisanUrl, link } from '../routes';
@@ -13,22 +13,26 @@ import { useAuth } from '../auth';
 import { useLang } from '../i18n';
 
 /**
- * The job — ARCHITECTURE.md §4. One route, two states:
+ * The job — ARCHITECTURE.md §4. One route, three states:
  *
- * - travelling: the tracking screen. Panel = timeline + the approved estimate +
- *   chat; map = TrackMap with the artisan easing along a sample route.
+ * - agreed (booked ahead): the slot, the approved estimate, chat; the artisan's
+ *   pin waits where they are.
+ * - travelling: the tracking screen — timeline, estimate, chat; TrackMap with the
+ *   artisan easing along a sample route.
  * - done: the receipt. Itemised lines, paid-in-app, rating, rebook.
  *
- * Signed-in only (account data); sample-driven until the Phase 5 backend.
+ * Signed-in only (account data). Sample-driven: a clearly labelled walkthrough
+ * control finishes the job so the whole loop can be seen end to end.
  */
 export default function JobPage() {
   const { id = '' } = useParams();
   const { signedIn, checking } = useAuth();
+  const jobs = useJobs();
 
   if (checking) return null;
   if (!signedIn) return <Navigate to={ROUTES.home} replace />;
-  const job = getJob(id);
-  if (!job) return <Navigate to={ROUTES.activity} replace />;
+  const job = jobs.find((j) => j.id === id);
+  if (!job || job.status === 'cancelled') return <Navigate to={ROUTES.activity} replace />;
 
   return job.status === 'done' ? <Receipt job={job} /> : <LiveJob job={job} />;
 }
@@ -40,7 +44,9 @@ function LiveJob({ job }: { job: Job }) {
   const [params] = useSearchParams();
   const [chatOpen, setChatOpen] = useState(params.get('chat') === '1');
   const artisan = AVAILABLE.find((a) => a.id === job.artisanId);
-  const current = STEPS.indexOf(job.status);
+  const current = STEPS.indexOf(job.status as (typeof STEPS)[number]);
+  const booked = job.status === 'agreed';
+  const first = job.artisanName.split(' ')[0]!;
 
   return (
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
@@ -49,16 +55,27 @@ function LiveJob({ job }: { job: Job }) {
         <div className="flex min-h-0 min-w-0 flex-col gap-[18px] overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
           <div>
             <div className="mb-2.5 flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-2 rounded-full border border-success/30 bg-success-tint px-[11px] py-1">
-                <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-success text-success" />
-                <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-success">
-                  {t('customer.onTheWay')}
+              {booked ? (
+                <span className="flex items-center gap-2 rounded-full border border-brand/25 bg-brand-tint px-[11px] py-1">
+                  <span className="block h-[7px] w-[7px] flex-none rounded-full bg-brand" />
+                  <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-brand-hover">{t('job.booked')}</span>
                 </span>
+              ) : (
+                <span className="flex items-center gap-2 rounded-full border border-success/30 bg-success-tint px-[11px] py-1">
+                  <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-success text-success" />
+                  <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-success">
+                    {t('customer.onTheWay')}
+                  </span>
+                </span>
+              )}
+              <span className="ml-auto text-[13px] font-bold text-ink-60">
+                {booked
+                  ? `${formatDate(job.date, lang)} · ${job.slot?.window ?? ''}`
+                  : job.arrives && t('customer.arrives', { time: job.arrives })}
               </span>
-              {job.arrives && <span className="ml-auto text-[13px] font-bold text-ink-60">{t('customer.arrives', { time: job.arrives })}</span>}
             </div>
             <h1 className="text-[24px] font-extrabold leading-[1.1] tracking-[-.025em] text-ink">
-              {t('customer.heading', { name: job.artisanName.split(' ')[0]! })}
+              {booked ? t('job.bookedHeading', { name: first }) : t('customer.heading', { name: first })}
             </h1>
             <p className="mt-1 text-[13.5px] font-semibold text-ink-60">
               {`${t(`trades.${job.trade}` as const)} · ${job.title[lang]}`}
@@ -119,15 +136,31 @@ function LiveJob({ job }: { job: Job }) {
           >
             {t('customer.openChat')}
           </button>
-          <p className="text-[12.5px] font-medium leading-[1.5] text-ink-40">
-            {t('job.cancelNote', { name: job.artisanName.split(' ')[0]! })}
-          </p>
+          <p className="text-[12.5px] font-medium leading-[1.5] text-ink-40">{t('job.cancelNote', { name: first })}</p>
+
+          {/* Walkthrough control — honest about what it is */}
+          <div className="rounded-card border border-dashed border-line p-4">
+            <p className="mb-3 text-[12.5px] font-medium leading-[1.5] text-ink-60">{t('job.demoNote')}</p>
+            <button
+              type="button"
+              onClick={() => finishJob(job.id)}
+              className="h-10 w-full rounded-[12px] border border-line bg-panel text-[13.5px] font-bold text-ink transition hover:bg-well"
+            >
+              {t('job.demoFinish')}
+            </button>
+          </div>
         </div>
 
         <div className="relative min-h-[440px] min-w-0 lg:min-h-0">
-          {job.from && <TrackMap from={job.from} to={HOME} initials={job.initials} />}
+          {job.from && <TrackMap from={job.from} to={job.to ?? HOME} initials={job.initials} moving={!booked} />}
           {chatOpen && artisan && (
-            <ChatPanel key={artisan.id} artisan={artisan} address={DEFAULT_ADDRESS} onClose={() => setChatOpen(false)} />
+            <ChatPanel
+              key={artisan.id}
+              artisan={artisan}
+              address={job.address ?? DEFAULT_ADDRESS}
+              mode="job"
+              onClose={() => setChatOpen(false)}
+            />
           )}
         </div>
       </div>
@@ -137,8 +170,9 @@ function LiveJob({ job }: { job: Job }) {
 
 function Receipt({ job }: { job: Job }) {
   const { t, lang } = useLang();
-  const [given, setGiven] = useState<number | null>(job.rating ?? null);
+  const [justRated, setJustRated] = useState(false);
   const hasProfile = AVAILABLE.some((a) => a.id === job.artisanId);
+  const first = job.artisanName.split(' ')[0]!;
 
   return (
     <div className="min-h-screen bg-page">
@@ -153,7 +187,7 @@ function Receipt({ job }: { job: Job }) {
           </div>
           <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-[-.03em] text-ink">{job.title[lang]}</h1>
           <p className="mt-1.5 text-[13.5px] font-semibold text-ink-60">
-            {job.date}
+            {formatDate(job.date, lang)}
             {' · '}
             {hasProfile ? (
               <Link to={artisanUrl(job.artisanId)} className="font-bold text-brand hover:text-brand-hover">
@@ -168,8 +202,11 @@ function Receipt({ job }: { job: Job }) {
 
         {/* Receipt */}
         <section className="overflow-hidden rounded-card border border-line-soft bg-panel">
-          <div className="flex items-center border-b border-line-rule px-5 py-4">
+          <div className="flex items-center gap-2 border-b border-line-rule px-5 py-4">
             <span className="mr-auto text-label text-ink-40">{t('job.receipt')}</span>
+            <span className="rounded-full bg-warning-tint px-2.5 py-1 text-[10.5px] font-extrabold uppercase tracking-[.06em] text-warning">
+              {t('nearby.sample')}
+            </span>
             {job.paid && (
               <span className="rounded-full bg-success-tint px-3 py-1 text-[11.5px] font-extrabold uppercase tracking-[.06em] text-success">
                 {t('job.paid')}
@@ -188,23 +225,24 @@ function Receipt({ job }: { job: Job }) {
           </div>
         </section>
 
-        {/* Rating */}
+        {/* Rating — remembered with the job */}
         <section className="mt-5 rounded-card border border-line-soft bg-panel p-5">
-          {given !== null ? (
-            <p className="text-[14.5px] font-bold text-ink">
-              {job.rating ? t('job.rated', { stars: given }) : t('job.rateThanks')}
-            </p>
+          {justRated ? (
+            <p className="text-[14.5px] font-bold text-ink">{t('job.rateThanks')}</p>
+          ) : job.rating ? (
+            <p className="text-[14.5px] font-bold text-ink">{t('job.rated', { stars: job.rating })}</p>
           ) : (
             <>
-              <p className="mb-3 text-[15px] font-bold text-ink">
-                {t('job.rate', { name: job.artisanName.split(' ')[0]! })}
-              </p>
+              <p className="mb-3 text-[15px] font-bold text-ink">{t('job.rate', { name: first })}</p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
                     type="button"
-                    onClick={() => setGiven(n)}
+                    onClick={() => {
+                      rateJob(job.id, n);
+                      setJustRated(true);
+                    }}
                     aria-label={t('job.star', { n })}
                     className="grid h-11 w-11 place-items-center rounded-[13px] border border-line bg-panel text-[19px] text-star transition hover:bg-brand-tint"
                   >
@@ -222,6 +260,12 @@ function Receipt({ job }: { job: Job }) {
             className="flex h-ctl items-center rounded-[13px] bg-brand px-5 text-[14.5px] font-bold text-white transition hover:bg-brand-hover hover:text-white"
           >
             {t('customer.rebook')}
+          </Link>
+          <Link
+            to={ROUTES.activity}
+            className="flex h-ctl items-center rounded-[13px] border border-line bg-panel px-5 text-[14.5px] font-bold text-ink transition hover:bg-page hover:text-ink"
+          >
+            {t('nav.activity')}
           </Link>
           <Link
             to={link('help')}

@@ -12,6 +12,7 @@ import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
 import LoginPage from './pages/LoginPage';
 import TradePage from './pages/TradePage';
+import HowItWorksPage from './pages/HowItWorksPage';
 import { ROUTES, link } from './routes';
 import { launched } from './config';
 import { applyMeta, pageMeta } from './seo';
@@ -62,6 +63,7 @@ export default function AppRoutes() {
         {/* Marketing surface. The launch switch (config.ts) retires the waitlist. */}
         <Route path={ROUTES.waitlist} element={launched() ? <Navigate to={ROUTES.home} replace /> : <WaitlistPage />} />
         <Route path={ROUTES.trade} element={<TradePage />} />
+        <Route path={ROUTES.howItWorks} element={<HowItWorksPage />} />
         <Route path={ROUTES.forArtisans} element={<ForArtisansPage />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />

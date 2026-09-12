@@ -34,8 +34,10 @@ type Entry = { title: StringKey; description: StringKey; noindex?: boolean };
 const PAGES: Record<string, Entry> = {
   [ROUTES.home]: { title: 'seo.home.title', description: 'seo.home.desc' },
   [ROUTES.explore]: { title: 'seo.explore.title', description: 'seo.explore.desc' },
-  [ROUTES.waitlist]: { title: 'seo.waitlist.title', description: 'seo.waitlist.desc' },
+  // Parked: reachable at /waitlist, but no longer a front door — kept out of search.
+  [ROUTES.waitlist]: { title: 'seo.waitlist.title', description: 'seo.waitlist.desc', noindex: true },
   [ROUTES.forArtisans]: { title: 'seo.forArtisans.title', description: 'seo.forArtisans.desc' },
+  [ROUTES.howItWorks]: { title: 'seo.how.title', description: 'seo.how.desc' },
   [ROUTES.about]: { title: 'footer.about', description: 'seo.about.desc' },
   [ROUTES.help]: { title: 'footer.helpCentre', description: 'seo.help.desc' },
   [ROUTES.privacy]: { title: 'footer.privacy', description: 'seo.legal.desc' },
@@ -86,13 +88,18 @@ export function pageMeta(pathname: string, lang: Lang): PageMeta {
   };
 }
 
-/** Every public, indexable page — the sitemap and the pre-rendered heads. */
-export function indexablePaths(launched: boolean): string[] {
+/**
+ * Every public, indexable page — the sitemap and the pre-rendered heads. The
+ * waitlist is parked (reachable, not promoted), so it is never listed; the
+ * `launched` switch is kept for pages that change at launch.
+ */
+export function indexablePaths(_launched: boolean): string[] {
+  void _launched;
   return [
     ROUTES.home,
     ROUTES.explore,
-    ...(launched ? [] : [ROUTES.waitlist]),
     ...TRADE_SLUGS.map(tradeUrl),
+    ROUTES.howItWorks,
     ROUTES.forArtisans,
     ROUTES.about,
     ROUTES.help,

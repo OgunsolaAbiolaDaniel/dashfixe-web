@@ -5,10 +5,12 @@ import { LiveMap } from '../map/lazy';
 import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
 import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
-import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
-import { HOME } from '../../lib/geo';
+import { exploreUrl, type When } from '../../search';
+import { setPlace, usePlace } from '../../lib/place';
+import AddressField from '../shared/AddressField';
 import { ROUTES, jobUrl } from '../../routes';
-import { ACTIVE_JOB_ID } from '../../lib/jobs';
+import { activeJob, formatDate, formatEuro, useJobs } from '../../lib/jobs';
+import { useAuth } from '../../auth';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -35,12 +37,24 @@ const CARD = 'rounded-card border border-line-soft bg-panel';
 export default function AppHome() {
   const { t } = useLang();
   const navigate = useNavigate();
+  const { name } = useAuth();
+  const { lang } = useLang();
+  const live = activeJob(useJobs());
   const [when, setWhen] = useState<When>('now');
   const [need, setNeed] = useState('');
+  // Clocks are impure: read once per mount.
+  const [dayPart] = useState<'morning' | 'afternoon' | 'evening'>(() => {
+    const h = new Date().getHours();
+    return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+  });
 
-  // Every action carries the saved address, so /explore opens where the customer is.
+  // The shared place (lib/place): the map, the pin, and every shortcut below
+  // follow it, so /explore always opens where the customer is.
+  const place = usePlace();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
   const to = (extra: Parameters<typeof exploreUrl>[0]) =>
-    exploreUrl({ address: DEFAULT_ADDRESS, lngLat: HOME, ...extra });
+    exploreUrl({ address: place.label, lngLat: place.lngLat, ...extra });
   const find = () => navigate(to({ need, when }));
 
   return (
@@ -53,15 +67,42 @@ export default function AppHome() {
         <div className="flex min-h-0 min-w-0 flex-col gap-[18px] overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
           <div>
             <h1 className="mb-2 text-[26px] font-extrabold leading-[1.08] tracking-[-.03em] text-ink">
-              {t('customer.greeting', { name: 'Alex' })}
+              {name ? t(`customer.greet.${dayPart}`, { name: name.split(' ')[0]! }) : t(`customer.greetPlain.${dayPart}`)}
             </h1>
-            <Link
-              to={ROUTES.activity}
-              className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
-            >
-              <MapPin size={15} className="flex-none text-brand" />
-              {DEFAULT_ADDRESS}
-            </Link>
+            {editing ? (
+              <div className="mt-2 flex items-start gap-2">
+                <AddressField
+                  className="min-w-0 flex-1"
+                  variant="input"
+                  value={draft}
+                  onChange={setDraft}
+                  onPlace={(p) => {
+                    setPlace(p);
+                    setEditing(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="h-12 flex-none rounded-input px-3 text-[13.5px] font-bold text-ink-60 transition hover:bg-well hover:text-ink"
+                >
+                  {t('customer.cancel')}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft('');
+                  setEditing(true);
+                }}
+                className="group flex max-w-full items-center gap-2 text-left text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
+              >
+                <MapPin size={15} className="flex-none text-brand" />
+                <span className="truncate">{place.label}</span>
+                <span className="flex-none font-bold text-brand group-hover:text-brand-hover">· {t('customer.changePlace')}</span>
+              </button>
+            )}
           </div>
 
           {/* The composer — the "Where to?" of Dashfixe */}
@@ -102,7 +143,9 @@ export default function AppHome() {
             </div>
           </section>
 
-          {/* The active job — Uber's ongoing-trip banner */}
+          {/* The active job — Uber's ongoing-trip banner. Follows whatever is live:
+              the seeded job, or one just booked in chat (lib/jobs). */}
+          {live && (
           <section className="relative overflow-hidden rounded-hero bg-ink p-5 shadow-hero">
             <span
               aria-hidden="true"
@@ -113,28 +156,36 @@ export default function AppHome() {
                 <span className="flex items-center gap-2 rounded-full border border-success-bright/40 bg-success-bright/[.16] px-[11px] py-1">
                   <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-success-bright text-success-bright" />
                   <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-[#a7f3cf]">
-                    {t('customer.onTheWay')}
+                    {live.status === 'agreed' ? t('job.booked') : t('customer.onTheWay')}
                   </span>
                 </span>
-                <span className="ml-auto text-[12.5px] font-bold text-onink">{t('customer.arrives', { time: '14:35' })}</span>
+                <span className="ml-auto text-[12.5px] font-bold text-onink">
+                  {live.status === 'agreed'
+                    ? `${formatDate(live.date, lang)} · ${live.slot?.window ?? ''}`
+                    : live.arrives && t('customer.arrives', { time: live.arrives })}
+                </span>
               </div>
-              <div className="mb-1 text-[12.5px] font-bold text-brand-on-dark">{t('customer.jobLabel')}</div>
+              <div className="mb-1 truncate text-[12.5px] font-bold text-brand-on-dark">
+                {`${t(`trades.${live.trade}` as const)} · ${live.title[lang]}`}
+              </div>
               <h2 className="mb-3.5 text-[20px] font-extrabold leading-[1.15] tracking-[-.025em] text-white">
-                {t('customer.heading', { name: 'Tiago' })}
+                {live.status === 'agreed'
+                  ? t('job.bookedHeading', { name: live.artisanName.split(' ')[0]! })
+                  : t('customer.heading', { name: live.artisanName.split(' ')[0]! })}
               </h2>
               <div className="mb-3.5 flex items-center gap-3 border-y border-white/[.12] py-2.5">
                 <span className="mr-auto text-[12.5px] font-semibold text-onink">{t('customer.approved')}</span>
-                <span className="flex-none text-[17px] font-extrabold tracking-[-.02em] text-white">€63.00</span>
+                <span className="flex-none text-[17px] font-extrabold tracking-[-.02em] text-white">{formatEuro(live.total)}</span>
               </div>
               <div className="flex gap-2.5">
                 <Link
-                  to={`${jobUrl(ACTIVE_JOB_ID)}?chat=1`}
+                  to={`${jobUrl(live.id)}?chat=1`}
                   className="flex h-11 flex-1 items-center justify-center rounded-[13px] bg-brand text-[14px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
                 >
                   {t('customer.openChat')}
                 </Link>
                 <Link
-                  to={jobUrl(ACTIVE_JOB_ID)}
+                  to={jobUrl(live.id)}
                   className="flex h-11 flex-none items-center rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16] hover:text-onink-strong"
                 >
                   {t('customer.track')}
@@ -142,6 +193,7 @@ export default function AppHome() {
               </div>
             </div>
           </section>
+          )}
 
           {/* Book again — two shortcuts, the rest under Activity */}
           <section>
@@ -211,7 +263,7 @@ export default function AppHome() {
 
         {/* The map IS the home. Tapping a pin opens the search with that artisan. */}
         <div className="relative min-h-[440px] min-w-0 lg:min-h-0">
-          <LiveMap home={HOME} onSelect={(id) => navigate(to({ artisan: id }))} />
+          <LiveMap home={place.lngLat} onSelect={(id) => navigate(to({ artisan: id }))} />
         </div>
       </div>
     </div>

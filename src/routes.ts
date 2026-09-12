@@ -26,6 +26,8 @@ export const ROUTES = {
   job: '/job/:id',
   /** One indexable landing page per trade (SEO, Phase 5). */
   trade: '/trade/:slug',
+  /** The customer journey end to end — the header's "How it works". */
+  howItWorks: '/how-it-works',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
   about: '/about',
@@ -61,6 +63,9 @@ const DESTINATIONS = {
   book: `${ROUTES.explore}?when=later`,
 
   // Info + legal.
+  howItWorks: ROUTES.howItWorks,
+  /** The price rule, explained. */
+  priceRule: `${ROUTES.howItWorks}#estimate`,
   about: ROUTES.about,
   /** Cut page: one pilot area is a section, not a page. */
   coverage: `${ROUTES.about}#coverage`,

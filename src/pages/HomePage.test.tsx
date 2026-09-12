@@ -89,7 +89,7 @@ describe('HomePage', () => {
     expect(screen.queryByRole('dialog', { name: 'Menu' })).not.toBeInTheDocument();
   });
 
-  it('refuses a location outside the pilot area instead of pinning it', async () => {
+  it('keeps an out-of-area location inside the pilot area, and says so', async () => {
     const user = userEvent.setup();
     // Lisbon: real, nearby, and outside the Amora–Seixal box.
     Object.defineProperty(navigator, 'geolocation', {
@@ -103,7 +103,8 @@ describe('HomePage', () => {
     await user.click(screen.getByRole('button', { name: 'Use my location' }));
 
     expect(await screen.findByText(/piloting in Amora & Seixal only/)).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: 'Your address' })).toHaveValue('');
+    // "We've kept your search there" is now literally true: the field, not Lisbon.
+    expect(screen.getByRole('combobox', { name: 'Your address' })).toHaveValue('Rua da Cooperativa 14, Amora');
   });
 
   it('works out the sample distances instead of hard-coding them', () => {
@@ -112,5 +113,22 @@ describe('HomePage', () => {
     expect(screen.getByText(`Plumbing · ${tiago.km} km`)).toBeInTheDocument();
     expect(screen.getAllByText(`Available · ${tiago.eta} min away`).length).toBeGreaterThan(0);
     expect(screen.getByText('Sample data')).toBeInTheDocument();
+  });
+
+  it('re-works every distance and ETA when the customer picks an address', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    const seixal: [number, number] = [-9.1012, 38.6403];
+    const before = getNearby().find((p) => p.id === 'tf')!;
+    const after = getNearby(seixal).find((p) => p.id === 'tf')!;
+    expect(after.km).not.toBe(before.km); // guard: the test means something
+
+    await user.type(screen.getByRole('combobox', { name: 'Your address' }), 'seixal');
+    await user.click(await screen.findByRole('option', { name: 'Praça 1.º de Maio, Seixal' }));
+
+    expect(await screen.findByText(`Plumbing · ${after.km} km`)).toBeInTheDocument();
+    expect(screen.getByText('Around Praça 1.º de Maio, Seixal')).toBeInTheDocument();
+    // …and it is remembered for the next page.
+    expect(JSON.parse(localStorage.getItem('dfx.place')!).label).toBe('Praça 1.º de Maio, Seixal');
   });
 });

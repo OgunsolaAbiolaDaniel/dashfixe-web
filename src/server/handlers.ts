@@ -60,6 +60,8 @@ function str(body: unknown, key: string, max = 200): string | null {
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** A first name: letters (any script), spaces, apostrophes and hyphens. */
+const NAME = /^\p{L}[\p{L}\p{M} '’-]{0,39}$/u;
 /** Digits, spaces and a leading +; 9–16 digits once normalised. */
 function normalisePhone(raw: string): string | null {
   if (!/^[+\d][\d\s-]*$/.test(raw)) return null;
@@ -143,7 +145,21 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
 
     case 'GET /api/auth/me': {
       const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));
-      return session ? ok({ signedIn: true, phone: session.phone }) : ok({ signedIn: false });
+      return session ? ok({ signedIn: true, phone: session.phone, name: session.name ?? null }) : ok({ signedIn: false });
+    }
+
+    // The display name rides in the session token (re-issued here) — no profile
+    // table until accounts need more than a first name.
+    case 'POST /api/auth/profile': {
+      const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));
+      if (!session) return bad(401, 'not_signed_in');
+      const name = str(req.body, 'name', 40);
+      if (!name || !NAME.test(name)) return bad(400, 'invalid_name');
+      return {
+        status: 200,
+        body: { ok: true, name },
+        setCookie: [sessionCookie(issueToken(session.phone, name))],
+      };
     }
 
     case 'POST /api/auth/logout':

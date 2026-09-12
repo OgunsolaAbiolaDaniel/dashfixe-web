@@ -6,8 +6,8 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-12 · Revision 1.4 — launch hardening: the map is lazy, every
-route has its own head, trade pages exist, the launch switch is wired, smoke tests gate CI.
+**Last revised:** 2026-09-12 · Revision 1.5 — product polish: one header, one-tap pilot
+login, one shared place, and chat that turns a search into a job.
 
 ---
 
@@ -61,12 +61,19 @@ dashboard; the lists (recent requests, saved places) live on `/activity`, Uber's
 
 Four journeys cover everyone. Every nav decision below exists to serve these.
 
-1. **Urgent Ana** — tap leaking now. `/` composer (need + address) → `/explore` sorted by
-   arrival → picks an artisan → **Chat** (auth gate) → price agreed in chat → `/job/:id`
-   (on the way → done → receipt) → next time, rebooks from the signed-in home in two taps.
-2. **Planner Pedro** — wants the painting done some Saturday. `/` toggles *Book for later* →
-   `/explore?when=later` → picks a date and a two-hour window → holds an artisan (auth gate)
-   → on the day it becomes a live job, same `/job/:id`.
+1. **Urgent Ana** — tap leaking now.
+   - `/` composer (need + address) → `/explore`, sorted by arrival → picks an artisan →
+     **Chat**. This is the auth gate; in pilot mode it's one tap.
+   - The artisan asks what's wrong (her need is pre-filled) → an itemised estimate → she
+     approves and confirms → a booked card with **Track**.
+   - `/job/:id`: on the way, then done, then the receipt and rating.
+   - Next time she rebooks from the signed-in home in two taps.
+2. **Planner Pedro** — wants the painting done some Saturday.
+   - `/` toggles *Book for later* → `/explore?when=later` → picks a day and a two-hour
+     window.
+   - Chat → estimate → approve. That holds the slot, and the job shows as **Booked** with
+     the date and window.
+   - On the day it becomes the live job, on the same `/job/:id`.
 3. **Artisan Tiago** — heard about the pilot. Any page → *Become an artisan* →
    `/for-artisans` (how it pays, vetting, the app) → applies with name + WhatsApp + trade →
    a human calls him on WhatsApp within 48 h. Supply acquisition is manual by design.
@@ -91,7 +98,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
 | `/privacy` `/terms` `/cookies` | marketing | Minimal, honest, GDPR-aware | built (rev 1) |
 | `/trade/:slug` | marketing | One landing page per trade (5), pre-rendered head, the search-engine entry point | built (rev 1.4) |
-| `/waitlist` | marketing | Pre-launch front door; `VITE_LAUNCHED=true` redirects it to `/` | built (switch: rev 1.4) |
+| `/how-it-works` | marketing | The customer journey in five steps + the three trust rules (`#estimate`, `#safety`, `#cancellations`) | built (rev 1.5) |
+| `/waitlist` | own chrome | **Parked** (rev 1.5): reachable, linked from nowhere, `noindex`, out of the sitemap; `VITE_LAUNCHED=true` redirects it to `/` | built |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
 
 ### Cut in revision 1, and why
@@ -122,39 +130,44 @@ and Twitter tags on every navigation and language switch. At build time, the
 `vite preview` both resolve it. It also writes `sitemap.xml` and `robots.txt`. This
 matters because link-preview crawlers (WhatsApp, LinkedIn, X) never run JavaScript.
 
-- **Indexed:** the home, `/explore`, `/waitlist` (until launch), the five trade pages,
+- **Indexed:** the home, `/explore`, the five trade pages, `/how-it-works`,
   `/for-artisans`, `/about`, `/help` and legal.
 - **`noindex`:** `/login`, `/activity` and `/job/*`, because they are private.
-  `/artisan/*` too, because those profiles are sample data.
+  `/artisan/*` too, because those profiles are sample data. `/waitlist`, because it is
+  parked.
 - **Absolute URLs:** from `SITE_URL`, falling back to Vercel's production hostname.
 - **Share image:** `public/og.jpg`, 1200×630, under 100 kB.
 - **Guard:** the build fails if `index.html` loses any tag the renderer expects.
 
 **The launch switch.** `VITE_LAUNCHED=true` (via `src/config.ts`) redirects `/waitlist`
-to `/`. `link('waitlist')` follows, and the page drops out of the sitemap. The honesty
+to `/`, and `link('waitlist')` follows. The page is already out of the sitemap, because it
+is parked. The honesty
 badges are deliberately *not* tied to the switch: they come off screen by screen as real
 supply replaces the sample data (Phase 6).
 
 ## 5. Navigation
 
-Three chrome components, in `src/components/chrome/`. Nothing else renders a header.
+**One header** (rev 1.5): `components/chrome/Header.tsx`. Every page renders it; nothing
+else draws a header except the parked `/waitlist`, whose logo still goes home. Only the
+frame changes with the surface:
 
-**`SiteNav`** — marketing surface. Links go to the *product*, not to explainer anchors:
-*Fix* → `/explore` · *Book ahead* → `/explore?when=later` · *Become an artisan* →
-`/for-artisans` · *Help* → `/help`. Right cluster: language, Log in, Sign up (ink pill).
-Under `md` it collapses to the shared `MobileMenu` sheet. Auth comes from `useAuth()`
-directly — no prop drilling.
+- **Frames:** `contained` on marketing pages (via `SiteNav`), `full` on map screens (via
+  `AppBar`), and `minimal` on `/login` (logo and language only, so there's nothing to
+  wander off to mid-flow).
+- **Logo:** always `/`.
+- **Signed out:** *Find an artisan* · *Book ahead* · *How it works* · *Become an artisan*,
+  then Help, Log in, and Sign up (ink pill).
+- **Signed in:** *Home* · *Find an artisan* · *Activity*, then the bell and an account
+  menu (name, phone, Activity, Help, Sign out).
+- **Active link:** a well background. It tells `/explore` apart from
+  `/explore?when=later`.
+- **Under `md`:** everything collapses into the shared `MobileMenu` sheet.
+- **Auth:** read from `useAuth()` directly.
 
 **`SiteFooter`** — marketing surface only. Four columns, every link true:
-*Services* (trade deep-links into `/explore`), *Company* (About, Coverage → `/about#coverage`,
+*Services* (the `/trade/:slug` pages), *Company* (About, Coverage → `/about#coverage`,
 Contact → `/help#contact`), *For artisans* (Join → `/for-artisans#apply`, payouts/vetting/app
 anchors), *Support* (Help, Safety, Cancellations → `/help` anchors). Legal row at the bottom.
-
-**`AppBar`** — product surface. Slim, 69 px, **auth-aware** like Uber's: a visitor sees
-*Find an artisan · How it works · Become an artisan* plus Log in / Sign up; a signed-in
-customer sees *Home · Activity · Help* with the bell and the account chip (sign out).
-Used by the signed-in home, `/explore` and `/activity` today; `/artisan/:id` and
-`/job/:id` reuse it in Phase 4. The current route's link renders brand-bold.
 
 Sections on `/` remain reachable by scrolling and by `/#anchor` links (the router's
 `HashScroll` makes these work from any page), but the nav's job is to move people into the
@@ -165,14 +178,30 @@ product, so nav links point at routes.
 - **Search state** (`src/search.ts`): `need, trade, address, lng/lat, when, artisan` —
   parsed from and serialised to the URL. The composer, trade tiles, nearby cards and the
   signed-in home all speak this one language; `/explore` only reads it.
-- **Auth** (`src/auth.tsx`): in-memory walkthrough today. `gate(action)` is the only
-  API pages use, so swapping in phone-OTP later (Phase 5) changes no page code.
+- **Auth** (`src/auth.tsx`): server-backed. `requireAuth(next)` sends the visitor to
+  `/login?next=`, and `/api/auth/me` returns the phone and first name.
+  - **Pilot mode** (no `TWILIO_*`): the login page verifies the code the server handed
+    back, so Send code signs you in. The code step appears only when a real SMS was sent.
+  - **Name:** a one-time, skippable step saves it into the session token
+    (`POST /api/auth/profile`).
+- **The current place** (`src/lib/place.ts`, rev 1.5): one saved address for the whole
+  site, in localStorage and pilot-area only, read through `usePlace()`.
+  - Every map, pin, distance and ETA follows it.
+  - On `/explore` the URL wins, so shared links open where they were made.
+- **Jobs** (`src/lib/jobs.ts`, rev 1.5): the seeded history, plus jobs booked by approving
+  an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
+  `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
+  this for `/api/jobs`, keeping the same shapes.
+- **Chat** (`components/explore/chatStore.ts`): one thread per artisan that follows the
+  customer from `/explore` to the job. Replies are scripted and labelled as such, until
+  the Phase 6 chat backend.
 - **Language** (`src/i18n/`): flat key dictionaries EN/PT with a parity test (keys and
   `{placeholders}` must match). `Rich` renders translated sentences containing links.
   Persisted per browser, mirrored to `<html lang>`.
 - **Geography** (`src/lib/geo.ts`, `geocode.ts`): one derivation chain —
   address → `lng/lat` → `getSupply(home)` → distances, ETAs, median. Nominatim bounded to
-  the pilot box, offline street list fallback, out-of-area positions refused with a notice.
+  the pilot box, offline street list fallback. An out-of-area "use my location" keeps the
+  search at the pilot address, and says so.
 - **Sample supply** (`components/explore/artisans.ts`): the only place fake artisans exist.
   Everything renders from it, always badged. When the backend arrives (Phase 5), this file's
   exports become the API client's return shape — the components don't change.
