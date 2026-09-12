@@ -4,8 +4,11 @@ import SearchPanel from '../components/explore/SearchPanel';
 import { LiveMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
-import { getSupply } from '../components/explore/artisans';
-import { parseSearch, type When } from '../search';
+import { getSupply, type Artisan } from '../components/explore/artisans';
+import { WINDOWS, parseSearch, type When } from '../search';
+import { clockIn, createJob } from '../lib/jobs';
+import type { Estimate } from '../lib/estimate';
+import { translate } from '../i18n/strings';
 import type { Place } from '../lib/geocode';
 import { ROUTES } from '../routes';
 import type { LngLat } from '../lib/geo';
@@ -111,6 +114,34 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
+  /**
+   * Approving the estimate in chat books the job: on the way now, or held for
+   * the chosen slot in later mode. Returns the id the chat's "Track" link opens.
+   */
+  const approve = (a: Artisan, estimate: Estimate): string => {
+    const later = search.when === 'later';
+    const need = search.need.trim();
+    const job = createJob({
+      artisanId: a.id,
+      artisanName: a.name,
+      initials: a.initials,
+      trade: a.trade,
+      title: need
+        ? { EN: need, PT: need }
+        : { EN: translate('EN', `trades.${a.trade}`), PT: translate('PT', `trades.${a.trade}`) },
+      status: later ? 'agreed' : 'travelling',
+      from: a.lngLat,
+      to: home,
+      address: addressLabel || place.label,
+      ...(later
+        ? { dayOffset: search.day ?? 0, slot: { window: WINDOWS[search.win ?? 2]! } }
+        : { arrives: clockIn(a.eta) }),
+      lines: estimate.lines,
+      total: estimate.total,
+    });
+    return job.id;
+  };
+
   // The docked chat is for signed-in customers only. Signing out closes it.
   const openId = chatWith ?? (wantChat ? arriving : null);
   const chatArtisan = signedIn ? (supply.available.find((a) => a.id === openId) ?? null) : null;
@@ -154,6 +185,9 @@ export default function ExplorePage() {
               key={chatArtisan.id}
               artisan={chatArtisan}
               address={addressLabel || place.label}
+              need={search.need}
+              later={search.when === 'later'}
+              onApprove={(estimate) => approve(chatArtisan, estimate)}
               onClose={closeChat}
             />
           )}

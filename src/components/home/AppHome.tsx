@@ -9,7 +9,7 @@ import { exploreUrl, type When } from '../../search';
 import { setPlace, usePlace } from '../../lib/place';
 import AddressField from '../shared/AddressField';
 import { ROUTES, jobUrl } from '../../routes';
-import { ACTIVE_JOB_ID } from '../../lib/jobs';
+import { activeJob, formatDate, formatEuro, useJobs } from '../../lib/jobs';
 import { useAuth } from '../../auth';
 
 /**
@@ -38,6 +38,8 @@ export default function AppHome() {
   const { t } = useLang();
   const navigate = useNavigate();
   const { name } = useAuth();
+  const { lang } = useLang();
+  const live = activeJob(useJobs());
   const [when, setWhen] = useState<When>('now');
   const [need, setNeed] = useState('');
   // Clocks are impure: read once per mount.
@@ -141,7 +143,9 @@ export default function AppHome() {
             </div>
           </section>
 
-          {/* The active job — Uber's ongoing-trip banner */}
+          {/* The active job — Uber's ongoing-trip banner. Follows whatever is live:
+              the seeded job, or one just booked in chat (lib/jobs). */}
+          {live && (
           <section className="relative overflow-hidden rounded-hero bg-ink p-5 shadow-hero">
             <span
               aria-hidden="true"
@@ -152,28 +156,36 @@ export default function AppHome() {
                 <span className="flex items-center gap-2 rounded-full border border-success-bright/40 bg-success-bright/[.16] px-[11px] py-1">
                   <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-success-bright text-success-bright" />
                   <span className="text-[11px] font-extrabold uppercase tracking-[.08em] text-[#a7f3cf]">
-                    {t('customer.onTheWay')}
+                    {live.status === 'agreed' ? t('job.booked') : t('customer.onTheWay')}
                   </span>
                 </span>
-                <span className="ml-auto text-[12.5px] font-bold text-onink">{t('customer.arrives', { time: '14:35' })}</span>
+                <span className="ml-auto text-[12.5px] font-bold text-onink">
+                  {live.status === 'agreed'
+                    ? `${formatDate(live.date, lang)} · ${live.slot?.window ?? ''}`
+                    : live.arrives && t('customer.arrives', { time: live.arrives })}
+                </span>
               </div>
-              <div className="mb-1 text-[12.5px] font-bold text-brand-on-dark">{t('customer.jobLabel')}</div>
+              <div className="mb-1 truncate text-[12.5px] font-bold text-brand-on-dark">
+                {`${t(`trades.${live.trade}` as const)} · ${live.title[lang]}`}
+              </div>
               <h2 className="mb-3.5 text-[20px] font-extrabold leading-[1.15] tracking-[-.025em] text-white">
-                {t('customer.heading', { name: 'Tiago' })}
+                {live.status === 'agreed'
+                  ? t('job.bookedHeading', { name: live.artisanName.split(' ')[0]! })
+                  : t('customer.heading', { name: live.artisanName.split(' ')[0]! })}
               </h2>
               <div className="mb-3.5 flex items-center gap-3 border-y border-white/[.12] py-2.5">
                 <span className="mr-auto text-[12.5px] font-semibold text-onink">{t('customer.approved')}</span>
-                <span className="flex-none text-[17px] font-extrabold tracking-[-.02em] text-white">€63.00</span>
+                <span className="flex-none text-[17px] font-extrabold tracking-[-.02em] text-white">{formatEuro(live.total)}</span>
               </div>
               <div className="flex gap-2.5">
                 <Link
-                  to={`${jobUrl(ACTIVE_JOB_ID)}?chat=1`}
+                  to={`${jobUrl(live.id)}?chat=1`}
                   className="flex h-11 flex-1 items-center justify-center rounded-[13px] bg-brand text-[14px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
                 >
                   {t('customer.openChat')}
                 </Link>
                 <Link
-                  to={jobUrl(ACTIVE_JOB_ID)}
+                  to={jobUrl(live.id)}
                   className="flex h-11 flex-none items-center rounded-[13px] border border-white/[.18] bg-white/10 px-4 text-[14px] font-bold text-onink-strong transition hover:bg-white/[.16] hover:text-onink-strong"
                 >
                   {t('customer.track')}
@@ -181,6 +193,7 @@ export default function AppHome() {
               </div>
             </div>
           </section>
+          )}
 
           {/* Book again — two shortcuts, the rest under Activity */}
           <section>

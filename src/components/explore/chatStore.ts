@@ -1,43 +1,55 @@
 import type { StringKey } from '../../i18n/strings';
 
 /**
- * The chat walkthrough's message store — module-level so a thread survives
- * closing and reopening the panel within a session. Seeded messages are i18n
- * keys (they follow the language switch); typed messages are raw text.
- * Replaced by the real chat backend in Phase 5.
+ * The chat walkthrough's thread store — module-level, per artisan, so a thread
+ * survives closing and reopening the panel and follows the customer from
+ * /explore (where the estimate is approved) onto /job/:id. Artisan lines are
+ * i18n keys (they follow the language switch); the customer's are raw text.
+ * Replaced by the chat backend (WebSocket) in Phase 6.
  */
 export type Msg =
-  | { from: 'photo' }
+  /** "Chat about Plumbing · <address>" — rendered from the panel's props. */
+  | { from: 'context' }
+  /** Opening line on a job that was agreed elsewhere. */
+  | { from: 'agreed'; total: number }
+  | { from: 'me'; text: string }
   | { from: 'me'; img: string }
-  | { from: 'me' | 'them'; key: StringKey }
-  | { from: 'me' | 'them'; text: string };
+  | { from: 'them'; key: StringKey; vars?: Record<string, string | number> }
+  /** The itemised estimate card (built from the artisan, lib/estimate). */
+  | { from: 'estimate' }
+  /** The confirmation card once the estimate is approved. */
+  | { from: 'booked'; jobId: string };
 
-const threads = new Map<string, Msg[]>();
-const replied = new Set<string>();
+/**
+ * new → the artisan has asked what's wrong; quoting → an estimate is on its way;
+ * quoted → approve or ask about it; approved → booked, chat carries on.
+ */
+export type Stage = 'new' | 'quoting' | 'quoted' | 'approved';
 
-const SEED: Msg[] = [{ from: 'photo' }, { from: 'me', key: 'chat.msg1' }, { from: 'them', key: 'chat.msg2' }];
+export type Thread = { msgs: Msg[]; stage: Stage; greeted: boolean; jobId?: string };
 
-export function getThread(artisanId: string): Msg[] {
+const threads = new Map<string, Thread>();
+
+/**
+ * The thread with one artisan. `agreedTotal` opens a fresh thread on an
+ * already-agreed job (the job screen) instead of at the start of a quote.
+ */
+export function getThread(artisanId: string, agreedTotal: number | null = null): Thread {
   const existing = threads.get(artisanId);
   if (existing) return existing;
-  const seeded = [...SEED];
-  threads.set(artisanId, seeded);
-  return seeded;
+  const fresh: Thread =
+    agreedTotal !== null
+      ? { msgs: [{ from: 'agreed', total: agreedTotal }], stage: 'approved', greeted: true }
+      : { msgs: [{ from: 'context' }], stage: 'new', greeted: false };
+  threads.set(artisanId, fresh);
+  return fresh;
 }
 
-export function saveThread(artisanId: string, msgs: Msg[]) {
-  threads.set(artisanId, msgs);
-}
-
-/** The one canned reply per thread — a walkthrough beat, not a live artisan. */
-export function shouldAutoReply(artisanId: string): boolean {
-  if (replied.has(artisanId)) return false;
-  replied.add(artisanId);
-  return true;
+export function saveThread(artisanId: string, thread: Thread) {
+  threads.set(artisanId, thread);
 }
 
 /** Test hook. */
 export function resetChatStore() {
   threads.clear();
-  replied.clear();
 }

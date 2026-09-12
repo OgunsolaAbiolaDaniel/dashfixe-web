@@ -64,6 +64,8 @@ const DESTINATIONS = {
 
   // Info + legal.
   howItWorks: ROUTES.howItWorks,
+  /** The price rule, explained. */
+  priceRule: `${ROUTES.howItWorks}#estimate`,
   about: ROUTES.about,
   /** Cut page: one pilot area is a section, not a page. */
   coverage: `${ROUTES.about}#coverage`,

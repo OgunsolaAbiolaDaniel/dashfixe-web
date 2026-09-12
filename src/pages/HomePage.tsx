@@ -29,7 +29,7 @@ export default function HomePage() {
       <SiteNav />
       <main>
         <PublicHero />
-        <Explore onAuth={openAuth} />
+        <Explore />
         <AccountSplit onAuth={openAuth} />
         <BookAhead />
         <Trades />

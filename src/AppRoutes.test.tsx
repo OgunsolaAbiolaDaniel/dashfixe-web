@@ -200,6 +200,16 @@ describe('/job/:id', () => {
     expect(screen.getByText('€48.00')).toBeInTheDocument();
   });
 
+  it('finishes a job in the walkthrough and remembers the rating', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/job/dfx-1042');
+    await user.click(screen.getByRole('button', { name: 'Walkthrough: finish this job' }));
+    expect(await screen.findByText('Receipt')).toBeInTheDocument();
+    expect(screen.getByText('Paid in app')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Rate 4 stars' }));
+    expect(screen.getByText('Thanks — this helps the next customer.')).toBeInTheDocument();
+  });
+
   it('is signed-in only', async () => {
     renderAt('/job/dfx-1042');
     expect(await screen.findByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
@@ -264,6 +274,41 @@ describe('/login (a page, not a modal)', () => {
     // …and back on the search with the chat we asked for.
     expect(await screen.findByLabelText('Message')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Who is free right now' })).toBeInTheDocument();
+  });
+});
+
+describe('the chat turns a search into a job (the commit point)', () => {
+  it('asks, estimates, gets approved, books, and hands off to tracking', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/explore?artisan=tf&need=Leaking%20tap');
+    await user.click(screen.getByRole('button', { name: 'Chat with Tiago' }));
+
+    // What they searched for is already in the composer.
+    expect(screen.getByLabelText('Message')).toHaveValue('Leaking tap');
+    expect(await screen.findByText(/What's going on\?/, {}, { timeout: 3000 })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+
+    // The itemised estimate arrives, and the price rule is visible.
+    expect(await screen.findByText('Estimate', {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByText('€63.00')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Approve €63.00' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm and book' }));
+    await user.click(await screen.findByRole('link', { name: 'Track Tiago' }));
+
+    expect(screen.getByRole('heading', { name: 'Tiago is heading over' })).toBeInTheDocument();
+    expect(screen.getByText('Plumbing · Leaking tap')).toBeInTheDocument();
+  });
+
+  it('answers the suggested questions while the estimate is on the table', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/explore?artisan=ra');
+    await user.click(screen.getByRole('button', { name: 'Chat with Rui' }));
+    await user.type(screen.getByLabelText('Message'), 'Blocked sink');
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    await screen.findByText('Estimate', {}, { timeout: 4000 });
+    await user.click(screen.getByRole('button', { name: 'Are parts included?' }));
+    expect(await screen.findByText(/the parts line covers them/, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 });
 

@@ -1,14 +1,18 @@
 /**
- * Sample jobs — the account walkthrough's history and its one live job.
- * Everything /job/:id and /activity render comes from here, so amounts, artisans
- * and stories can never disagree between pages. Replaced by GET /api/jobs in
- * Phase 5; the shapes below are the API contract draft (ARCHITECTURE.md §6).
+ * Jobs — the account's history, its live job, and every job booked in this
+ * browser's walkthrough. /job/:id, /activity and the home banner all read from
+ * here, so amounts, artisans and states can never disagree between pages.
+ *
+ * Seeded sample history + per-browser jobs (localStorage) created when a
+ * customer approves an estimate in chat. Replaced by GET/POST /api/jobs in
+ * Phase 6; the shapes below are the API contract draft (ARCHITECTURE.md §6).
  */
+import { useSyncExternalStore } from 'react';
 import type { Lang } from '../types';
 import type { LngLat } from './geo';
 import type { Trade } from '../components/explore/artisans';
 
-export type JobStatus = 'agreed' | 'travelling' | 'working' | 'done';
+export type JobStatus = 'agreed' | 'travelling' | 'working' | 'done' | 'cancelled';
 
 export type Bilingual = Record<Lang, string>;
 
@@ -25,17 +29,24 @@ export type Job = {
   status: JobStatus;
   /** ISO date of the visit. */
   date: string;
-  /** Only while travelling: where the artisan is coming from, and when they land. */
+  /** Where the artisan is coming from, and the customer's address. */
   from?: LngLat;
+  to?: LngLat;
+  address?: string;
+  /** Travelling: when they land (HH:MM). */
   arrives?: string;
+  /** Booked ahead: the two-hour window on `date`. */
+  slot?: { window: string };
   lines: ReceiptLine[];
   total: number;
   paid: boolean;
-  /** Stars already given, if the customer rated it. */
+  /** Stars given, once the customer rated it. */
   rating?: number;
+  /** Booked in this browser's walkthrough (vs the seeded history). */
+  mine?: boolean;
 };
 
-const JOBS: Job[] = [
+const SEED: Job[] = [
   {
     id: 'dfx-1042',
     artisanId: 'tf',
@@ -84,15 +95,137 @@ const JOBS: Job[] = [
     paid: true,
     rating: 5,
   },
+  {
+    id: 'dfx-1019',
+    artisanId: 'ms',
+    artisanName: 'Miguel Santos',
+    initials: 'MS',
+    trade: 'carpentry',
+    title: { EN: 'Wardrobe door adjustment', PT: 'Ajuste da porta do roupeiro' },
+    status: 'cancelled',
+    date: '2026-08-11',
+    lines: [],
+    total: 0,
+    paid: false,
+  },
 ];
 
-export function getJob(id: string): Job | null {
-  return JOBS.find((j) => j.id === id) ?? null;
+/** The seeded live job the walkthrough starts with. */
+export const ACTIVE_JOB_ID = 'dfx-1042';
+
+// ── The store ───────────────────────────────────────────────────────────────
+// Stored jobs are this browser's own bookings plus edits to seeded ones (a
+// finished or rated sample job). Memoised on the raw string so snapshots keep
+// their identity between reads, as useSyncExternalStore requires.
+
+const KEY = 'dfx.jobs';
+const listeners = new Set<() => void>();
+let lastRaw: string | null | undefined;
+let lastAll: Job[] = SEED;
+
+function stored(): Job[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    return Array.isArray(parsed) ? (parsed.filter((j) => j && typeof j.id === 'string') as Job[]) : [];
+  } catch {
+    return [];
+  }
 }
 
-/** The one live job the walkthrough tracks, if any. */
-export const ACTIVE_JOB_ID = 'dfx-1042';
+/** Every job, newest first. */
+export function listJobs(): Job[] {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(KEY);
+  } catch {
+    /* storage blocked: the seeded history stands */
+  }
+  if (raw !== lastRaw) {
+    lastRaw = raw;
+    const own = stored();
+    const ids = new Set(own.map((j) => j.id));
+    lastAll = [...own, ...SEED.filter((j) => !ids.has(j.id))].sort((a, b) => b.date.localeCompare(a.date));
+  }
+  return lastAll;
+}
+
+function write(jobs: Job[]) {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(jobs));
+  } catch {
+    /* full or blocked — the walkthrough carries on without persistence */
+  }
+  listeners.forEach((l) => l());
+}
+
+export function getJob(id: string): Job | null {
+  return listJobs().find((j) => j.id === id) ?? null;
+}
+
+/** The job in progress, if any: booked, on the way, or being worked on. */
+export function activeJob(jobs: Job[] = listJobs()): Job | null {
+  return jobs.find((j) => j.status === 'agreed' || j.status === 'travelling' || j.status === 'working') ?? null;
+}
+
+export type NewJob = Omit<Job, 'id' | 'date' | 'paid' | 'mine'> & { dayOffset?: number };
+
+const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** Book a job — what approving an estimate in chat does. */
+export function createJob({ dayOffset = 0, ...input }: NewJob): Job {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  const own = stored();
+  const job: Job = { ...input, id: `dfx-${2001 + own.filter((j) => j.mine).length}`, date: iso(date), paid: false, mine: true };
+  write([job, ...own]);
+  return job;
+}
+
+export function updateJob(id: string, patch: Partial<Job>) {
+  const job = getJob(id);
+  if (!job) return;
+  write([{ ...job, ...patch }, ...stored().filter((j) => j.id !== id)]);
+}
+
+/** Walkthrough: the work is done and paid in the app. */
+export function finishJob(id: string) {
+  updateJob(id, { status: 'done', paid: true, arrives: undefined });
+}
+
+export function rateJob(id: string, stars: number) {
+  updateJob(id, { rating: stars });
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  const onStorage = (e: StorageEvent) => e.key === KEY && listener();
+  window.addEventListener('storage', onStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
+/** Every job, re-rendering whenever one is booked, finished or rated. */
+export function useJobs(): Job[] {
+  return useSyncExternalStore(subscribe, listJobs, listJobs);
+}
+
+// ── Formatting ──────────────────────────────────────────────────────────────
 
 export function formatEuro(amount: number): string {
   return `€${amount.toFixed(2)}`;
+}
+
+/** "2 Sep" / "2 set." — the visit date as people say it. */
+export function formatDate(isoDate: string, lang: Lang): string {
+  return new Intl.DateTimeFormat(lang === 'PT' ? 'pt-PT' : 'en-GB', { day: 'numeric', month: 'short' }).format(
+    new Date(`${isoDate}T12:00:00`),
+  );
+}
+
+/** "14:35", `minutes` from now. */
+export function clockIn(minutes: number, now = Date.now()): string {
+  const d = new Date(now + minutes * 60_000);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
