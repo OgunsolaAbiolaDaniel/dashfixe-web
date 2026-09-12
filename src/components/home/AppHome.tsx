@@ -5,8 +5,9 @@ import { LiveMap } from '../map/lazy';
 import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
 import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
-import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
-import { HOME } from '../../lib/geo';
+import { exploreUrl, type When } from '../../search';
+import { setPlace, usePlace } from '../../lib/place';
+import AddressField from '../shared/AddressField';
 import { ROUTES, jobUrl } from '../../routes';
 import { ACTIVE_JOB_ID } from '../../lib/jobs';
 import { useAuth } from '../../auth';
@@ -45,9 +46,13 @@ export default function AppHome() {
     return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
   });
 
-  // Every action carries the saved address, so /explore opens where the customer is.
+  // The shared place (lib/place): the map, the pin, and every shortcut below
+  // follow it, so /explore always opens where the customer is.
+  const place = usePlace();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
   const to = (extra: Parameters<typeof exploreUrl>[0]) =>
-    exploreUrl({ address: DEFAULT_ADDRESS, lngLat: HOME, ...extra });
+    exploreUrl({ address: place.label, lngLat: place.lngLat, ...extra });
   const find = () => navigate(to({ need, when }));
 
   return (
@@ -62,13 +67,40 @@ export default function AppHome() {
             <h1 className="mb-2 text-[26px] font-extrabold leading-[1.08] tracking-[-.03em] text-ink">
               {name ? t(`customer.greet.${dayPart}`, { name: name.split(' ')[0]! }) : t(`customer.greetPlain.${dayPart}`)}
             </h1>
-            <Link
-              to={ROUTES.activity}
-              className="flex items-center gap-2 text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
-            >
-              <MapPin size={15} className="flex-none text-brand" />
-              {DEFAULT_ADDRESS}
-            </Link>
+            {editing ? (
+              <div className="mt-2 flex items-start gap-2">
+                <AddressField
+                  className="min-w-0 flex-1"
+                  variant="input"
+                  value={draft}
+                  onChange={setDraft}
+                  onPlace={(p) => {
+                    setPlace(p);
+                    setEditing(false);
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="h-12 flex-none rounded-input px-3 text-[13.5px] font-bold text-ink-60 transition hover:bg-well hover:text-ink"
+                >
+                  {t('customer.cancel')}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft('');
+                  setEditing(true);
+                }}
+                className="group flex max-w-full items-center gap-2 text-left text-[13.5px] font-semibold text-ink-60 transition hover:text-ink"
+              >
+                <MapPin size={15} className="flex-none text-brand" />
+                <span className="truncate">{place.label}</span>
+                <span className="flex-none font-bold text-brand group-hover:text-brand-hover">· {t('customer.changePlace')}</span>
+              </button>
+            )}
           </div>
 
           {/* The composer — the "Where to?" of Dashfixe */}
@@ -218,7 +250,7 @@ export default function AppHome() {
 
         {/* The map IS the home. Tapping a pin opens the search with that artisan. */}
         <div className="relative min-h-[440px] min-w-0 lg:min-h-0">
-          <LiveMap home={HOME} onSelect={(id) => navigate(to({ artisan: id }))} />
+          <LiveMap home={place.lngLat} onSelect={(id) => navigate(to({ artisan: id }))} />
         </div>
       </div>
     </div>

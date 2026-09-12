@@ -5,10 +5,11 @@ import { LiveMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
 import { getSupply } from '../components/explore/artisans';
-import { DEFAULT_ADDRESS, parseSearch, type When } from '../search';
+import { parseSearch, type When } from '../search';
 import type { Place } from '../lib/geocode';
 import { ROUTES } from '../routes';
-import { HOME, type LngLat } from '../lib/geo';
+import type { LngLat } from '../lib/geo';
+import { setPlace as savePlace, usePlace } from '../lib/place';
 import { useAuth } from '../auth';
 
 /**
@@ -32,9 +33,16 @@ export default function ExplorePage() {
 
   // parseSearch builds a fresh tuple on every render, and the map refits whenever the
   // home reference changes — so key the memo on the numbers, not the array.
+  // A search carried in the URL wins (shared links open where they were made);
+  // otherwise the customer's saved place (lib/place) — never a hard-coded default.
+  const place = usePlace();
   const lng = search.lngLat?.[0];
   const lat = search.lngLat?.[1];
-  const home = useMemo<LngLat>(() => (lng !== undefined && lat !== undefined ? [lng, lat] : HOME), [lng, lat]);
+  const home = useMemo<LngLat>(
+    () => (lng !== undefined && lat !== undefined ? [lng, lat] : place.lngLat),
+    [lng, lat, place.lngLat],
+  );
+  const addressLabel = search.address || (search.lngLat ? '' : place.label);
   const supply = getSupply(home);
 
   const arriving = supply.available.find((a) => a.id === search.artisan)?.id ?? supply.available[0]!.id;
@@ -85,11 +93,12 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
-  const setPlace = (place: Place) => {
+  const choosePlace = (picked: Place) => {
+    savePlace(picked);
     const next = new URLSearchParams(params);
-    next.set('address', place.label);
-    next.set('lng', place.lngLat[0].toFixed(5));
-    next.set('lat', place.lngLat[1].toFixed(5));
+    next.set('address', picked.label);
+    next.set('lng', picked.lngLat[0].toFixed(5));
+    next.set('lat', picked.lngLat[1].toFixed(5));
     setParams(next, { replace: true });
   };
 
@@ -132,7 +141,8 @@ export default function ExplorePage() {
           onSlot={setSlot}
           onSort={toggleSort}
           onNeed={setNeed}
-          onPlace={setPlace}
+          onPlace={choosePlace}
+          addressLabel={addressLabel}
           selectedId={selectedId}
           onSelect={select}
           onChat={openChat}
@@ -143,7 +153,7 @@ export default function ExplorePage() {
             <ChatPanel
               key={chatArtisan.id}
               artisan={chatArtisan}
-              address={search.address || DEFAULT_ADDRESS}
+              address={addressLabel || place.label}
               onClose={closeChat}
             />
           )}

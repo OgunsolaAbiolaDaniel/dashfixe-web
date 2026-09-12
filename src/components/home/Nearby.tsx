@@ -2,23 +2,34 @@
  * Illustrative supply. The design labels this "Sample data" on purpose —
  * no real artisans are recruited yet, so the badge must stay.
  *
- * Distances and arrival times are worked out from the sample address, the same
- * way /explore does it, so the two pages never disagree.
+ * Distances and arrival times are worked out from the customer's current place
+ * (lib/place) — the same point the hero map and /explore use — so picking an
+ * address above re-ranks these cards and every ETA moves with it.
  */
 import { Link } from 'react-router-dom';
+import { MapPin } from '../icons';
 import { exploreUrl } from '../../search';
 import { getNearby } from '../explore/artisans';
+import { usePlace } from '../../lib/place';
 import { useLang } from '../../i18n';
 
 export default function Nearby() {
   const { t } = useLang();
-  const pros = getNearby();
+  const place = usePlace();
+  const pros = getNearby(place.lngLat);
+  const from = { address: place.label, lngLat: place.lngLat };
 
   return (
     <section className="bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
         <div className="mb-7 flex flex-wrap items-end gap-4">
-          <h2 className="mr-auto text-h2 text-ink">{t('nearby.title')}</h2>
+          <div className="mr-auto">
+            <h2 className="text-h2 text-ink">{t('nearby.title')}</h2>
+            <p className="mt-1.5 flex items-center gap-1.5 text-[14px] font-semibold text-ink-60">
+              <MapPin size={15} className="flex-none text-brand" />
+              {t('nearby.around', { place: place.label })}
+            </p>
+          </div>
           <span className="rounded-full bg-warning-tint px-3 py-1.5 text-[11.5px] font-extrabold uppercase tracking-[.06em] text-warning">
             {t('nearby.sample')}
           </span>
@@ -28,7 +39,7 @@ export default function Nearby() {
             <Link
               key={p.id}
               // Listed artisans open pre-selected; the rest open the search for their trade.
-              to={p.listed ? exploreUrl({ artisan: p.id }) : exploreUrl({ trade: p.trade })}
+              to={p.listed ? exploreUrl({ ...from, artisan: p.id }) : exploreUrl({ ...from, trade: p.trade })}
               className="block rounded-[20px] bg-well p-6 text-left transition hover:bg-line hover:text-ink"
             >
               <span className="mb-[18px] flex items-center gap-[13px]">
@@ -45,7 +56,7 @@ export default function Nearby() {
               <span className="flex items-center gap-3 border-t border-[#dbe0ea] pt-4">
                 {p.free ? (
                   <span className="mr-auto flex items-center gap-[7px] text-sm font-bold text-success">
-                    <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-success text-success" />
+                    <span className="block h-[7px] w-[7px] flex-none rounded-full bg-success" />
                     {`${t('nearby.available')} · ${t('nearby.minAway', { min: p.eta })}`}
                   </span>
                 ) : (

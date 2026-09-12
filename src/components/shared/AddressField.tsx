@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Crosshair, MapPin } from '../icons';
 import { useLang } from '../../i18n';
 import { inPilotArea, locate, reverseGeocode, searchAddress, type Place } from '../../lib/geocode';
+import { PILOT_HOME } from '../../lib/place';
 
 type Props = {
   value: string;
@@ -65,9 +66,11 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
     try {
       const lngLat = await locate();
       // The sample supply only exists around Amora; a pin in Lisbon would put every
-      // artisan 30 km away. Say so instead of pretending.
+      // artisan 30 km away. Say so, and keep the search in the pilot area — so the
+      // map, pins and ETAs still answer instead of the button doing nothing.
       if (!inPilotArea(lngLat)) {
         setNotice(t('hero.outsideArea'));
+        pick(PILOT_HOME);
         return;
       }
       pick(await reverseGeocode(lngLat));

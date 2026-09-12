@@ -2,7 +2,11 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // Per-browser state (the saved place, language, places list) must not leak between tests.
+  localStorage.clear();
+});
 
 // jsdom has no layout engine; the map and scroll code both touch these.
 Object.defineProperty(window, 'scrollTo', { value: vi.fn(), writable: true });

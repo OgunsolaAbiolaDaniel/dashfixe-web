@@ -8,7 +8,8 @@ import { link } from '../../routes';
 import { useAuth } from '../../auth';
 import { useLang } from '../../i18n';
 import type { LngLat } from '../../lib/geo';
-import { searchAddress } from '../../lib/geocode';
+import { searchAddress, type Place } from '../../lib/geocode';
+import { getPlace, isPilotHome, setPlace, usePlace } from '../../lib/place';
 import AddressField from '../shared/AddressField';
 import { LiveMap } from '../map/lazy';
 
@@ -27,10 +28,18 @@ export default function PublicHero() {
   const navigate = useNavigate();
   const { requireAuth } = useAuth();
   const { t } = useLang();
+  // The shared place (lib/place): the map below and the "Free near you" cards
+  // follow it. A returning visitor's saved address is filled back in.
+  const place = usePlace();
   const [need, setNeed] = useState('');
-  const [address, setAddress] = useState('');
-  const [lngLat, setLngLat] = useState<LngLat | null>(null);
+  const [address, setAddress] = useState(() => (isPilotHome(getPlace()) ? '' : getPlace().label));
+  const [lngLat, setLngLat] = useState<LngLat | null>(() => (isPilotHome(getPlace()) ? null : getPlace().lngLat));
   const [when, setWhen] = useState<When>('now');
+
+  const choose = (p: Place) => {
+    setLngLat(p.lngLat);
+    setPlace(p);
+  };
 
   /**
    * If an address was typed but no suggestion picked, look it up before leaving so
@@ -45,6 +54,7 @@ export default function PublicHero() {
       const [first] = await searchAddress(address, ctrl.signal);
       clearTimeout(timer);
       where = first?.lngLat ?? null;
+      if (first) setPlace(first);
     }
     navigate(exploreUrl({ need, address, lngLat: where, when }));
   };
@@ -104,7 +114,7 @@ export default function PublicHero() {
                   setAddress(v);
                   setLngLat(null);
                 }}
-                onPlace={(p) => setLngLat(p.lngLat)}
+                onPlace={choose}
               />
 
               <div className="mt-[22px] flex flex-wrap items-center gap-[26px]">
@@ -127,7 +137,7 @@ export default function PublicHero() {
 
           <div className="relative">
             <div className="relative h-[clamp(300px,34vw,480px)] overflow-hidden rounded-card bg-canvas">
-              <LiveMap variant="peek" home={lngLat ?? undefined} />
+              <LiveMap variant="peek" home={place.lngLat} />
               <span className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 rounded-full border border-white/90 bg-white/[.86] px-3 py-1.5 text-[12px] font-bold text-ink shadow-map backdrop-blur-[14px]">
                 <span className="pulse-dot block h-[7px] w-[7px] flex-none rounded-full bg-brand text-brand" />
                 {t('hero.mapCaption')}

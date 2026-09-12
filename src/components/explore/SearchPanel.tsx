@@ -5,7 +5,7 @@ import AddressField from '../shared/AddressField';
 import type { Place } from '../../lib/geocode';
 import { artisanUrl } from '../../routes';
 import { AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan, type Supply } from './artisans';
-import { DEFAULT_ADDRESS, TRADES, WINDOWS, priceFrom, type Search, type When } from '../../search';
+import { TRADES, WINDOWS, priceFrom, type Search, type When } from '../../search';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 
@@ -19,6 +19,8 @@ type Props = {
   onSort: () => void;
   onNeed: (need: string) => void;
   onPlace: (place: Place) => void;
+  /** The address the search is worked out from (URL, else the saved place). */
+  addressLabel: string;
   selectedId: string;
   onSelect: (id: string) => void;
   onChat: (id: string) => void;
@@ -115,12 +117,24 @@ function ArtisanCard({
   );
 }
 
-export default function SearchPanel({ search, supply, onWhen, onSlot, onSort, onNeed, onPlace, selectedId, onSelect, onChat }: Props) {
+export default function SearchPanel({
+  search,
+  supply,
+  onWhen,
+  onSlot,
+  onSort,
+  onNeed,
+  onPlace,
+  addressLabel,
+  selectedId,
+  onSelect,
+  onChat,
+}: Props) {
   const { t } = useLang();
   const trade = TRADES.find((x) => x.slug === search.trade)?.slug;
   const needPlaceholder = trade ? t(`trades.${trade}` as const) : t('hero.needPlaceholder');
   const [needDraft, setNeedDraft] = useState(search.need);
-  const [addressDraft, setAddressDraft] = useState(search.address || DEFAULT_ADDRESS);
+  const [addressDraft, setAddressDraft] = useState(addressLabel);
   const listed =
     search.sort === 'price'
       ? [...supply.available].sort((a, b) => priceFrom(a.price) - priceFrom(b.price))

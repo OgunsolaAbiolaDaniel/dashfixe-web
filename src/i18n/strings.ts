@@ -95,7 +95,7 @@ export const en = {
   'trades.other.hint': "Describe it and we'll route it",
 
   // Nearby
-  'nearby.title': 'Free in Amora right now',
+  'nearby.title': 'Free near you right now',
   'nearby.sample': 'Sample data',
   'nearby.available': 'Available',
   'nearby.from': 'From {time}',
@@ -144,7 +144,7 @@ export const en = {
   // Explore page
   'search.live': 'Amora & Seixal · pilot area',
   'search.title': 'Who is free right now',
-  'search.intro': 'Nine vetted artisans are online within 5 km of you. Pick one, agree the price in chat, and they travel once.',
+  'search.intro': 'Nine sample artisans within 5 km of you in this walkthrough. Pick one, agree the price in chat, and they travel once.',
   'search.online': 'Online',
   'search.median': 'Median arrival',
   'search.rating': 'Cohort rating',
@@ -483,6 +483,9 @@ export const en = {
   'how.proBody': 'Work comes to you, priced before you drive, paid in the app. No lead fees.',
   'how.proCta': 'For artisans',
   'how.pilot': 'Dashfixe is launching as a pilot in Amora & Seixal. Artisans shown in the app are sample data until the first cohort is live.',
+  'nearby.around': 'Around {place}',
+  'customer.changePlace': 'Change',
+  'customer.cancel': 'Cancel',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -568,7 +571,7 @@ export const pt: Record<StringKey, string> = {
   'trades.other': 'Outra coisa',
   'trades.other.hint': 'Descreva e nós encaminhamos',
 
-  'nearby.title': 'Livres na Amora neste momento',
+  'nearby.title': 'Livres perto de si neste momento',
   'nearby.sample': 'Dados de exemplo',
   'nearby.available': 'Disponível',
   'nearby.from': 'A partir das {time}',
@@ -613,7 +616,7 @@ export const pt: Record<StringKey, string> = {
 
   'search.live': 'Amora e Seixal · zona piloto',
   'search.title': 'Quem está livre agora',
-  'search.intro': 'Nove profissionais verificados estão online a menos de 5 km de si. Escolha um, acorde o preço no chat, e deslocam-se uma só vez.',
+  'search.intro': 'Nove profissionais de exemplo a menos de 5 km de si nesta demonstração. Escolha um, acorde o preço no chat, e deslocam-se uma só vez.',
   'search.online': 'Online',
   'search.median': 'Chegada mediana',
   'search.rating': 'Avaliação do grupo',
@@ -936,6 +939,9 @@ export const pt: Record<StringKey, string> = {
   'how.proBody': 'O trabalho vem ter consigo, com preço antes de sair e pago na app. Sem taxas por contacto.',
   'how.proCta': 'Para profissionais',
   'how.pilot': 'A Dashfixe está a arrancar como piloto na Amora e no Seixal. Os profissionais mostrados na app são dados de exemplo até o primeiro grupo começar.',
+  'nearby.around': 'Perto de {place}',
+  'customer.changePlace': 'Alterar',
+  'customer.cancel': 'Cancelar',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;
