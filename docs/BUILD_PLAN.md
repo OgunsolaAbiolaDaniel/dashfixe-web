@@ -2,8 +2,9 @@
 
 How we build: **one phase at a time, each phase ends green and testable.** A phase is done
 when `npm run check` passes (types + lint + unit tests), the page renders headless
-(`node scripts/shot.mjs`), and the owner has clicked through it in a real browser. The owner
-commits; the assistant never runs `git commit` or `git push`.
+(`node scripts/shot.mjs`), and the owner has clicked through it in a real browser. Since
+Phase 3 the owner asked for progressive commits: each green chunk is committed on a
+feature branch and pushed to its PR; the owner reviews and merges.
 
 Reference for taste: **uber.com** — calm marketing pages, tight type, product surfaces that
 put a real map front and centre. Reference for truth: `docs/HANDOVER.md` (state) and the
@@ -149,7 +150,7 @@ The product moment after "Chat", built on the AppBar chrome.
 send a message → Activity → open the €48.00 receipt → rate it → tap an artisan's name
 from any search card.
 
-## Phase 5 · Backend, launch, hardening 🔄
+## Phase 5 · Backend, launch, hardening ✅ code · ⬜ ops
 
 ### Revision 1.3 · The functional core ✅
 
@@ -176,15 +177,48 @@ from any search card.
 POST), log in with the on-screen pilot code from the Chat gate, add a saved place, sort by
 price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and watch rows land.
 
-### Still open in Phase 5
+### Revision 1.4 · Launch hardening ✅ (branch `feat/launch-hardening`)
 
-- ⬜ Ops to go live: set `DATABASE_URL`, `AUTH_SECRET` (and `TWILIO_*` when ready) in
-  Vercel; verify a production login and a waitlist row
-- ⬜ Perf: code-split MapLibre (~500 kB) behind `React.lazy`; image weight pass
-- ⬜ SEO: `/trade/:slug` pages, sitemap.xml, OG images, robots.txt
-- ⬜ Playwright smoke on the built app in CI
-- ⬜ Launch switch: `/waitlist` redirects to `/`; honesty badges come off only as real
-  supply replaces sample data
+- ✅ **Perf: MapLibre code-split.** Every map now loads through `components/map/lazy.tsx`,
+  and ESLint rejects direct imports.
+  - Entry JS: 1,445 → 424 kB (gzip 399 → 123 kB).
+  - Marketing pages and `/login` never fetch the map.
+- ✅ **Image weight pass.**
+  - Brand PNGs are now 3× their display size: 327 → 61 kB on every page.
+  - The OG card is a JPEG: 330 → 83 kB.
+  - The unused `phone-screen.png` (136 kB) is deleted.
+- ✅ **SEO.** `src/seo.ts` holds one table.
+  - At runtime it sets titles, descriptions, canonical, robots and OG/Twitter tags per
+    route and language.
+  - The build writes a static head per public route (14 pages), plus `sitemap.xml` and
+    `robots.txt`.
+  - Private and sample pages are `noindex`. `public/og.jpg` is the share card.
+- ✅ **`/trade/:slug`.** Five landing pages in EN and PT: what the trade covers, price
+  guidance taken from the sample data, how it works, badged sample artisans and sibling
+  trades. The footer's Services column links to them.
+- ✅ **Launch switch.** `VITE_LAUNCHED=true` redirects `/waitlist` to `/`, `link()`
+  follows, and the sitemap drops the page.
+- ✅ **Playwright smoke.** Six journeys run against the built app, which `vite preview`
+  serves with the pilot API. CI gains a `smoke` job after `check`.
+- ✅ **Honesty and UX fixes.** The explore chip said "· live" with a pulsing dot; it now
+  says "pilot area". A prefilled address no longer pops open its suggestion list on load
+  (it was covering the Now/Later toggle).
+
+**Owner test:**
+1. Run `npx vite build && npm run smoke`, and expect 6 passed.
+2. Open `/trade/electrical` in EN, then PT, and watch the tab title follow.
+3. View source on the built `/trade/plumbing` (via `npx vite preview`); it has its own
+   `<title>` and `og:*` tags.
+4. Load `/help` with DevTools → Network open; no `LiveMap`/`MapCanvas` chunk should
+   appear.
+
+### Still open in Phase 5 (operator steps, no code)
+
+- ⬜ **Vercel env vars.** Set `DATABASE_URL` and `AUTH_SECRET` (plus `TWILIO_*` when
+  ready), and `SITE_URL` once the domain is chosen. Then verify one production login and
+  one waitlist row.
+- ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
+  real supply replaces the sample data (Phase 6).
 
 ## Phase 6 · Live operations ⬜
 

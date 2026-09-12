@@ -5,26 +5,40 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-11 · **Branch:** `main` ·
+**Last updated:** 2026-09-12 · **Branch:** `feat/launch-hardening` (PR to `main`) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0–4 are done and Phase 5's functional core is in; 0–3 are merged (#4–#6), `main` is green.
+Phases 0–4 are done and merged. Phase 5's code is done. #1–#8 are merged, including
+revision 1.3 (the pilot backend and `/login`), and `main` is green.
 
-Revision 1.3 (branch `feat/functional-core`, on top of the Phase 4 branch — merge #7
-then #8): **the product is functional.** The pilot API is real and in-repo (waitlist,
-artisan applications, full phone-OTP auth with httpOnly sessions; Postgres via
-`DATABASE_URL`, in-memory in dev; SMS adapter with labelled on-screen pilot codes),
-`/login` is a page and the auth modal is deleted, every form POSTs with busy/error
-states, and the dead-button sweep landed (sort, editable search fields, real booking
-slot, bell popover, photo attach, saved places). CI runs check+build on every PR, and
-vercel.json adds the SPA rewrite. Start any new session by reading
-`docs/ARCHITECTURE.md` (rev 1.3 — §6 has the endpoints and the env table, §7 the maps
-decision). Next: the "Still open in Phase 5" list (ops env vars in Vercel, MapLibre
-code-split, SEO, Playwright, launch switch), then Phase 6.
+**Revision 1.4**, on branch `feat/launch-hardening`, is launch hardening. Three commits,
+each one green:
+
+- **Lazy map.** MapLibre is code-split: always import maps from
+  `components/map/lazy.tsx`, which ESLint enforces. Entry JS dropped from 1,445 to
+  424 kB.
+- **Lighter images.** 3× brand PNGs and a JPEG OG card.
+- **SEO pack.** `src/seo.ts` drives both the runtime tags and a static head per route
+  generated at build, plus the sitemap and `robots.txt`.
+- **Trade pages.** Five `/trade/:slug` landing pages.
+- **Launch switch.** `VITE_LAUNCHED`.
+- **Smoke tests.** Playwright (`e2e/`) runs against the built app, as a CI job after
+  `check`.
+- **Two honesty/UX fixes:** the explore chip no longer says "live", and the address
+  field's suggestion list no longer opens on load.
+
+Start any new session by reading `docs/ARCHITECTURE.md` rev 1.4:
+- §4 covers the route map, and search and sharing
+- §6 holds the endpoints and the env table
+- §7 covers the maps and the lazy rule
+- §8 covers testing
+
+**Next:** Phase 5's operator steps (Vercel env vars, then `VITE_LAUNCHED` on launch day),
+then Phase 6, which is real supply and live operations.
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
@@ -85,8 +99,9 @@ What changed in the latest pass (Phase 2, second half):
 npm install
 npm run dev        # http://localhost:5173 — including the FULL pilot API, zero secrets
 npm run check      # typecheck + lint + tests — must be green before a commit
-npm run build      # typechecks, then bundles to dist/
-npm run preview    # serves dist/ on 4173
+npm run build      # typechecks, then bundles to dist/ (+ per-route heads, sitemap, robots)
+npm run preview    # serves dist/ on 4173 — with the pilot API
+npm run smoke      # Playwright on the built app (build first); PW_CHANNEL=msedge reuses Edge
 ```
 
 Headless screenshot of any page (needs a Chromium: Playwright's cache, Chrome or Edge):
@@ -103,32 +118,39 @@ Optional 6th argument is a JS expression evaluated in the page and printed, e.g.
 1. Clone the repo and `npm install` (Node 24 is what this was built on; 20+ should work).
 2. Copy the parent folder's `designs/`, `Dashfixe.md`, `Dashfixemarklatest.md` alongside the
    repo if you want the design context — the code does not depend on them.
-3. `npm run check` — 48 tests should pass.
-4. `npm run dev` and open `/`, `/waitlist`, `/explore`.
+3. `npm run check` — 108 tests should pass. Then `npx vite build && npm run smoke` —
+   6 smoke journeys (set `PW_CHANNEL=msedge` or run `npx playwright install chromium`).
+4. `npm run dev` and open `/`, `/waitlist`, `/explore`, `/trade/plumbing`.
 5. No env vars, no API keys. The map uses OpenFreeMap's public tiles (fair-use, attribution is
-   rendered). If they ever rate-limit, `MAP_STYLE` in `LiveMap.tsx` is the one line to change.
+   rendered). If they ever rate-limit, set `VITE_MAP_STYLE` (read in `components/map/kit.ts`).
 
 ## Layout of the code
 
 ```
 src/
-  App.tsx            routes (react-router); one AuthSheet for the whole app
-  routes.ts          route table + link() fallback for unbuilt pages (SITEMAP.md)
+  App.tsx            BrowserRouter > LangProvider > AuthProvider > AppRoutes
+  AppRoutes.tsx      the route tree, redirects for cut pages, HashScroll, RouteMeta (SEO)
+  routes.ts          ROUTES + link() + artisanUrl/jobUrl/tradeUrl + TRADE_SLUGS
+  config.ts          build-time switches (launched())
+  seo.ts             per-route title/description/robots; build renderers (heads, sitemap, robots)
   search.ts          the search carried in the URL between home and /explore
-  auth.tsx           in-memory session; gate() is the commit point
-  lib/geo.ts         LngLat helpers: distance, ETA, bounds, radius polygon
-  lib/geocode.ts     address search + reverse geocode (Nominatim, offline fallback)
-  i18n/              EN/PT dictionaries, LangProvider/useLang, translate()
-  components/shared  MobileMenu · LangToggle · AddressField
-  i18n/Rich.tsx      translated sentences with links or other nodes inside
-  pages/             HomePage · WaitlistPage · ExplorePage
+  auth.tsx           server-backed session (/api/auth/me); requireAuth() → /login?next=
+  server/            handlers (the pilot API), store (Postgres | memory), session, sms
+  lib/               geo · geocode · api (fetch client) · jobs (sample) · places (localStorage)
+  i18n/              EN/PT dictionaries, LangProvider/useLang, translate(), Rich.tsx
+  pages/             Home · Explore · Activity · ArtisanProfile · Job · Login · Trade ·
+                     ForArtisans · About · Help · Legal · Waitlist
+  components/chrome  SiteNav · SiteFooter · MarketingShell · AppBar
+  components/map     kit.ts (MapLibre + WORKER WIRING) · lazy.tsx (the only map import)
+  components/explore SearchPanel · LiveMap · MapCanvas (fallback) · ChatPanel · artisans.ts
+  components/job     TrackMap
   components/home    public + signed-in home sections
-  components/waitlist
-  components/explore SearchPanel · LiveMap (real) · MapCanvas (fallback) · ChatPanel · artisans.ts
-  components/icons.tsx
-  test/              vitest setup + MapLibre stub
+  components/shared  MobileMenu · LangToggle · AddressField · PhotoPick
+  test/              vitest setup · MapLibre stub · pilot API fetch mock
+api/[...path].ts     Vercel adapter for server/handlers
+e2e/                 Playwright smoke suite (playwright.config.ts at the root)
 scripts/shot.mjs     headless screenshot via CDP
-docs/                BUILD_PLAN · HANDOVER · DESIGN
+docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 ```
 
 ## Going live (Vercel env)
@@ -139,9 +161,12 @@ docs/                BUILD_PLAN · HANDOVER · DESIGN
 | `AUTH_SECRET` | sessions | any long random string; rotating it logs everyone out |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | real SMS codes | without them login shows labelled pilot codes on screen |
 | `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes |
+| `SITE_URL` | canonical/OG/sitemap URLs | e.g. `https://dashfixe.pt`; absent → Vercel's production hostname |
+| `VITE_LAUNCHED` | launch day | `true` retires `/waitlist` to `/` and drops it from the sitemap |
 
 After setting the first two: deploy, join the waitlist in production, log in once, and
-check the rows in Neon. That is the go-live smoke test.
+check the rows in Neon. That is the go-live smoke test. Then paste a `/trade/plumbing`
+link into WhatsApp — the card should show that page's title and the map image.
 
 ## Gotchas (each one cost real time)
 
@@ -150,8 +175,22 @@ check the rows in Neon. That is the go-live smoke test.
   entry so that URL 404s; the production build never emits the worker at all. Either way the
   failure is **silent**: tiles never parse, `load` never fires, the map is a blank grey box.
   Fix in place: `optimizeDeps.exclude: ['maplibre-gl']` + `worker.format: 'es'` in
-  `vite.config.ts`, and `maplibregl.setWorkerUrl(import ... '?worker&url')` in `LiveMap.tsx`.
-  Do not remove either half.
+  `vite.config.ts`, and `maplibregl.setWorkerUrl(import ... '?worker&url')` in
+  `components/map/kit.ts`. Do not remove either half.
+- **Map imports go through `components/map/lazy.tsx`.** A direct `import LiveMap from…`
+  anywhere puts ~800 kB back in the entry chunk; ESLint (`no-restricted-imports`) fails it.
+- **Root-relative URLs in `index.html` get bundled by Vite.** `<link rel="canonical"
+  href="/">` resolved to the `public/` folder and failed the build with `EISDIR`. The SEO
+  tags carry absolute placeholders; the build and the runtime replace every one.
+- **The MapLibre worker is its own sub-build.** Its `closeBundle` fires before the main
+  bundle writes `index.html`, so build plugins that read the page must use `writeBundle`
+  and check `'index.html' in bundle` (see `seoPages()` in `vite.config.ts`).
+- **Per-route pages are `<path>.html`, not `<path>/index.html`.** Vercel's `cleanUrls`
+  and `vite preview` resolve `/trade/plumbing` to `trade/plumbing.html`; a directory
+  index only matches with a trailing slash.
+- **Windows PowerShell 5.1 splits here-strings passed to native commands**, so
+  `git commit -m @'…'@` with quotes in it fails. Write the message to a file and use
+  `git commit -F <file>`.
 - **MapLibre's CSS** sets `.maplibregl-map { position: relative }`, which beats Tailwind's
   `absolute` and collapses the map to zero height. `index.css` re-pins `.live-map`.
 - **The in-app browser preview cannot render the map** — it never fires
@@ -176,5 +215,7 @@ check the rows in Neon. That is the go-live smoke test.
 ## Honesty rules that shape the code
 
 Nothing on the site claims live supply. Every list of artisans is labelled sample data
-(`Nearby.tsx` badge, the "Sample artisans · real map" chip on the map). Keep those until the
+(`Nearby.tsx` badge, the "Sample artisans · real map" chip on the map, the trade pages'
+"Sample data" badge and pilot line). The `/explore` area chip says "pilot area" with a
+still dot — never "live". Sample artisan profiles are `noindex`. Keep all of it until the
 pilot cohort is real. See `../Dashfixe.md` §2 for the full list of forbidden claims.

@@ -130,7 +130,8 @@ export default function SearchPanel({ search, supply, onWhen, onSlot, onSort, on
     <div className="flex min-h-0 min-w-0 flex-col gap-5 overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
       <div>
         <div className="mb-3.5 flex w-fit items-center gap-2 rounded-full bg-brand-tint px-3.5 py-2">
-          <span className="pulse-dot block h-[7px] w-[7px] rounded-full bg-brand text-brand" />
+          {/* A still dot, not a pulse: the pilot area is real, live supply is not yet. */}
+          <span className="block h-[7px] w-[7px] rounded-full bg-brand" />
           <span className="text-[12.5px] font-bold text-brand-hover">{t('search.live')}</span>
         </div>
         <h1 className="mb-2 max-w-[7em] text-[30px] font-extrabold leading-[1.06] tracking-[-.035em] text-ink [text-wrap:balance]">

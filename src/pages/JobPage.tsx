@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import AppBar from '../components/chrome/AppBar';
-import TrackMap from '../components/job/TrackMap';
+import { TrackMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import { Check } from '../components/icons';
 import { AVAILABLE } from '../components/explore/artisans';

@@ -6,6 +6,7 @@
  * duplicate pages: there is ONE product surface (/explore) with a now/later mode,
  * one artisan page with anchored depth, and coverage lives on /about.
  */
+import { launched } from './config';
 
 /** Routes that exist. Marketing surface + product surface (ARCHITECTURE.md §2). */
 export const ROUTES = {
@@ -23,6 +24,8 @@ export const ROUTES = {
   artisan: '/artisan/:id',
   /** Signed-in: the live job or its receipt (Phase 4). */
   job: '/job/:id',
+  /** One indexable landing page per trade (SEO, Phase 5). */
+  trade: '/trade/:slug',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
   about: '/about',
@@ -74,7 +77,22 @@ export type Destination = keyof typeof DESTINATIONS;
 
 /** Resolve a named destination to its current path. */
 export function link(name: Destination): string {
+  // The launch switch (config.ts): after launch the waitlist's job is done and
+  // every link that pointed at it lands on the home instead.
+  if (name === 'waitlist' && launched()) return ROUTES.home;
   return DESTINATIONS[name];
+}
+
+/** The trades with their own landing page. "Something else" routes through search. */
+export const TRADE_SLUGS = ['plumbing', 'electrical', 'painting', 'carpentry', 'cleaning'] as const;
+export type TradeSlug = (typeof TRADE_SLUGS)[number];
+
+export function isTradeSlug(slug: string | undefined): slug is TradeSlug {
+  return TRADE_SLUGS.includes(slug as TradeSlug);
+}
+
+export function tradeUrl(slug: TradeSlug): string {
+  return `/trade/${slug}`;
 }
 
 /** The parameterised app routes, filled in. */

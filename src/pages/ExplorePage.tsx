@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import SearchPanel from '../components/explore/SearchPanel';
-import LiveMap from '../components/explore/LiveMap';
+import { LiveMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
 import { getSupply } from '../components/explore/artisans';

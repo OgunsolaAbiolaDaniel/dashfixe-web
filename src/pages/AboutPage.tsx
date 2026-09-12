@@ -1,5 +1,5 @@
 import MarketingShell from '../components/chrome/MarketingShell';
-import LiveMap from '../components/explore/LiveMap';
+import { LiveMap } from '../components/map/lazy';
 import { useLang } from '../i18n';
 
 /**

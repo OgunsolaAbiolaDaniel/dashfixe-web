@@ -29,7 +29,9 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
   const [active, setActive] = useState(-1);
   const [locating, setLocating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const chosen = useRef<string | null>(null);
+  // The value we arrived with counts as chosen: a prefilled address (the sample home,
+  // an address carried in the URL) must not pop the suggestion list open on load.
+  const chosen = useRef<string | null>(value);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { ROUTES, link } from './routes';
+import { describe, expect, it, vi } from 'vitest';
+import { ROUTES, TRADE_SLUGS, isTradeSlug, link, tradeUrl } from './routes';
 
 /** The route table mirrors ARCHITECTURE.md §4 — cuts resolve, nothing dead-ends. */
 describe('link', () => {
@@ -29,6 +29,19 @@ describe('link', () => {
     expect(link('safety')).toBe('/help#safety');
     expect(link('cancellations')).toBe('/help#cancellations');
     expect(link('contact')).toBe('/help#contact');
+  });
+
+  it('points the waitlist home once the launch switch is on', () => {
+    expect(link('waitlist')).toBe('/waitlist');
+    vi.stubEnv('VITE_LAUNCHED', 'true');
+    expect(link('waitlist')).toBe('/');
+    vi.unstubAllEnvs();
+  });
+
+  it('gives each trade a landing page, and only real trades', () => {
+    expect(TRADE_SLUGS.map(tradeUrl)).toContain('/trade/plumbing');
+    expect(isTradeSlug('cleaning')).toBe(true);
+    expect(isTradeSlug('other')).toBe(false);
   });
 
   it('never resolves to the waitlist as a fallback any more', () => {

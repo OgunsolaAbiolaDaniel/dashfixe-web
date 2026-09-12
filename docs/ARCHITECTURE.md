@@ -6,7 +6,8 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-11 · Revision 1.3 — the pilot backend is real; auth is a page.
+**Last revised:** 2026-09-12 · Revision 1.4 — launch hardening: the map is lazy, every
+route has its own head, trade pages exist, the launch switch is wired, smoke tests gate CI.
 
 ---
 
@@ -89,7 +90,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
 | `/privacy` `/terms` `/cookies` | marketing | Minimal, honest, GDPR-aware | built (rev 1) |
-| `/waitlist` | marketing | Pre-launch front door; at launch → redirect to `/` | built |
+| `/trade/:slug` | marketing | One landing page per trade (5), pre-rendered head, the search-engine entry point | built (rev 1.4) |
+| `/waitlist` | marketing | Pre-launch front door; `VITE_LAUNCHED=true` redirects it to `/` | built (switch: rev 1.4) |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
 
 ### Cut in revision 1, and why
@@ -101,7 +103,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/for-artisans/details` | **cut** | One strong artisan page beats a lean one plus a long one. Depth becomes sections (`#pay`, `#vetting`, `#app`). |
 | `/artisan-app` | **cut** | An app that doesn't ship yet doesn't earn a route. It is a section of `/for-artisans`. |
 | `/coverage` | **fold → `/about#coverage`** | One pilot area is a paragraph and a map, not a page. Returns as a page when there are areas to choose between. |
-| `/trade/:slug` | **defer** (SEO, post-launch) | Trade tiles already deep-link `/explore?trade=x`, which is the better product answer today. SEO pages come when there is supply to rank for. |
+| `/trade/:slug` | ~~defer~~ **built in rev 1.4** | Reversed: search has to find the pilot before the cohort is live, or launch day starts from zero. The split keeps both answers right — home tiles still deep-link `/explore?trade=x` (product intent), while the footer and search engines land on the trade page, one hop from `/explore`. |
 | Careers / Press links | **removed from footer** | A pre-launch company of one has neither. Footer links must all resolve to something true. |
 
 ### Redirect policy
@@ -109,6 +111,29 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 Old paths never 404. `/fix`, `/book`, `/coverage` are real `<Route>` entries that issue
 client redirects to their new homes. `src/routes.ts` stays the single place any internal
 link resolves through (`link()`), so a future re-cut is a one-file change.
+
+### Search and sharing (rev 1.4)
+
+`src/seo.ts` is one table with two consumers. At runtime, `RouteMeta` (in
+`AppRoutes.tsx`) rewrites `<title>`, description, canonical, robots and the Open Graph
+and Twitter tags on every navigation and language switch. At build time, the
+`seoPages()` plugin in `vite.config.ts` bakes the same values into a copy of
+`index.html` per public route, written as `<path>.html` so Vercel's `cleanUrls` and
+`vite preview` both resolve it. It also writes `sitemap.xml` and `robots.txt`. This
+matters because link-preview crawlers (WhatsApp, LinkedIn, X) never run JavaScript.
+
+- **Indexed:** the home, `/explore`, `/waitlist` (until launch), the five trade pages,
+  `/for-artisans`, `/about`, `/help` and legal.
+- **`noindex`:** `/login`, `/activity` and `/job/*`, because they are private.
+  `/artisan/*` too, because those profiles are sample data.
+- **Absolute URLs:** from `SITE_URL`, falling back to Vercel's production hostname.
+- **Share image:** `public/og.jpg`, 1200×630, under 100 kB.
+- **Guard:** the build fails if `index.html` loses any tag the renderer expects.
+
+**The launch switch.** `VITE_LAUNCHED=true` (via `src/config.ts`) redirects `/waitlist`
+to `/`. `link('waitlist')` follows, and the page drops out of the sitemap. The honesty
+badges are deliberately *not* tied to the switch: they come off screen by screen as real
+supply replaces the sample data (Phase 6).
 
 ## 5. Navigation
 
@@ -184,6 +209,8 @@ login page shows it, clearly labelled.
 | `AUTH_SECRET` | Session signing key. Absent → insecure dev secret, loudly warned |
 | `TWILIO_ACCOUNT_SID` `TWILIO_AUTH_TOKEN` `TWILIO_FROM` | Real SMS delivery; absent → on-screen pilot codes |
 | `VITE_MAP_STYLE` | Swap the map style URL (e.g. MapTiler with a key) without a code change |
+| `SITE_URL` | Absolute base for canonical/OG/sitemap (e.g. `https://dashfixe.pt`). Absent → Vercel's production hostname |
+| `VITE_LAUNCHED` | `true` on launch day: `/waitlist` → `/`, and it leaves the sitemap |
 
 ## 7. The map
 
@@ -197,8 +224,17 @@ in HANDOVER — it broke silently twice.
 `TrackMap` (rev 1.2) is the third surface: the job screen's map on the same kit
 (`components/map/kit.ts`, which now owns the worker wiring), drawing a curved sample
 route with the artisan's pin easing along it — sample-driven until the backend, and
-badged as such. Phase 5 code-splits MapLibre (~500 kB) behind `React.lazy` so marketing
-pages stop paying for it.
+badged as such.
+
+**Every map is lazy (rev 1.4).** Pages import `LiveMap` and `TrackMap` from
+`components/map/lazy.tsx` only. That wrapper puts MapLibre, the kit, the fallback canvas
+and their 83 kB of CSS behind `React.lazy`, with a placeholder in the map's own ground
+colour so nothing jumps. An ESLint `no-restricted-imports` rule rejects any direct import,
+because one stray import pulls about 800 kB back into the entry chunk.
+
+- **Entry JS:** 1,445 → 424 kB (gzip 399 → 123 kB).
+- **What skips the map:** marketing pages and `/login` never download it, and the smoke
+  suite asserts that.
 
 ### The maps decision (rev 1.3)
 
@@ -221,12 +257,25 @@ that pipeline with sample data. Geocoding: Nominatim within its fair-use policy 
   auth gate at chat, marker ↔ card selection, language switch, redirects.
 - **Rendered truth:** `node scripts/shot.mjs` against dev *and* `vite preview` — the only
   net that catches WebGL, worker and provider-mounting failures that pass tsc and jsdom.
-- **Phase 5:** Playwright smoke on the built app in CI (GitHub Actions running `check` +
-  build on every PR). No PR merges red — the one rule that would have prevented the
+- **Smoke (rev 1.4):** Playwright runs against the *built* app (`e2e/smoke.spec.ts`).
+  `vite preview` serves `dist/` plus the pilot API. It covers six journeys:
+  - marketing pages load with no map chunk and no console errors
+  - the lazy map draws its markers
+  - static heads, the sitemap and robots.txt are served
+  - cold deep links and redirects resolve
+  - OTP login lands on `?next=` and survives a reload
+  - the waitlist form POSTs
+- **CI:** GitHub Actions runs `check` (gate + build), then `smoke` (Chromium), on every
+  PR, keeping traces on failure. No PR merges red. That one rule would have prevented the
   2026-09-10 main breakage.
 
 ## 9. Delivery
 
-Phases live in `docs/BUILD_PLAN.md`; this document defines *what*, the plan defines *when*.
-Current: rev 1 (this restructure) is Phase 3. The job loop is Phase 4. Backend, auth, CI
-and the launch switch (waitlist → home redirect decision) are Phase 5.
+Phases live in `docs/BUILD_PLAN.md`. This document defines *what*; the plan defines *when*.
+
+- **Phase 3:** revision 1 (this restructure).
+- **Phase 4:** the job loop.
+- **Phase 5:** the backend, auth, CI, performance, SEO and the launch switch. The code
+  landed in revisions 1.3 and 1.4. Only the operator steps remain: environment variables
+  in Vercel, then flipping `VITE_LAUNCHED`.
+- **Phase 6:** real supply and live operations.

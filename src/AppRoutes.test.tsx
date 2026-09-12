@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -274,5 +274,60 @@ describe('the waitlist forms hit the real API', () => {
     expect(await screen.findByText(/Something went wrong/)).toBeInTheDocument();
     // Still on the form — the customer can fix the number and retry.
     expect(screen.getByRole('button', { name: 'Submit application' })).toBeInTheDocument();
+  });
+});
+
+describe('/trade/:slug (SEO landing pages)', () => {
+  it('pitches one trade and hands off to the search with it set', () => {
+    renderAt('/trade/plumbing');
+    expect(screen.getByRole('heading', { level: 1, name: 'Plumbers in Amora & Seixal' })).toBeInTheDocument();
+    expect(screen.getByText('Blocked drains and siphons')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /See who is free/ })).toHaveAttribute('href', '/explore?trade=plumbing');
+    // Supply on this page is sample data, and says so.
+    expect(screen.getByText('Sample data')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Tiago Ferreira/ })).toHaveAttribute('href', '/artisan/tf');
+  });
+
+  it('is reachable from the footer and links its sibling trades', () => {
+    renderAt('/help');
+    expect(screen.getByRole('link', { name: 'Electrical' })).toHaveAttribute('href', '/trade/electrical');
+    renderAt('/trade/cleaning');
+    expect(screen.getByRole('link', { name: 'Painters' })).toHaveAttribute('href', '/trade/painting');
+  });
+
+  it('sends an unknown trade to the search', () => {
+    renderAt('/trade/juggling');
+    expect(screen.getByRole('heading', { name: 'Who is free right now' })).toBeInTheDocument();
+  });
+});
+
+describe('per-route document metadata (seo.ts)', () => {
+  it('titles each page and follows the language', async () => {
+    const user = userEvent.setup();
+    renderAt('/trade/electrical');
+    expect(document.title).toBe('Electricians in Amora & Seixal · Dashfixe');
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute('href', `${location.origin}/trade/electrical`);
+    await user.click(screen.getByRole('button', { name: 'Language' }));
+    expect(document.title).toBe('Eletricistas na Amora e no Seixal · Dashfixe');
+  });
+
+  it('marks private pages noindex', () => {
+    renderAt('/login');
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+  });
+});
+
+describe('the launch switch (VITE_LAUNCHED)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('keeps the waitlist before launch', () => {
+    renderAt('/waitlist');
+    expect(screen.getAllByRole('button', { name: 'Join the waitlist' }).length).toBeGreaterThan(0);
+  });
+
+  it('retires the waitlist to the home at launch', () => {
+    vi.stubEnv('VITE_LAUNCHED', 'true');
+    renderAt('/waitlist');
+    expect(screen.getByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
   });
 });

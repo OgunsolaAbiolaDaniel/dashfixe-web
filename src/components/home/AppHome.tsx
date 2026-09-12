@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '../chrome/AppBar';
-import LiveMap from '../explore/LiveMap';
+import { LiveMap } from '../map/lazy';
 import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
 import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
