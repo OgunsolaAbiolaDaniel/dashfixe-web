@@ -142,7 +142,7 @@ export const en = {
   'footer.cookies': 'Cookies',
 
   // Explore page
-  'search.live': 'Amora & Seixal · live',
+  'search.live': 'Amora & Seixal · pilot area',
   'search.title': 'Who is free right now',
   'search.intro': 'Nine vetted artisans are online within 5 km of you. Pick one, agree the price in chat, and they travel once.',
   'search.online': 'Online',
@@ -514,7 +514,7 @@ export const pt: Record<StringKey, string> = {
   'footer.terms': 'Termos',
   'footer.cookies': 'Cookies',
 
-  'search.live': 'Amora e Seixal · em direto',
+  'search.live': 'Amora e Seixal · zona piloto',
   'search.title': 'Quem está livre agora',
   'search.intro': 'Nove profissionais verificados estão online a menos de 5 km de si. Escolha um, acorde o preço no chat, e deslocam-se uma só vez.',
   'search.online': 'Online',

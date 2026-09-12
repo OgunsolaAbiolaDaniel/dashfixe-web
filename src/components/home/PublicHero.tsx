@@ -10,7 +10,7 @@ import { useLang } from '../../i18n';
 import type { LngLat } from '../../lib/geo';
 import { searchAddress } from '../../lib/geocode';
 import AddressField from '../shared/AddressField';
-import LiveMap from '../explore/LiveMap';
+import { LiveMap } from '../map/lazy';
 
 const FIELD = 'flex h-[56px] items-center gap-[13px] rounded-input bg-well px-[18px]';
 const INPUT =
