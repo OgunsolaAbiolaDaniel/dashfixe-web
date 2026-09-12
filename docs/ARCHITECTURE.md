@@ -179,11 +179,17 @@ product, so nav links point at routes.
 
 ### The pilot backend (rev 1.3 — live)
 
-One framework-agnostic handler core (`src/server/handlers.ts`) runs in three hosts: the
-Vercel functions (`api/[...path].ts`), the Vite dev server (middleware — `npm run dev`
-serves the full API with zero secrets), and the tests (called directly, and the UI tests'
-fetch mock routes through it). Server code lives under `src/server/` and is never imported
-by client code.
+One framework-agnostic handler core (`src/server/handlers.ts`) runs in three hosts:
+
+- **Vercel:** one function, `api/router.ts`. `vercel.json` rewrites every `/api/*` path to
+  it, because outside Next.js a `[...path]` file only matches one segment.
+- **The Vite dev and preview servers:** as middleware. `npm run dev` serves the full API
+  with zero secrets.
+- **The tests:** they call the handlers directly, and the UI tests' fetch mock routes
+  through them, cookie jar included.
+
+Server code lives under `src/server/` and is never imported by client code. Its relative
+imports carry `.js`, because Vercel runs these files as plain Node ES modules.
 
 ```
 POST /api/waitlist            { email, userType }                → 200   live
@@ -195,9 +201,22 @@ GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)         Phase
 POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat               Phase 6
 ```
 
-Sessions are HMAC-signed tokens in an httpOnly SameSite cookie. Codes: 6 digits, 5-minute
-TTL, five attempts then burned. Storage is an adapter: Postgres when `DATABASE_URL` is set
-(Neon as-is, tables created on first use), in-memory otherwise. SMS is an adapter: real
+**Auth is stateless, so login needs no database.**
+
+- **Sessions:** HMAC-signed tokens in an httpOnly `SameSite=Lax` cookie.
+- **The pending login code:** it rides in a second signed cookie (`dfx_otp`) that is
+  httpOnly, `SameSite=Strict`, scoped to `/api/auth` and lives 5 minutes. That cookie
+  holds only a *keyed hash* of the code, never the code itself. A miss re-issues it with
+  the attempt count raised.
+- **Codes:** 6 digits, a 5-minute TTL, and burned after five misses.
+- **Why stateless:** on serverless, `request-code` and `verify` can hit different
+  instances, so an in-memory code store failed there.
+- **What remains:** `request-code` has no rate limit yet. Add one, per phone and IP,
+  before real SMS costs money.
+
+**Storage** holds only data worth keeping: waitlist entries, applications and users. It
+is an adapter: Postgres when `DATABASE_URL` is set (Neon as-is, tables created on first
+use), in-memory otherwise. SMS is an adapter: real
 texts when `TWILIO_*` is configured; until then **pilot mode** returns the code and the
 login page shows it, clearly labelled.
 

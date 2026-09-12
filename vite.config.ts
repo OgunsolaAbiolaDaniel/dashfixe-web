@@ -8,7 +8,7 @@ import { indexablePaths, pageMeta, renderHead, robotsTxt, sitemapXml } from './s
 
 /**
  * The pilot API inside `npm run dev` AND `vite preview`: the same shared handlers
- * Vercel runs in production (api/[...path].ts), mounted as middleware so the app is
+ * Vercel runs in production (api/router.ts), mounted as middleware so the app is
  * fully functional locally with zero secrets — and so the smoke tests can drive the
  * built app end to end. See docs/ARCHITECTURE.md §6.
  */

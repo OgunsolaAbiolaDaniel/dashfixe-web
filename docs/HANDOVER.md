@@ -147,7 +147,7 @@ src/
   components/home    public + signed-in home sections
   components/shared  MobileMenu · LangToggle · AddressField · PhotoPick
   test/              vitest setup · MapLibre stub · pilot API fetch mock
-api/[...path].ts     Vercel adapter for server/handlers
+api/router.ts        Vercel adapter for server/handlers (vercel.json rewrites /api/* here)
 e2e/                 Playwright smoke suite (playwright.config.ts at the root)
 scripts/shot.mjs     headless screenshot via CDP
 docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
@@ -191,6 +191,17 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Windows PowerShell 5.1 splits here-strings passed to native commands**, so
   `git commit -m @'…'@` with quotes in it fails. Write the message to a file and use
   `git commit -F <file>`.
+- **Vercel functions are not Next.js.** `api/[...path].ts` matched ONE segment, so
+  `/api/auth/*` 404'd in production while `/api/waitlist` reached the function. Fixed
+  with one `api/router.ts` plus a `vercel.json` rewrite.
+- **Vercel runs `api/` as plain Node ES modules.** Extensionless relative imports
+  (`./store`) crash at runtime with a 500. Vite and Vitest hide that, so everything under
+  `src/server` imports `./x.js`. To prove it without deploying, compile with
+  `tsc --module nodenext` (it errors on a missing extension) and `import()` the output
+  in Node.
+- **Serverless has no shared memory.** An in-memory OTP store fails when `verify` lands
+  on a different instance from `request-code`. The pending code now rides in a signed
+  cookie (`server/session.ts`).
 - **MapLibre's CSS** sets `.maplibregl-map { position: relative }`, which beats Tailwind's
   `absolute` and collapses the map to zero height. `index.css` re-pins `.live-map`.
 - **The in-app browser preview cannot render the map** — it never fires
