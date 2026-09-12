@@ -5,18 +5,35 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-12 · **Branch:** `feat/launch-hardening` (PR to `main`) ·
+**Last updated:** 2026-09-12 · **Branch:** `feat/product-polish` (PR to `main`) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0–4 are done and merged. Phase 5's code is done. #1–#8 are merged, including
-revision 1.3 (the pilot backend and `/login`), and `main` is green.
+Phases 0–4 are done and merged. Phase 5's code is done. #1–#10 are merged, including
+revision 1.4 (#9) and the Vercel API fix (#10), and `main` is green. **Production login
+works:** it was verified live, with no database and no Twilio.
 
-**Revision 1.4**, on branch `feat/launch-hardening`, is launch hardening. Three commits,
-each one green:
+**Revision 1.5**, on branch `feat/product-polish`, is the owner's review pass. Four
+commits, each one green:
+
+- **One header on every page** (`components/chrome/Header.tsx`). `SiteNav` and `AppBar`
+  are now thin wrappers around it.
+- **One-tap pilot login.** With no SMS provider, Send code verifies the returned code
+  itself. Then a one-time name step; the name rides in the session token
+  (`POST /api/auth/profile`).
+- **One shared place** (`lib/place.ts`). Every map, pin and ETA follows the address the
+  customer picked.
+- **Chat → estimate → approve → booked → track → finish → rate.** This runs on the job
+  store (`lib/jobs.ts`) and `lib/estimate.ts`, and every step is labelled as sample.
+- **`/how-it-works`**, home layout fixes, and the waitlist parked.
+
+**For the owner:** nothing to do to log in. When SMS is funded, set `TWILIO_*` and the
+code step returns by itself.
+
+Revision 1.4 (#9, launch hardening), for reference:
 
 - **Lazy map.** MapLibre is code-split: always import maps from
   `components/map/lazy.tsx`, which ESLint enforces. Entry JS dropped from 1,445 to
@@ -31,7 +48,7 @@ each one green:
 - **Two honesty/UX fixes:** the explore chip no longer says "live", and the address
   field's suggestion list no longer opens on load.
 
-Start any new session by reading `docs/ARCHITECTURE.md` rev 1.4:
+Start any new session by reading `docs/ARCHITECTURE.md` rev 1.5:
 - §4 covers the route map, and search and sharing
 - §6 holds the endpoints and the env table
 - §7 covers the maps and the lazy rule
@@ -202,6 +219,17 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Serverless has no shared memory.** An in-memory OTP store fails when `verify` lands
   on a different instance from `request-code`. The pending code now rides in a signed
   cookie (`server/session.ts`).
+- **A scrolling flex column shrinks its children.** Cards with `overflow-hidden` get
+  clipped (the chat's approved estimate lost its footer). Add `[&>*]:shrink-0` to the
+  scroller.
+- **External stores need a stable snapshot.** `usePlace()` and `useJobs()` use
+  `useSyncExternalStore`, which re-renders forever if `getSnapshot` returns a new object
+  on each call. Both memoise on the raw localStorage string.
+- **Tests share module state.** `src/test/setup.ts` clears localStorage and the chat
+  threads after every test. Add any new per-browser store to that reset.
+- **The chat's replies run on timers.** Every `setState` for a scripted reply happens
+  inside a timeout, never synchronously in an effect (`react-hooks/set-state-in-effect`).
+  Each reply also has a cleanup, so StrictMode's double mount doesn't greet twice.
 - **MapLibre's CSS** sets `.maplibregl-map { position: relative }`, which beats Tailwind's
   `absolute` and collapses the map to zero height. `index.css` re-pins `.live-map`.
 - **The in-app browser preview cannot render the map** — it never fires
@@ -228,5 +256,7 @@ link into WhatsApp — the card should show that page's title and the map image.
 Nothing on the site claims live supply. Every list of artisans is labelled sample data
 (`Nearby.tsx` badge, the "Sample artisans · real map" chip on the map, the trade pages'
 "Sample data" badge and pilot line). The `/explore` area chip says "pilot area" with a
-still dot — never "live". Sample artisan profiles are `noindex`. Keep all of it until the
+still dot — never "live"; its intro says nine *sample* artisans. The chat header reads
+"Sample artisan · scripted replies", receipts carry a Sample badge, the job screen's
+finish button is labelled "Walkthrough", and pilot login says it skipped the SMS. Sample artisan profiles are `noindex`. Keep all of it until the
 pilot cohort is real. See `../Dashfixe.md` §2 for the full list of forbidden claims.
