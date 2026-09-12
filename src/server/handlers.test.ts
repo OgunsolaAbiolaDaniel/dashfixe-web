@@ -119,6 +119,17 @@ describe('the login flow (stateless: the pending code rides in a signed cookie)'
     expect(verify.body.error).toBe('code_expired');
   });
 
+  it('saves a first name into the session, and only for a signed-in visitor', async () => {
+    const b = browser();
+    expect((await b.post('/api/auth/profile', { name: 'Ana' })).status).toBe(401);
+    const code = (await b.post('/api/auth/request-code', { phone: '912345678' })).body.devCode as string;
+    await b.post('/api/auth/verify', { phone: '912345678', code });
+    expect((await b.post('/api/auth/profile', { name: '<script>' })).body.error).toBe('invalid_name');
+    expect((await b.post('/api/auth/profile', { name: 'Ana Sofia' })).status).toBe(200);
+    const me = await handleApi({ method: 'GET', path: '/api/auth/me', body: null, cookieHeader: b.jar.header() });
+    expect(me.body).toMatchObject({ signedIn: true, name: 'Ana Sofia' });
+  });
+
   it('logs out by clearing the cookie', async () => {
     const out = await post('/api/auth/logout', null);
     expect(out.setCookie![0]).toContain('Max-Age=0');

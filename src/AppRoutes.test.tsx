@@ -103,7 +103,8 @@ describe('/for-artisans', () => {
 describe('the signed-in app home (map-first, ARCHITECTURE.md rev 1.1)', () => {
   it('is the map and the composer, not a dashboard', async () => {
     renderSignedIn('/');
-    expect(screen.getByRole('heading', { name: 'Good morning, Alex.' })).toBeInTheDocument();
+    // Greets by first name, for the time of day.
+    expect(screen.getByRole('heading', { name: /^Good (morning|afternoon|evening), Alex\.$/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Find an artisan' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Activity' })).toBeInTheDocument();
     // The map mounts with the supply around the saved address.
@@ -210,33 +211,47 @@ describe('/job/:id', () => {
   });
 });
 
-/** Drive the real login flow: phone → pilot code shown → verify. */
-async function logIn(user: ReturnType<typeof userEvent.setup>) {
+/**
+ * Drive the real login flow. Pilot mode (no SMS provider): Send code signs the
+ * visitor straight in, then the one-time name step.
+ */
+async function logIn(user: ReturnType<typeof userEvent.setup>, name = 'Ana') {
   await user.type(screen.getByLabelText('Phone number'), '912 345 678');
   await user.click(screen.getByRole('button', { name: 'Send code' }));
-  const pilot = await screen.findByText(/your code is shown here/);
-  const code = /(\d{6})/.exec(pilot.textContent ?? '')![1]!;
-  await user.type(screen.getByLabelText('Code'), code);
-  await user.click(screen.getByRole('button', { name: 'Log in' }));
+  await user.type(await screen.findByLabelText('First name'), name);
+  await user.click(screen.getByRole('button', { name: 'Continue' }));
 }
 
-describe('/login (a page, not a modal — rev 1.3)', () => {
-  it('signs in with a real code and returns to next', async () => {
+describe('/login (a page, not a modal)', () => {
+  it('signs in on Send code in pilot mode, asks a name once, and returns to next', async () => {
     const user = userEvent.setup();
     renderAt('/login?next=/activity');
-    await logIn(user);
+    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.click(screen.getByRole('button', { name: 'Send code' }));
+    // No code to type: pilot mode says so, honestly.
+    expect(await screen.findByText(/you're in without a code/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText('First name'), 'Ana');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: 'Activity' })).toBeInTheDocument();
+    // The header now knows who this is.
+    expect(screen.getByRole('button', { name: 'Account' })).toHaveTextContent('Ana');
+  });
+
+  it('lets a new customer skip the name', async () => {
+    const user = userEvent.setup();
+    renderAt('/login?next=/activity');
+    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.click(screen.getByRole('button', { name: 'Send code' }));
+    await user.click(await screen.findByRole('button', { name: 'Skip for now' }));
     expect(await screen.findByRole('heading', { name: 'Activity' })).toBeInTheDocument();
   });
 
-  it('rejects a wrong code with a readable error', async () => {
+  it('turns away a number that is not a phone number', async () => {
     const user = userEvent.setup();
     renderAt('/login');
-    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.type(screen.getByLabelText('Phone number'), '12');
     await user.click(screen.getByRole('button', { name: 'Send code' }));
-    await screen.findByText(/your code is shown here/);
-    await user.type(screen.getByLabelText('Code'), '000000');
-    await user.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(await screen.findByText(/That code is not right/)).toBeInTheDocument();
+    expect(await screen.findByText(/does not look right/)).toBeInTheDocument();
   });
 
   it('gates chat on /explore and comes back with the chat open', async () => {

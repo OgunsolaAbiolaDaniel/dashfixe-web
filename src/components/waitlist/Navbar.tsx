@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
 import type { Lang } from '../../types';
@@ -16,10 +17,11 @@ export default function Navbar({ lang, onLang }: Props) {
     <header className="sticky top-0 z-[60] bg-panel border-b border-line-soft">
       <div className="mx-auto max-w-[1200px] px-[clamp(18px,4vw,32px)]">
         <div className="flex flex-wrap items-center justify-between gap-x-[26px] gap-y-3 min-h-[72px] py-3">
-          <a href="#top" className="flex flex-none items-center gap-2.5">
+          {/* The logo always goes home — on every page, this one included. */}
+          <Link to="/" aria-label="Dashfixe — home" className="flex flex-none items-center gap-2.5">
             <img src={mark} alt="" className="block h-[30px] w-auto" />
             <img src={wordmark} alt="Dashfixe" className="block h-[19px] w-auto" />
-          </a>
+          </Link>
 
           <nav className="flex flex-wrap items-center gap-6">
             {LINKS.map((l) => (

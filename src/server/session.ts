@@ -68,13 +68,17 @@ export function cookieFromHeader(cookieHeader: string | undefined, name: string)
 
 // ── Sessions ────────────────────────────────────────────────────────────────
 
-export function issueToken(phone: string, now = Date.now()): string {
-  return seal({ phone, exp: Math.floor(now / 1000) + THIRTY_DAYS_S });
+export type Session = { phone: string; name?: string };
+
+/** The session carries the display name too, so no profile table is needed yet. */
+export function issueToken(phone: string, name?: string, now = Date.now()): string {
+  return seal({ phone, ...(name ? { name } : {}), exp: Math.floor(now / 1000) + THIRTY_DAYS_S });
 }
 
-export function verifyToken(token: string | undefined, now = Date.now()): { phone: string } | null {
+export function verifyToken(token: string | undefined, now = Date.now()): Session | null {
   const data = unseal(token, now);
-  return data && typeof data.phone === 'string' ? { phone: data.phone } : null;
+  if (!data || typeof data.phone !== 'string') return null;
+  return typeof data.name === 'string' ? { phone: data.phone, name: data.name } : { phone: data.phone };
 }
 
 export function sessionCookie(token: string): string {

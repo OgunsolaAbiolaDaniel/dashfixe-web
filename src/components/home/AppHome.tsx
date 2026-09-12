@@ -9,6 +9,7 @@ import { DEFAULT_ADDRESS, exploreUrl, type When } from '../../search';
 import { HOME } from '../../lib/geo';
 import { ROUTES, jobUrl } from '../../routes';
 import { ACTIVE_JOB_ID } from '../../lib/jobs';
+import { useAuth } from '../../auth';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -35,8 +36,14 @@ const CARD = 'rounded-card border border-line-soft bg-panel';
 export default function AppHome() {
   const { t } = useLang();
   const navigate = useNavigate();
+  const { name } = useAuth();
   const [when, setWhen] = useState<When>('now');
   const [need, setNeed] = useState('');
+  // Clocks are impure: read once per mount.
+  const [dayPart] = useState<'morning' | 'afternoon' | 'evening'>(() => {
+    const h = new Date().getHours();
+    return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
+  });
 
   // Every action carries the saved address, so /explore opens where the customer is.
   const to = (extra: Parameters<typeof exploreUrl>[0]) =>
@@ -53,7 +60,7 @@ export default function AppHome() {
         <div className="flex min-h-0 min-w-0 flex-col gap-[18px] overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
           <div>
             <h1 className="mb-2 text-[26px] font-extrabold leading-[1.08] tracking-[-.03em] text-ink">
-              {t('customer.greeting', { name: 'Alex' })}
+              {name ? t(`customer.greet.${dayPart}`, { name: name.split(' ')[0]! }) : t(`customer.greetPlain.${dayPart}`)}
             </h1>
             <Link
               to={ROUTES.activity}

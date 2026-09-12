@@ -44,22 +44,20 @@ test('deep links and cut pages resolve on a cold load', async ({ page }) => {
   await expect(page).toHaveURL(/\/explore$/);
 });
 
-test('log in with the pilot code, land on next, and stay signed in', async ({ page }) => {
+test('pilot login: Send code signs in, a name once, land on next, stay signed in', async ({ page }) => {
   await page.goto('/login?next=/activity');
   await page.getByLabel('Phone number').fill('912 345 678');
   await page.getByRole('button', { name: 'Send code' }).click();
 
-  const pilot = page.getByText(/your code is shown here/);
-  await expect(pilot).toBeVisible();
-  const code = /(\d{6})/.exec((await pilot.textContent()) ?? '')?.[1];
-  expect(code).toBeTruthy();
-  await page.getByLabel('Code').fill(code!);
-  await page.getByRole('button', { name: 'Log in' }).click();
+  // No SMS provider → no code to type; the one-time name step instead.
+  await page.getByLabel('First name').fill('Ana');
+  await page.getByRole('button', { name: 'Continue' }).click();
 
   await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
-  // The httpOnly session cookie survives a full reload.
+  // The httpOnly session cookie (name included) survives a full reload.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Account' })).toContainText('Ana');
 });
 
 test('the waitlist form reaches the API', async ({ page }) => {
