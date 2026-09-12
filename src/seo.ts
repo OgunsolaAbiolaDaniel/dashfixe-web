@@ -17,7 +17,8 @@ import { ROUTES, TRADE_SLUGS, isTradeSlug, tradeUrl } from './routes';
 import { AVAILABLE } from './components/explore/artisans';
 
 export const SITE_NAME = 'Dashfixe';
-export const OG_IMAGE = '/og.png';
+/** 1200×630 JPEG — link previews (WhatsApp especially) want it well under 300 kB. */
+export const OG_IMAGE = '/og.jpg';
 
 export type PageMeta = {
   title: string;

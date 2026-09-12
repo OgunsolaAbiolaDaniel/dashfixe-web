@@ -29,12 +29,12 @@ test('the explore map loads on demand and draws its markers', async ({ page }) =
 test('trade pages ship their own head to crawlers, and the sitemap lists them', async ({ request }) => {
   const html = await (await request.get('/trade/plumbing')).text();
   expect(html).toContain('<title>Plumbers in Amora &amp; Seixal · Dashfixe</title>');
-  expect(html).toMatch(/<meta property="og:image" content="https?:\/\/[^"]+\/og\.png"/);
+  expect(html).toMatch(/<meta property="og:image" content="https?:\/\/[^"]+\/og\.jpg"/);
 
   const sitemap = await (await request.get('/sitemap.xml')).text();
   expect(sitemap).toContain('/trade/cleaning</loc>');
   expect(await (await request.get('/robots.txt')).text()).toContain('Sitemap:');
-  expect((await request.get('/og.png')).headers()['content-type']).toContain('image/png');
+  expect((await request.get('/og.jpg')).headers()['content-type']).toContain('image/jpeg');
 });
 
 test('deep links and cut pages resolve on a cold load', async ({ page }) => {

@@ -51,7 +51,7 @@ describe('the build-side renderers', () => {
     expect(html).toContain('<title>Plumbers in Amora &amp; Seixal · Dashfixe</title>');
     expect(html).toContain(`<link rel="canonical" href="${SITE}/trade/plumbing"`);
     expect(html).toContain(`<meta property="og:url" content="${SITE}/trade/plumbing"`);
-    expect(html).toContain(`<meta property="og:image" content="${SITE}/og.png"`);
+    expect(html).toContain(`<meta property="og:image" content="${SITE}/og.jpg"`);
     expect(html).toContain('<meta name="robots" content="index, follow"');
   });
 
