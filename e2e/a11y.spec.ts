@@ -17,6 +17,7 @@ const PAGES = [
   '/trade/plumbing',
   '/pro',
   '/pro/app',
+  '/pro/apply',
   '/no-such-page',
 ];
 

@@ -52,6 +52,27 @@ describe('POST /api/artisans/apply', () => {
     expect(noPhone.status).toBe(400);
     expect(noPhone.body.error).toBe('invalid_phone');
   });
+
+  it('takes the Dashfixe Pro profile, requires consent with it, and returns a reference', async () => {
+    const base = { fullName: 'Tiago Ferreira', phone: '912 345 678', email: 'tiago@example.com', trade: 'plumbing' };
+    const profile = {
+      trades: ['carpentry'],
+      experience: '6-10',
+      areas: ['Amora', 'Seixal'],
+      availability: ['weekdays', 'weekends'],
+      transport: true,
+      licences: ['gas'],
+      insurance: true,
+    };
+    const good = await post('/api/artisans/apply', { ...base, profile, consent: true });
+    expect(good.status).toBe(200);
+    expect(good.body.reference).toMatch(/^A-\d{4}$/);
+
+    expect((await post('/api/artisans/apply', { ...base, profile })).body.error).toBe('consent_required');
+    expect((await post('/api/artisans/apply', { ...base, profile: { ...profile, experience: 'forever' }, consent: true })).body.error).toBe('invalid_profile');
+    expect((await post('/api/artisans/apply', { ...base, profile: { ...profile, areas: [] }, consent: true })).body.error).toBe('invalid_profile');
+    expect((await post('/api/artisans/apply', { ...base, profile: { ...profile, licences: ['astronaut'] }, consent: true })).body.error).toBe('invalid_profile');
+  });
 });
 
 describe('the login flow (stateless: the pending code rides in a signed cookie)', () => {

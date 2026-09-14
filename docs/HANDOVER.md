@@ -5,8 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/pro-shell` (PR to `main`; everything
-through #19 is merged, and production passes `check-prod.mjs` 20/20) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/pro-apply`, stacked on `feat/pro-shell`
+(#20; merge that first). Everything through #19 is merged, and production passes
+`check-prod.mjs` 20/20 ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -70,7 +71,29 @@ world, like Uber's driver site, built in four PRs in the order in BUILD_PLAN →
 - **Production checks:** `check-prod.mjs` now also cold-loads `/pro/app` and checks the
   redirect (22 checks).
 
-**Next: PR 2, the application** (`/pro/apply`, several steps, then a status page).
+**Revision 2.3**, on branch `feat/pro-apply`, is Pro PR 2: the application.
+
+- **`/pro/apply`** (`pages/ProApplyPage.tsx`) has four steps, each checked before
+  moving on, with focus on the first error:
+  - **About you:** name, WhatsApp and email.
+  - **Your work:** main trade, other trades and experience.
+  - **Where and when:** areas, availability and transport.
+  - **Papers:** licences, insurance and consent.
+  - Then a review with Edit links, and submit.
+- **The API.** `POST /api/artisans/apply` takes an optional `profile`, validated, with
+  consent required, and returns a reference. Postgres gains `profile JSONB` and
+  `reference`.
+- **`/pro/application`** (`pages/ProApplicationPage.tsx`) shows the reference, then
+  received → a WhatsApp call within 48 hours → documents → onboarding → ready. It says
+  plainly that it shows what this device sent.
+- **The landing's `#apply`** is now a start card that opens `/pro/apply`. Once this
+  device has applied, it reads "See your application". Every Apply link goes to
+  `/pro/apply`.
+- **Tests:** 158 Vitest, including the full four-step flow in the UI and the
+  server's profile validation.
+
+**Next:** the owner asked for an artisan profile card that opens as a modal from the
+customer's chat. Then Pro PR 3 (`/pro/login` + `/pro/dashboard`) and PR 4 (`/pro/help`).
 
 **Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
 through one change of direction: it began as an interactive walkthrough at `/pro`, and at

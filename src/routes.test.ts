@@ -20,7 +20,8 @@ describe('link', () => {
   it('sends the artisan world to Dashfixe Pro, with anchored depth', () => {
     expect(link('forArtisans')).toBe('/pro');
     expect(link('proHow')).toBe('/pro#how');
-    expect(link('artisanApply')).toBe('/pro#apply');
+    expect(link('artisanApply')).toBe('/pro/apply');
+    expect(link('proApplication')).toBe('/pro/application');
     expect(link('artisanPay')).toBe('/pro#pay');
     expect(link('artisanVetting')).toBe('/pro#vetting');
   });

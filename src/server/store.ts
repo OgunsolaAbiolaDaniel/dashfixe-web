@@ -12,11 +12,26 @@
  */
 
 export type WaitlistEntry = { email: string; userType: 'HOMEOWNER' | 'ARTISAN'; createdAt: string };
+/** The Dashfixe Pro application's extra answers (/pro/apply, rev 2.3). */
+export type ArtisanProfile = {
+  /** Other trades besides the primary one. */
+  trades: string[];
+  experience: string;
+  areas: string[];
+  availability: string[];
+  transport: boolean;
+  licences: string[];
+  insurance: boolean;
+};
 export type ArtisanApplication = {
   fullName: string;
   phone: string;
   email: string;
   trade: string;
+  /** Present for applications made through /pro/apply. */
+  profile?: ArtisanProfile;
+  /** Shown to the applicant on their status page. */
+  reference?: string;
   createdAt: string;
 };
 /**
@@ -67,6 +82,8 @@ CREATE TABLE IF NOT EXISTS artisan_applications (
   status TEXT NOT NULL DEFAULT 'received',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS profile JSONB;
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS reference TEXT;
 CREATE TABLE IF NOT EXISTS users (
   phone TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -86,8 +103,8 @@ async function pgStore(databaseUrl: string): Promise<Store> {
     },
     async addApplication(app) {
       await pool.query(
-        'INSERT INTO artisan_applications (full_name, phone, email, trade) VALUES ($1, $2, $3, $4)',
-        [app.fullName, app.phone, app.email, app.trade],
+        'INSERT INTO artisan_applications (full_name, phone, email, trade, profile, reference) VALUES ($1, $2, $3, $4, $5, $6)',
+        [app.fullName, app.phone, app.email, app.trade, app.profile ? JSON.stringify(app.profile) : null, app.reference ?? null],
       );
     },
     async ensureUser(phone) {

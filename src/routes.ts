@@ -36,6 +36,10 @@ export const ROUTES = {
   pro: '/pro',
   /** The Dashfixe Pro app's showcase: stills, "coming soon" store badges. */
   proApp: '/pro/app',
+  /** The Dashfixe Pro application: four steps, then review (rev 2.3). */
+  proApply: '/pro/apply',
+  /** The applicant's status page, for the application sent from this device. */
+  proApplication: '/pro/application',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -60,7 +64,8 @@ const DESTINATIONS = {
   forArtisans: ROUTES.pro,
   pro: ROUTES.pro,
   proHow: `${ROUTES.pro}#how`,
-  artisanApply: `${ROUTES.pro}#apply`,
+  artisanApply: ROUTES.proApply,
+  proApplication: ROUTES.proApplication,
   artisanPay: `${ROUTES.pro}#pay`,
   artisanVetting: `${ROUTES.pro}#vetting`,
   artisanApp: ROUTES.proApp,

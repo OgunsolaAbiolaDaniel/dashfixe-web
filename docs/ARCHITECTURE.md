@@ -6,9 +6,11 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 2.2 — Dashfixe Pro's shell: the artisan world gets
+**Last revised:** 2026-09-14 · Revision 2.3 — the Dashfixe Pro application: `/pro/apply`
+(four checked steps and a review) and `/pro/application` (the applicant's status), and the
+apply API takes a profile. (Revision 2.2 — Dashfixe Pro's shell: the artisan world gets
 its own frame and landing at `/pro` (was `/for-artisans`), with the app showcase at
-`/pro/app`. (Revision 2.1 — the bell works: notices about the
+`/pro/app`.) (Revision 2.1 — the bell works: notices about the
 customer's jobs and credit, an unread count, each linking where it's about.)
 (Revision 2.0 — the apps, shown honestly. `/pro` showcases the
 artisan app: preview screens from designs/Dashfixe Artisan App.dc.html, "coming soon" store
@@ -78,8 +80,9 @@ from the rider site.
 - **The frame** is `MarketingShell surface="pro"`: the dark Pro header and footer, the
   Pro nav, and Apply. There's one link back to the customer site, and the two never
   share a menu.
-- **Built:** the landing (`/pro`) and the app showcase (`/pro/app`).
-- **Next:** `/pro/apply`, `/pro/login` + `/pro/dashboard`, then `/pro/help`.
+- **Built:** the landing (`/pro`), the app showcase (`/pro/app`), the application
+  (`/pro/apply`) and its status page (`/pro/application`).
+- **Next:** `/pro/login` + `/pro/dashboard`, then `/pro/help`.
 
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
@@ -123,6 +126,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/activity` | app | Signed-in: every job, live and past (redirects visitors home) | built (rev 1.1; rev 1.8 jobs only) |
 | `/account` | app | Signed-in dashboard: profile, stats, credit, invite, artisans, places, preferences, data (visitors → `/login?next=/account`) | built (rev 1.8) |
 | `/pro/app` | pro | The Dashfixe Pro app's showcase: four preview screens (Today, offer, estimate, earnings), what's in the app, "coming soon" store badges, apply to the pilot. Not interactive. Noindex (sample previews); `link('artisanApp')` and `/artisan-app` land here | built (rev 2.0 at `/pro`; moved rev 2.2) |
+| `/pro/apply` | pro | The Dashfixe Pro application: about you, your work, where and when, papers (each step checks itself), then a review with Edit links. `link('artisanApply')` and every Apply lands here. Indexed | built (rev 2.3) |
+| `/pro/application` | pro | The applicant's status: reference, then WhatsApp call → documents → onboarding → ready. It shows what this device sent. Noindex | built (rev 2.3) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/pro` | pro | Dashfixe Pro landing: how it works (`#how`), pay (`#pay`), vetting (`#vetting`), the app (`#app`), pilot application (`#apply`). `/for-artisans` redirects here (a 308 in `vercel.json` and in the app, `#section` kept) | built (rev 2.2; was `/for-artisans`, rev 1) |
@@ -242,6 +247,17 @@ product, so nav links point at routes.
   an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
   `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
   this for `/api/jobs`, keeping the same shapes.
+- **The Pro application** (rev 2.3):
+  - **`POST /api/artisans/apply`** still takes the four original fields, so the old
+    form's contract holds. It adds an optional `profile`: other trades, experience
+    (`0-2`/`3-5`/`6-10`/`10+`), areas, availability (`weekdays`/`evenings`/`weekends`),
+    transport, licences (`dgeg`/`gas`/`none`) and insurance.
+  - The profile is validated field by field, and `consent: true` is required with it.
+  - It returns a reference (`A-1234`). Postgres gets `profile JSONB` and `reference`
+    columns (`ADD COLUMN IF NOT EXISTS`).
+  - **`src/lib/proApplication.ts`** keeps the reference and a few answers in
+    `dfx.proApplication`, for the status page and the landing's "See your application".
+    Phase 6 replaces it with the artisan account's status.
 - **Notifications** (`src/lib/notifications.ts`, rev 2.1):
   - **Derived, not stored.** There is no push backend yet. `buildNotices(jobs, wallet)`
     turns each job's *state* into one notice (booked, on the way, started, receipt ready,

@@ -9,6 +9,8 @@ import ArtisanProfilePage from './pages/ArtisanProfilePage';
 import JobPage from './pages/JobPage';
 import ProLandingPage from './pages/ProLandingPage';
 import ProAppPage from './pages/ProAppPage';
+import ProApplyPage from './pages/ProApplyPage';
+import ProApplicationPage from './pages/ProApplicationPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
@@ -87,6 +89,8 @@ export default function AppRoutes() {
         {/* Dashfixe Pro — the artisan world (rev 2.2). */}
         <Route path={ROUTES.pro} element={<ProLandingPage />} />
         <Route path={ROUTES.proApp} element={<ProAppPage />} />
+        <Route path={ROUTES.proApply} element={<ProApplyPage />} />
+        <Route path={ROUTES.proApplication} element={<ProApplicationPage />} />
         <Route path={ROUTES.forArtisans} element={<Moved to={ROUTES.pro} />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />

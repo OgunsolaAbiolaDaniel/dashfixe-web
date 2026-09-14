@@ -445,8 +445,22 @@ The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
    2. The nav has How it works, Earnings, Vetting and The app, plus Apply. "Need a
       repair?" goes back to the customer site.
    3. From the customer site, "Become an artisan" lands on `/pro`.
-2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
-   then the status page.
+2. ✅ **Application** (rev 2.3, branch `feat/pro-apply`, on top of #20).
+   - `/pro/apply` has four checked steps: about you, your work, where and when, papers.
+     Each step checks itself, and focus moves to the first error.
+   - A review with Edit links, then submit. The profile is added to
+     `POST /api/artisans/apply`, validated, with consent required, and a reference comes
+     back.
+   - `/pro/application` shows the status timeline. The landing's apply section becomes
+     a start card, which reads "See your application" once you've applied.
+
+   **Owner test:**
+   1. On `/pro`, tap **Apply**, then tap **Continue** with nothing filled in: each
+      missing field says what it needs.
+   2. Fill the four steps. The review lists everything, with Edit links.
+   3. Send it: the status page shows your reference and the WhatsApp call as the next
+      step.
+   4. Back on `/pro`, the apply card says **See your application**.
 3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
    labelled until Phase 6 supplies real jobs.
 4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
