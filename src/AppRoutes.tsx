@@ -15,6 +15,7 @@ import TradePage from './pages/TradePage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/shared/ErrorBoundary';
+import { AssistantProvider } from './components/assistant/AssistantProvider';
 import { ROUTES, link } from './routes';
 import { launched } from './config';
 import { applyMeta, pageMeta } from './seo';
@@ -54,6 +55,8 @@ export default function AppRoutes() {
       <RouteMeta />
       {/* A crash on one page shows a reload screen; navigating away clears it. */}
       <ErrorBoundary resetKey={pathname}>
+      {/* One Dashfixe assistant, openable from anywhere below. */}
+      <AssistantProvider>
       <Routes>
         {/* Product surface (ARCHITECTURE.md §2) */}
         <Route path={ROUTES.home} element={<HomePage />} />
@@ -87,6 +90,7 @@ export default function AppRoutes() {
         {/* Anything else is an honest 404 (noindex), not a silent trip home. */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </AssistantProvider>
       </ErrorBoundary>
     </>
   );

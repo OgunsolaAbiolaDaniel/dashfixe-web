@@ -546,6 +546,21 @@ export const en = {
   'trade.chip.change': 'Change',
   'trade.chip.choose': 'Choose a trade',
   'trade.chip.matched': 'matched from "{word}"',
+  'assist.title': 'Dashfixe assistant',
+  'assist.label': 'Automatic: matches your words to the right trade',
+  'assist.hello': 'Hi! Tell me what\'s broken or needs doing, in your own words, and I\'ll find the right kind of artisan near {place}.',
+  'assist.placeholder': 'Describe the problem…',
+  'assist.match': 'That sounds like a {trade} job (you mentioned "{word}"). {n} are free near you right now.',
+  'assist.picked': 'Got it: {trade}. {n} are free near you right now.',
+  'assist.go': 'See {pros} near me',
+  'assist.other': 'Not quite, choose another trade',
+  'assist.unsure': 'I\'m not sure which trade that is yet. Which of these is closest?',
+  'assist.none': 'None of these',
+  'assist.noneReply': 'For now the pilot covers five trades. Tell me a bit more and I\'ll try again, or see everyone who is free near you.',
+  'assist.everyone': 'See everyone near me',
+  'assist.near': 'Searching near {place}',
+  'assist.close': 'Close the assistant',
+  'assist.typing': 'The assistant is typing',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -1062,6 +1077,21 @@ export const pt: Record<StringKey, string> = {
   'trade.chip.change': 'Alterar',
   'trade.chip.choose': 'Escolher ofício',
   'trade.chip.matched': 'pela palavra "{word}"',
+  'assist.title': 'Assistente Dashfixe',
+  'assist.label': 'Automático: liga as suas palavras ao ofício certo',
+  'assist.hello': 'Olá! Diga-me o que está avariado ou precisa de ser feito, por palavras suas, e eu encontro o profissional certo perto de {place}.',
+  'assist.placeholder': 'Descreva o problema…',
+  'assist.match': 'Parece um trabalho de {trade} (mencionou "{word}"). {n} estão livres perto de si agora.',
+  'assist.picked': 'Entendido: {trade}. {n} estão livres perto de si agora.',
+  'assist.go': 'Ver {pros} perto de mim',
+  'assist.other': 'Não é bem isso, escolher outro ofício',
+  'assist.unsure': 'Ainda não sei que ofício é. Qual destes é o mais próximo?',
+  'assist.none': 'Nenhum destes',
+  'assist.noneReply': 'Por agora o piloto cobre cinco ofícios. Diga-me um pouco mais e tento outra vez, ou veja todos os que estão livres perto de si.',
+  'assist.everyone': 'Ver todos perto de mim',
+  'assist.near': 'A procurar perto de {place}',
+  'assist.close': 'Fechar o assistente',
+  'assist.typing': 'O assistente está a escrever',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

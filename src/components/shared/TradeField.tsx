@@ -5,6 +5,7 @@ import { TRADE_ICONS } from './tradeIcons';
 import { classifyNeed } from '../../lib/classify';
 import { isTradeSlug, type TradeSlug } from '../../routes';
 import { useLang } from '../../i18n';
+import { useAssistant } from '../assistant/AssistantProvider';
 
 type Props = {
   /** The chosen trade slug, or '' for any. */
@@ -23,7 +24,10 @@ type Props = {
  */
 export default function TradeField({ trade, need, onTrade, onAssistant, className = '' }: Props) {
   const { t } = useLang();
+  const { openAssistant } = useAssistant();
   const [open, setOpen] = useState(false);
+  // "Not sure?" hands whatever was typed to the assistant, so nothing is re-typed.
+  const ask = onAssistant ?? (() => openAssistant(need));
   const match = classifyNeed(need);
   const matched = isTradeSlug(trade) && match?.trade === trade ? match.keyword : null;
 
@@ -57,7 +61,7 @@ export default function TradeField({ trade, need, onTrade, onAssistant, classNam
       )}
       {matched && <span className="text-[12.5px] font-semibold text-ink-40">{t('trade.chip.matched', { word: matched })}</span>}
 
-      <TradePicker open={open} current={trade} onPick={onTrade} onClose={() => setOpen(false)} onAssistant={onAssistant} />
+      <TradePicker open={open} current={trade} onPick={onTrade} onClose={() => setOpen(false)} onAssistant={ask} />
     </div>
   );
 }
