@@ -11,6 +11,7 @@ vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
 
 import { installPilotApi } from './test/pilotApi.mock';
 import { redeemCode } from './lib/wallet';
+import { saveApplication } from './lib/proApplication';
 
 // Every fetch in these tests goes through the real handlers + a fresh store.
 const pilotApi = installPilotApi();
@@ -90,17 +91,109 @@ describe('/pro (Dashfixe Pro, the artisan world)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
   });
 
-  it('takes an application and confirms the WhatsApp follow-up', async () => {
+  it('applies in four checked steps, reviews, sends, and lands on the status page', async () => {
     const user = userEvent.setup();
-    renderAt('/pro');
-    await user.type(screen.getByLabelText('Full name'), 'Tiago Ferreira');
-    await user.type(screen.getByLabelText('WhatsApp / phone number'), '+351 912 345 678');
-    await user.type(screen.getByLabelText('Email address'), 'tiago@example.com');
-    await user.selectOptions(screen.getByLabelText('Primary trade'), 'electrical');
-    await user.click(screen.getByRole('button', { name: 'Submit application' }));
+    renderAt('/pro/apply');
+    expect(screen.getByRole('heading', { level: 1, name: 'Apply to Dashfixe Pro' })).toBeInTheDocument();
 
-    expect(screen.getByRole('heading', { name: 'Application received' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Submit application' })).not.toBeInTheDocument();
+    // Each step checks itself, and says what's missing.
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Enter your full name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Full name')).toHaveFocus();
+    await user.type(screen.getByLabelText('Full name'), 'Tiago Ferreira');
+    await user.type(screen.getByLabelText('WhatsApp / phone number'), '912 345 678');
+    await user.type(screen.getByLabelText('Email address'), 'tiago@example.com');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await user.click(screen.getByRole('radio', { name: 'Plumbing' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Carpentry' }));
+    await user.click(screen.getByRole('radio', { name: '6–10' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await user.click(screen.getByRole('checkbox', { name: 'Amora' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Weekdays' }));
+    await user.click(screen.getByRole('radio', { name: 'Yes' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    await user.click(screen.getByRole('checkbox', { name: 'Gas (Lei n.º 15/2015)' }));
+    await user.click(screen.getByRole('radio', { name: 'Yes' }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByText('Please agree, so we can contact you about your application')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: /I agree that Dashfixe may contact me/ }));
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // Review, with a way back to any step.
+    expect(screen.getByText('tiago@example.com')).toBeInTheDocument();
+    expect(screen.getByText('Carpentry')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit: Your main trade' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Send application' }));
+
+    expect(await screen.findByRole('heading', { name: "Thanks, Tiago. You're in the queue." })).toBeInTheDocument();
+    expect(screen.getByText(/Reference A-\d{4}/)).toBeInTheDocument();
+    expect(screen.getByText('Within 48 hours, from a person on our team, to 912 345 678.')).toBeInTheDocument();
+  });
+
+  it('turns the landing into "See your application" once this device has applied', () => {
+    saveApplication({ reference: 'A-1234', submittedAt: '2026-09-14T10:00:00Z', fullName: 'Tiago Ferreira', trade: 'plumbing', phone: '912345678', areas: ['Amora'] });
+    renderAt('/pro');
+    expect(screen.getByRole('link', { name: /See your application/ })).toHaveAttribute('href', '/pro/application');
+  });
+
+  it('offers artisans their own log in', () => {
+    renderAt('/pro');
+    expect(screen.getAllByRole('link', { name: 'Log in' })[0]).toHaveAttribute('href', '/pro/login');
+  });
+
+  it('logs an artisan in, in Pro chrome, and lands on the dashboard', async () => {
+    const user = userEvent.setup();
+    renderAt('/pro/login');
+    expect(screen.getByRole('heading', { name: 'Log in to Dashfixe Pro' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.click(screen.getByRole('button', { name: 'Send code' }));
+    await user.type(await screen.findByLabelText('First name'), 'Tiago');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your Dashfixe Pro dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Hello, Tiago')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Start your application/ })).toHaveAttribute('href', '/pro/apply');
+  });
+
+  it('sends a signed-out visitor from the dashboard to the Pro log in', async () => {
+    renderAt('/pro/dashboard');
+    expect(await screen.findByRole('heading', { name: 'Log in to Dashfixe Pro' })).toBeInTheDocument();
+  });
+
+  it('builds the dashboard from the application: status, a checklist to tick off, and the hours', async () => {
+    saveApplication({
+      reference: 'A-1234',
+      submittedAt: '2026-09-14T10:00:00Z',
+      fullName: 'Tiago Ferreira',
+      trade: 'plumbing',
+      phone: '912345678',
+      areas: ['Amora'],
+      licences: ['gas'],
+      insurance: true,
+      availability: ['weekdays'],
+    });
+    const user = userEvent.setup();
+    renderSignedIn('/pro/dashboard');
+    expect(await screen.findByText('Application A-1234 · in review')).toBeInTheDocument();
+    expect(screen.getByText('0 of 5 ready')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Your gas licence (Lei n.º 15/2015)' }));
+    expect(screen.getByText('1 of 5 ready')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Weekdays' })).toBeChecked();
+    expect(screen.getByText('Preview · sample')).toBeInTheDocument();
+  });
+
+  it('answers artisans at /pro/help, by topic, with a person to talk to', () => {
+    renderAt('/pro/help');
+    expect(screen.getByRole('heading', { level: 1, name: 'Answers for artisans' })).toBeInTheDocument();
+    for (const id of ['pay', 'jobs', 'estimates', 'documents', 'safety', 'account', 'contact']) expect(document.getElementById(id)).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'What does Dashfixe take?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toBeInTheDocument();
+    // The Pro footer's help goes here, not to the customer help centre.
+    expect(screen.getAllByRole('link', { name: 'Help centre' })[0]).toHaveAttribute('href', '/pro/help');
+    expect(screen.getByRole('link', { name: /Start your application/ })).toHaveAttribute('href', '/pro/apply');
   });
 
   it('reads in Portuguese too', async () => {
@@ -108,7 +201,7 @@ describe('/pro (Dashfixe Pro, the artisan world)', () => {
     renderAt('/pro');
     await user.click(screen.getByRole('button', { name: 'Language' }));
     expect(screen.getByRole('heading', { name: /O trabalho vem ter consigo/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Enviar candidatura' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Começar a candidatura/ })).toHaveAttribute('href', '/pro/apply');
   });
 });
 
@@ -171,7 +264,7 @@ describe('/pro/app (the Dashfixe Pro app showcase)', () => {
     // Nothing implies the app is out: the badges link nowhere.
     expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
     expect(screen.getByText('Screens are previews with sample data.')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/pro#apply');
+    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/pro/apply');
   });
 });
 

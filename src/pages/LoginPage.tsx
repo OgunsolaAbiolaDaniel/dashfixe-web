@@ -34,15 +34,18 @@ const BODY = 'text-[14.5px] font-medium leading-[1.5] text-ink-60';
 const PRIMARY =
   'mt-[18px] h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60';
 
-export default function LoginPage() {
+export default function LoginPage({ surface = 'customer' }: { surface?: 'customer' | 'pro' }) {
   const { t } = useLang();
   const { signedIn, completeAuth, saveName } = useAuth();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const id = useId();
+  // /pro/login (rev 2.5): the same sign-in, in Pro chrome, landing on the artisan dashboard.
+  const pro = surface === 'pro';
+  const fallback = pro ? ROUTES.proDashboard : ROUTES.home;
 
-  const nextRaw = params.get('next') ?? ROUTES.home;
-  const next = nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : ROUTES.home;
+  const nextRaw = params.get('next') ?? fallback;
+  const next = nextRaw.startsWith('/') && !nextRaw.startsWith('//') ? nextRaw : fallback;
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
@@ -109,7 +112,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-page">
-      <Header layout="full" minimal />
+      <Header layout="full" minimal surface={surface} />
 
       <main className="flex flex-1 items-start justify-center px-5 py-[clamp(32px,8vh,72px)]">
         <div className={CARD}>
@@ -120,8 +123,8 @@ export default function LoginPage() {
                 void requestCode();
               }}
             >
-              <h1 className={H1}>{t('auth.title')}</h1>
-              <p className={`mb-[22px] ${BODY}`}>{t('auth.body')}</p>
+              <h1 className={H1}>{t(pro ? 'auth.pro.title' : 'auth.title')}</h1>
+              <p className={`mb-[22px] ${BODY}`}>{t(pro ? 'auth.pro.body' : 'auth.body')}</p>
 
               <label htmlFor={id} className="mb-[7px] block text-label text-ink-40">
                 {t('auth.phone')}

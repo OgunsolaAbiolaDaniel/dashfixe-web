@@ -36,7 +36,7 @@ export default function Header({ layout = 'contained', minimal = false, surface 
   const { pathname, search } = useLocation();
 
   // The artisan world never shares the customer menu (like Uber's driver site).
-  if (surface === 'pro') return <ProHeader />;
+  if (surface === 'pro') return <ProHeader minimal={minimal} />;
 
   const links = signedIn
     ? [
@@ -172,9 +172,10 @@ export default function Header({ layout = 'contained', minimal = false, surface 
  * Artisan App.dc.html: "darker chrome"), its own nav, Apply as the one action,
  * and a single way back to the customer site. The logo goes to the Pro home.
  */
-function ProHeader() {
+function ProHeader({ minimal = false }: { minimal?: boolean }) {
   const { t, lang, setLang } = useLang();
   const { pathname } = useLocation();
+  const { signedIn } = useAuth();
   const links = [
     { label: t('pro.nav.how'), to: link('proHow') },
     { label: t('pro.nav.pay'), to: link('artisanPay') },
@@ -192,7 +193,7 @@ function ProHeader() {
             <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-[.08em] text-white">Pro</span>
           </Link>
 
-          <nav className="hidden items-center gap-0.5 md:flex">
+          <nav className={minimal ? 'hidden' : 'hidden items-center gap-0.5 md:flex'}>
             {links.map((l) => {
               const current = l.to === pathname;
               return (
@@ -209,6 +210,15 @@ function ProHeader() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5">
+            {!minimal && (
+              <Link
+                to={ROUTES.proHelp}
+                aria-current={pathname === ROUTES.proHelp ? 'page' : undefined}
+                className={`${LINK} hidden text-onink-strong hover:bg-white/10 hover:text-white lg:block`}
+              >
+                {t('nav.help')}
+              </Link>
+            )}
             <Link to={ROUTES.home} className={`${LINK} hidden text-onink hover:bg-white/10 hover:text-white lg:block`}>
               {t('pro.nav.customer')}
             </Link>
@@ -222,19 +232,40 @@ function ProHeader() {
               <Globe size={17} className="text-onink" />
               {lang}
             </button>
-            <Link
-              to={link('artisanApply')}
-              className="hidden h-ctl items-center rounded-full bg-brand px-5 text-nav text-white transition hover:bg-brand-hover hover:text-white md:flex"
-            >
-              {t('pro.nav.apply')}
-            </Link>
-            <MobileMenu
-              links={[
-                ...links,
-                { label: t('pro.nav.apply'), to: link('artisanApply') },
-                { label: t('pro.nav.customer'), to: ROUTES.home },
-              ]}
-            />
+            {!minimal &&
+              (signedIn ? (
+                <Link
+                  to={ROUTES.proDashboard}
+                  className="hidden h-ctl items-center rounded-full bg-brand px-5 text-nav text-white transition hover:bg-brand-hover hover:text-white md:flex"
+                >
+                  {t('pro.nav.dashboard')}
+                </Link>
+              ) : (
+                <>
+                  <Link to={ROUTES.proLogin} className={`${LINK} hidden text-white hover:bg-white/10 hover:text-white md:block`}>
+                    {t('pro.nav.login')}
+                  </Link>
+                  <Link
+                    to={link('artisanApply')}
+                    className="hidden h-ctl items-center rounded-full bg-brand px-5 text-nav text-white transition hover:bg-brand-hover hover:text-white md:flex"
+                  >
+                    {t('pro.nav.apply')}
+                  </Link>
+                </>
+              ))}
+            {!minimal && (
+              <MobileMenu
+                links={[
+                  ...links,
+                  signedIn
+                    ? { label: t('pro.nav.dashboard'), to: ROUTES.proDashboard }
+                    : { label: t('pro.nav.login'), to: ROUTES.proLogin },
+                  { label: t('pro.nav.apply'), to: link('artisanApply') },
+                  { label: t('nav.help'), to: ROUTES.proHelp },
+                  { label: t('pro.nav.customer'), to: ROUTES.home },
+                ]}
+              />
+            )}
           </div>
         </div>
       </div>

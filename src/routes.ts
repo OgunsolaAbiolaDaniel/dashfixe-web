@@ -36,6 +36,16 @@ export const ROUTES = {
   pro: '/pro',
   /** The Dashfixe Pro app's showcase: stills, "coming soon" store badges. */
   proApp: '/pro/app',
+  /** The Dashfixe Pro application: four steps, then review (rev 2.3). */
+  proApply: '/pro/apply',
+  /** The applicant's status page, for the application sent from this device. */
+  proApplication: '/pro/application',
+  /** Artisan log in — the same phone sign-in, in Pro chrome (rev 2.5). */
+  proLogin: '/pro/login',
+  /** Signed-in: the artisan's dashboard (Uber's drivers.uber.com), rev 2.5. */
+  proDashboard: '/pro/dashboard',
+  /** Help for artisans: pay, jobs, estimates, papers, safety, account (rev 2.6). */
+  proHelp: '/pro/help',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -60,7 +70,12 @@ const DESTINATIONS = {
   forArtisans: ROUTES.pro,
   pro: ROUTES.pro,
   proHow: `${ROUTES.pro}#how`,
-  artisanApply: `${ROUTES.pro}#apply`,
+  artisanApply: ROUTES.proApply,
+  proApplication: ROUTES.proApplication,
+  proLogin: ROUTES.proLogin,
+  proDashboard: ROUTES.proDashboard,
+  proHelp: ROUTES.proHelp,
+  proContact: `${ROUTES.proHelp}#contact`,
   artisanPay: `${ROUTES.pro}#pay`,
   artisanVetting: `${ROUTES.pro}#vetting`,
   artisanApp: ROUTES.proApp,

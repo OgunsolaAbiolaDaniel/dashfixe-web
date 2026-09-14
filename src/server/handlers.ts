@@ -11,7 +11,7 @@
  * `.js` back to the `.ts` source).
  */
 import { randomInt } from 'node:crypto';
-import { getStore } from './store.js';
+import { getStore, type ArtisanProfile } from './store.js';
 import {
   challengeCookie,
   clearedChallengeCookie,
@@ -70,6 +70,37 @@ function normalisePhone(raw: string): string | null {
   return raw.startsWith('+') ? `+${digits}` : `+351${digits.replace(/^351/, '')}`;
 }
 
+const EXPERIENCE = ['0-2', '3-5', '6-10', '10+'] as const;
+const AVAILABILITY = ['weekdays', 'evenings', 'weekends'] as const;
+const LICENCES = ['dgeg', 'gas', 'none'] as const;
+
+/** A list drawn from `allowed` (or free text up to 40 chars when `allowed` is omitted). */
+function list(v: unknown, max: number, allowed?: readonly string[]): string[] | null {
+  if (!Array.isArray(v) || v.length > max) return null;
+  const out: string[] = [];
+  for (const item of v) {
+    if (typeof item !== 'string') return null;
+    const s = item.trim();
+    if (!s || s.length > 40 || (allowed && !allowed.includes(s))) return null;
+    if (!out.includes(s)) out.push(s);
+  }
+  return out;
+}
+
+/** The Pro application's extra answers, or null when any part is malformed. */
+function parseProfile(v: unknown): ArtisanProfile | null {
+  if (typeof v !== 'object' || v === null) return null;
+  const p = v as Record<string, unknown>;
+  const trades = list(p.trades ?? [], 6);
+  const areas = list(p.areas, 8);
+  const availability = list(p.availability, 3, AVAILABILITY);
+  const licences = list(p.licences ?? [], 3, LICENCES);
+  const experience = typeof p.experience === 'string' && (EXPERIENCE as readonly string[]).includes(p.experience) ? p.experience : null;
+  if (!trades || !areas?.length || !availability?.length || !licences || !experience) return null;
+  if (typeof p.transport !== 'boolean' || typeof p.insurance !== 'boolean') return null;
+  return { trades, experience, areas, availability, transport: p.transport, licences, insurance: p.insurance };
+}
+
 export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
   const route = `${req.method.toUpperCase()} ${req.path.replace(/\/+$/, '')}`;
 
@@ -93,8 +124,22 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
       if (!phone) return bad(400, 'invalid_phone');
       if (!email || !EMAIL.test(email)) return bad(400, 'invalid_email');
       if (!trade) return bad(400, 'invalid_trade');
-      await (await getStore()).addApplication({ fullName, phone, email, trade, createdAt: new Date().toISOString() });
-      return ok();
+      // The Dashfixe Pro application (/pro/apply) adds a profile, and then consent is required.
+      const rawProfile = (req.body as Record<string, unknown>).profile;
+      const profile = rawProfile === undefined ? undefined : parseProfile(rawProfile);
+      if (profile === null) return bad(400, 'invalid_profile');
+      if (profile && (req.body as Record<string, unknown>).consent !== true) return bad(400, 'consent_required');
+      const reference = `A-${randomInt(1000, 10_000)}`;
+      await (await getStore()).addApplication({
+        fullName,
+        phone,
+        email,
+        trade,
+        ...(profile ? { profile } : {}),
+        reference,
+        createdAt: new Date().toISOString(),
+      });
+      return ok({ ok: true, reference });
     }
 
     // Login needs no storage: the pending code rides in a signed, httpOnly,

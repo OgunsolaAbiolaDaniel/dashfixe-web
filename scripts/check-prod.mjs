@@ -29,7 +29,7 @@ const expect = (cond, msg) => {
 const get = (path, init) => fetch(BASE + path, { redirect: 'manual', ...init });
 
 // ── Pages load cold (a refresh or a shared link, not a click inside the app) ──
-for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
+for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/pro/apply', '/pro/application', '/pro/login', '/pro/dashboard', '/pro/help', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
   await check(`GET ${path} serves the app`, async () => {
     const r = await get(path);
     const type = r.headers.get('content-type') ?? '';

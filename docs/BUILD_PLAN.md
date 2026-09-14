@@ -404,7 +404,7 @@ present an app. It also asked for the customer app to be promoted.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
-## Dashfixe Pro · the artisan world 🔄 (started 2026-09-14: "continue till we finish")
+## Dashfixe Pro · the artisan world ✅ (built 2026-09-14: "continue till we finish")
 
 The owner wants artisans to have a world of their own, the way Uber keeps drivers apart:
 uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
@@ -445,11 +445,43 @@ The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
    2. The nav has How it works, Earnings, Vetting and The app, plus Apply. "Need a
       repair?" goes back to the customer site.
    3. From the customer site, "Become an artisan" lands on `/pro`.
-2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
-   then the status page.
-3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
-   labelled until Phase 6 supplies real jobs.
-4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
+2. ✅ **Application** (rev 2.3, branch `feat/pro-apply`, on top of #20).
+   - `/pro/apply` has four checked steps: about you, your work, where and when, papers.
+     Each step checks itself, and focus moves to the first error.
+   - A review with Edit links, then submit. The profile is added to
+     `POST /api/artisans/apply`, validated, with consent required, and a reference comes
+     back.
+   - `/pro/application` shows the status timeline. The landing's apply section becomes
+     a start card, which reads "See your application" once you've applied.
+
+   **Owner test:**
+   1. On `/pro`, tap **Apply**, then tap **Continue** with nothing filled in: each
+      missing field says what it needs.
+   2. Fill the four steps. The review lists everything, with Edit links.
+   3. Send it: the status page shows your reference and the WhatsApp call as the next
+      step.
+   4. Back on `/pro`, the apply card says **See your application**.
+3. ✅ **Artisan login and dashboard** (rev 2.5, branch `feat/pro-dashboard`, on top of
+   #21).
+   - `/pro/login` is the same phone sign-in, in the minimal Pro header.
+   - `/pro/dashboard` shows the status and next step, a call checklist based on the
+     application, hours and radius, the profile, and a badged sample preview.
+   - The Pro header shows Log in, or Dashboard once signed in.
+
+   **Owner test:**
+   1. On `/pro`, tap **Log in** and use any number: you land on your dashboard.
+   2. Apply first and the dashboard fills in: your reference, the WhatsApp call next,
+      and a checklist to tick off.
+   3. Change your hours and radius, then reload the page: they're kept.
+4. ✅ **Help for artisans** (rev 2.6, branch `feat/pro-help`, on top of #23).
+   - `/pro/help` covers pay, jobs, estimates, papers, safety and your account, then a
+     person to talk to.
+   - It's linked from the Pro header, mobile menu, footer and dashboard. It's indexed,
+     in the sitemap, covered by axe and the production checks.
+
+   **Owner test:**
+   1. From any Pro page, tap **Help**. The topic chips jump to each section.
+   2. The Pro footer's Help centre and Contact links stay in the Pro world.
 
 ## Phase 6 · Live operations ⬜
 

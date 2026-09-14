@@ -1,29 +1,24 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MarketingShell from '../components/chrome/MarketingShell';
 import PhoneShot from '../components/shared/PhoneShot';
 import { TodayShot } from '../components/pro/Shots';
-import { ArrowRight, Bolt, Check, ChevronDown, Phone, Receipt, Verified, Wrench } from '../components/icons';
+import { ArrowRight, Bolt, Check, Phone, Receipt, Verified, Wrench } from '../components/icons';
 import { ROUTES } from '../routes';
 import { useLang } from '../i18n';
-import { api } from '../lib/api';
-import { TRADES } from '../search';
+import { useApplication } from '../lib/proApplication';
 
 /**
  * Dashfixe Pro's landing (/pro, rev 2.2) — the artisan world's front door, in its
  * own chrome (MarketingShell surface="pro"), like Uber's site for drivers. It was
  * /for-artisans, which now redirects here. Supply acquisition is manual during the
- * pilot: a credible pitch and a WhatsApp-first application. Anchored depth:
- * #how, #pay, #vetting, #app, #apply.
+ * pilot: a credible pitch, then the application (/pro/apply, rev 2.3). Anchored
+ * depth: #how, #pay, #vetting, #app, #apply.
  */
-export type ArtisanApplication = { fullName: string; phone: string; email: string; trade: string };
-
-const FIELD_LABEL = 'mb-[7px] block text-label text-ink-40';
-const FIELD_INPUT =
-  'h-12 w-full rounded-input border border-line bg-page px-[15px] text-[14.5px] font-semibold text-ink outline-offset-[6px] placeholder:text-ink-30';
+const APPLY_STEPS = ['pro.apply.s1', 'pro.apply.s2', 'pro.apply.s3', 'pro.apply.s4'] as const;
 
 export default function ProLandingPage() {
   const { t } = useLang();
+  const application = useApplication();
 
   return (
     <MarketingShell surface="pro">
@@ -38,12 +33,12 @@ export default function ProLandingPage() {
             <h1 className="mb-5 text-display text-white [text-wrap:balance]">{t('fa.hero.title')}</h1>
             <p className="mb-8 max-w-[520px] text-[15.5px] font-medium leading-[1.6] text-onink">{t('fa.hero.body')}</p>
             <div className="flex flex-wrap items-center gap-5">
-              <a
-                href="#apply"
+              <Link
+                to={ROUTES.proApply}
                 className="flex h-[52px] items-center rounded-btn bg-brand px-[26px] text-[15px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
               >
                 {t('fa.hero.apply')}
-              </a>
+              </Link>
               <a href="#pay" className="border-b border-white/30 pb-1 text-[14.5px] font-semibold text-onink-strong transition hover:border-white hover:text-white">
                 {t('fa.hero.how')}
               </a>
@@ -149,100 +144,41 @@ export default function ProLandingPage() {
         </div>
       </section>
 
-      {/* Apply */}
+      {/* Apply — the start of /pro/apply (or the way back to the status, once applied) */}
       <section id="apply" className="scroll-mt-[88px] bg-panel">
-        <div className="mx-auto max-w-[560px] px-[clamp(18px,4vw,40px)] py-[clamp(44px,6vw,80px)]">
-          <ApplyForm />
+        <div className="mx-auto max-w-[760px] px-[clamp(18px,4vw,40px)] py-[clamp(44px,6vw,80px)]">
+          <div className="relative overflow-hidden rounded-hero bg-ink p-[clamp(26px,4vw,44px)]">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -right-20 -top-24 block h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(37,99,235,.75)_0%,rgba(37,99,235,0)_68%)] blur-[24px]"
+            />
+            <div className="relative">
+              <p className="mb-3 text-label text-brand-on-dark">{t('pro.apply.eyebrow')}</p>
+              <h2 className="mb-3 text-h2 text-white">{t('fa.apply.title')}</h2>
+              <p className="mb-6 max-w-[520px] text-[15px] font-medium leading-[1.55] text-onink-strong">{t('fa.apply.subtitle')}</p>
+              <ol className="mb-7 grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-2.5">
+                {APPLY_STEPS.map((key, i) => (
+                  <li key={key} className="flex items-center gap-2.5 rounded-[14px] bg-white/10 px-3.5 py-3 text-[14px] font-semibold text-white">
+                    <span className="grid h-6 w-6 flex-none place-items-center rounded-full bg-white/15 text-[12px] font-extrabold">{i + 1}</span>
+                    {t(key)}
+                  </li>
+                ))}
+              </ol>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+                <Link
+                  to={application ? ROUTES.proApplication : ROUTES.proApply}
+                  className="flex h-[52px] items-center gap-2 rounded-btn bg-brand px-[26px] text-[15px] font-bold text-white shadow-brand transition hover:bg-brand-hover hover:text-white"
+                >
+                  {t(application ? 'pro.apply.seeStatus' : 'pro.apply.start')}
+                  <ArrowRight size={16} />
+                </Link>
+                <span className="text-[13px] font-semibold text-onink">{t('pro.apply.time')}</span>
+              </div>
+              <p className="mt-5 text-[12.5px] font-semibold text-onink">{t('fa.apply.micro')}</p>
+            </div>
+          </div>
         </div>
       </section>
     </MarketingShell>
-  );
-}
-
-function ApplyForm() {
-  const { t } = useLang();
-  const [done, setDone] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [app, setApp] = useState<ArtisanApplication>({ fullName: '', phone: '', email: '', trade: 'plumbing' });
-  const set = (k: keyof ArtisanApplication) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setApp((a) => ({ ...a, [k]: e.target.value }));
-
-  if (done) {
-    return (
-      <div className="rounded-card border border-line-soft bg-panel p-8 text-center shadow-card">
-        <span aria-hidden="true" className="mb-4 block text-4xl">
-          🛠️
-        </span>
-        <h2 className="mb-2 text-h3 text-ink">{t('fa.apply.done.title')}</h2>
-        <p className="text-[14.5px] font-medium leading-[1.55] text-ink-60">{t('fa.apply.done.body')}</p>
-      </div>
-    );
-  }
-
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void (async () => {
-          setBusy(true);
-          setError(null);
-          const r = await api('/api/artisans/apply', app);
-          setBusy(false);
-          if (r.ok) setDone(true);
-          else setError(t('form.error'));
-        })();
-      }}
-      className="rounded-card border border-line-soft bg-panel p-[clamp(22px,4vw,32px)] shadow-card"
-    >
-      <h2 className="mb-2 text-h3 text-ink">{t('fa.apply.title')}</h2>
-      <p className="mb-6 text-[14.5px] font-medium leading-[1.55] text-ink-60">{t('fa.apply.subtitle')}</p>
-
-      <div className="flex flex-col gap-[18px]">
-        <div>
-          <label htmlFor="fa-name" className={FIELD_LABEL}>
-            {t('fa.apply.name')}
-          </label>
-          <input id="fa-name" type="text" required value={app.fullName} onChange={set('fullName')} placeholder={t('fa.apply.name.ph')} className={FIELD_INPUT} />
-        </div>
-        <div>
-          <label htmlFor="fa-phone" className={FIELD_LABEL}>
-            {t('fa.apply.phone')}
-          </label>
-          <input id="fa-phone" type="tel" required value={app.phone} onChange={set('phone')} placeholder="+351 ..." className={FIELD_INPUT} />
-        </div>
-        <div>
-          <label htmlFor="fa-email" className={FIELD_LABEL}>
-            {t('fa.apply.email')}
-          </label>
-          <input id="fa-email" type="email" required value={app.email} onChange={set('email')} placeholder="name@example.com" className={FIELD_INPUT} />
-        </div>
-        <div>
-          <label htmlFor="fa-trade" className={FIELD_LABEL}>
-            {t('fa.apply.trade')}
-          </label>
-          <div className="relative">
-            <select id="fa-trade" value={app.trade} onChange={set('trade')} className={`${FIELD_INPUT} appearance-none pr-10`}>
-              {TRADES.map((tr) => (
-                <option key={tr.slug} value={tr.slug}>
-                  {t(`trades.${tr.slug}` as const)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink-40" />
-          </div>
-        </div>
-      </div>
-
-      {error && <p className="mt-4 text-[13px] font-semibold text-warning">{error}</p>}
-      <button
-        type="submit"
-        disabled={busy}
-        className="mt-6 h-ctl-lg w-full rounded-btn bg-brand text-[14.5px] font-bold text-white transition hover:bg-brand-hover disabled:opacity-60"
-      >
-        {busy ? t('form.sending') : t('fa.apply.submit')}
-      </button>
-      <p className="mt-3 text-center text-[12.5px] font-semibold text-ink-40">{t('fa.apply.micro')}</p>
-    </form>
   );
 }

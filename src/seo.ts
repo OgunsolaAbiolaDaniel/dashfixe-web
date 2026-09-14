@@ -47,6 +47,12 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.login]: { title: 'seo.login.title', description: 'seo.home.desc', noindex: true },
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
   [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
+  [ROUTES.proApply]: { title: 'seo.proApply.title', description: 'seo.proApply.desc' },
+  [ROUTES.proHelp]: { title: 'seo.proHelp.title', description: 'seo.proHelp.desc' },
+  [ROUTES.proLogin]: { title: 'auth.pro.title', description: 'seo.proApply.desc', noindex: true },
+  [ROUTES.proDashboard]: { title: 'pro.dash.title', description: 'seo.proApply.desc', noindex: true },
+  // One device's application status: private.
+  [ROUTES.proApplication]: { title: 'seo.proStatus.title', description: 'seo.proApply.desc', noindex: true },
   // The app showcase is sample stills, like /artisan/*: shareable, not indexed.
   [ROUTES.proApp]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
 };
@@ -106,6 +112,8 @@ export function indexablePaths(_launched: boolean): string[] {
     ...TRADE_SLUGS.map(tradeUrl),
     ROUTES.howItWorks,
     ROUTES.pro,
+    ROUTES.proApply,
+    ROUTES.proHelp,
     ROUTES.about,
     ROUTES.help,
     ROUTES.privacy,
@@ -164,6 +172,9 @@ export function robotsTxt(siteUrl: string): string {
     'Disallow: /login',
     'Disallow: /activity',
     'Disallow: /account',
+    'Disallow: /pro/login',
+    'Disallow: /pro/dashboard',
+    'Disallow: /pro/application',
     'Disallow: /job/',
     '',
     `Sitemap: ${siteUrl}/sitemap.xml`,

@@ -5,8 +5,10 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/pro-shell` (PR to `main`; everything
-through #19 is merged, and production passes `check-prod.mjs` 20/20) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/pro-help`, stacked on
+`feat/pro-dashboard` (#23), which is stacked on `feat/pro-apply` (#21). Merge in order:
+#21, #23, then this one. Everything through #20 is merged; #22 (the profile card in the
+chat) is separate ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -70,7 +72,65 @@ world, like Uber's driver site, built in four PRs in the order in BUILD_PLAN →
 - **Production checks:** `check-prod.mjs` now also cold-loads `/pro/app` and checks the
   redirect (22 checks).
 
-**Next: PR 2, the application** (`/pro/apply`, several steps, then a status page).
+**Revision 2.3**, on branch `feat/pro-apply`, is Pro PR 2: the application.
+
+- **`/pro/apply`** (`pages/ProApplyPage.tsx`) has four steps, each checked before
+  moving on, with focus on the first error:
+  - **About you:** name, WhatsApp and email.
+  - **Your work:** main trade, other trades and experience.
+  - **Where and when:** areas, availability and transport.
+  - **Papers:** licences, insurance and consent.
+  - Then a review with Edit links, and submit.
+- **The API.** `POST /api/artisans/apply` takes an optional `profile`, validated, with
+  consent required, and returns a reference. Postgres gains `profile JSONB` and
+  `reference`.
+- **`/pro/application`** (`pages/ProApplicationPage.tsx`) shows the reference, then
+  received → a WhatsApp call within 48 hours → documents → onboarding → ready. It says
+  plainly that it shows what this device sent.
+- **The landing's `#apply`** is now a start card that opens `/pro/apply`. Once this
+  device has applied, it reads "See your application". Every Apply link goes to
+  `/pro/apply`.
+- **Tests:** 158 Vitest, including the full four-step flow in the UI and the
+  server's profile validation.
+
+The owner then asked for an artisan profile card in the customer's chat. That's #22,
+on its own branch.
+
+**Revision 2.5**, on branch `feat/pro-dashboard`, is Pro PR 3: artisans can log in.
+
+- **`/pro/login`** is `LoginPage surface="pro"`: the same phone sign-in and pilot bypass,
+  in the minimal Pro header, headed "Log in to Dashfixe Pro". It lands on
+  `/pro/dashboard`.
+- **`/pro/dashboard`** (`pages/ProDashboardPage.tsx`) is signed-in only. It's honest
+  that nobody is approved yet, so it shows:
+  - the application's status and next step
+  - a "get ready for your call" checklist built from the application: ID, NIF, IBAN,
+    and insurance and DGEG/gas licences if declared
+  - hours and radius
+  - the profile, with sign out
+  - a badged sample preview of the earnings view
+  - Choices are saved on this device (`lib/proDashboard.ts`); nothing is uploaded.
+- **The application record** now also keeps licences, insurance and availability, which
+  the checklist uses.
+- **The Pro header** shows Log in, or Dashboard once signed in. Robots now disallow
+  `/pro/login`, `/pro/dashboard` and `/pro/application`.
+
+**Revision 2.6**, on branch `feat/pro-help`, is Pro PR 4, and Dashfixe Pro is complete.
+
+- **`/pro/help`** (`pages/ProHelpPage.tsx`) gives straight answers in the Pro frame. It
+  has topic chips at the top, each a section: pay, jobs, estimates, papers, safety and
+  your account.
+- **Honest pre-pilot.** Where something is still being set up (the rate, the payout
+  day), it says it's confirmed at onboarding.
+- **`#contact`** points applicants to WhatsApp and to their dashboard, and everyone else
+  to Apply.
+- **Linked from** the Pro header (Help, `lg` and up), the mobile menu, the footer (Help
+  centre and Contact now stay in the Pro world) and the dashboard.
+
+**What's left is the owner's (no code):** set `DATABASE_URL` (free on Neon), so
+applications and the waitlist survive restarts. Choose a domain, then set `SITE_URL`
+and the `PROD_URL` repo variable. Set the `TWILIO_*` variables when SMS is funded, and
+`VITE_LAUNCHED` on launch day. After that comes Phase 6: real supply.
 
 **Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
 through one change of direction: it began as an interactive walkthrough at `/pro`, and at
