@@ -188,6 +188,11 @@ export const en = {
   'chat.online': 'Online now',
   'chat.job': 'Job',
   'chat.close': 'Close chat',
+  'chat.viewProfile': 'View {name}\'s profile',
+  'chat.profile.close': 'Close profile',
+  'chat.profile.back': 'Back to chat',
+  'chat.profile.full': 'Full profile',
+  'chat.profile.available': 'Available now · {eta} min away',
   'chat.photo': '[ your photo ]',
   'chat.msg1': 'Kitchen mixer tap dripping from the base.',
   'chat.msg2': 'That is the cartridge. I have one on the van — sending the price now.',
@@ -714,11 +719,6 @@ export const en = {
   'pro.footer.customers': 'For customers',
   'pro.footer.getRepair': 'Get a repair',
   'pro.show.title': 'The Dashfixe Pro app',
-  'chat.viewProfile': 'View {name}\'s profile',
-  'chat.profile.close': 'Close profile',
-  'chat.profile.back': 'Back to chat',
-  'chat.profile.full': 'Full profile',
-  'chat.profile.available': 'Available now · {eta} min away',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -889,6 +889,11 @@ export const pt: Record<StringKey, string> = {
   'chat.online': 'Online agora',
   'chat.job': 'Trabalho',
   'chat.close': 'Fechar chat',
+  'chat.viewProfile': 'Ver o perfil de {name}',
+  'chat.profile.close': 'Fechar perfil',
+  'chat.profile.back': 'Voltar ao chat',
+  'chat.profile.full': 'Perfil completo',
+  'chat.profile.available': 'Disponível agora · a {eta} min',
   'chat.photo': '[ a sua foto ]',
   'chat.msg1': 'A misturadora da cozinha está a pingar pela base.',
   'chat.msg2': 'É o cartucho. Tenho um na carrinha — já lhe envio o preço.',
@@ -1403,11 +1408,6 @@ export const pt: Record<StringKey, string> = {
   'pro.footer.customers': 'Para clientes',
   'pro.footer.getRepair': 'Pedir uma reparação',
   'pro.show.title': 'A app Dashfixe Pro',
-  'chat.viewProfile': 'Ver o perfil de {name}',
-  'chat.profile.close': 'Fechar perfil',
-  'chat.profile.back': 'Voltar ao chat',
-  'chat.profile.full': 'Perfil completo',
-  'chat.profile.available': 'Disponível agora · a {eta} min',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;
