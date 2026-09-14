@@ -10,31 +10,53 @@ const HEAD = 'mb-4 text-label text-onink-strong';
 /**
  * Marketing-surface footer — ARCHITECTURE.md §5. Every link resolves to something
  * true: trades open their landing pages (the SEO pages, one hop from /explore),
- * artisan links anchor into /for-artisans, support links anchor into /help. No
- * careers, no press — nothing that doesn't exist.
+ * artisan links anchor into /pro, support links anchor into /help. No careers,
+ * no press — nothing that doesn't exist.
+ *
+ * `surface="pro"` is Dashfixe Pro's footer: work with us, the app, support, and
+ * one column back to the customer side.
  */
-const COMPANY: Array<[StringKey, Destination]> = [
+type Rows = Array<[StringKey, Destination]>;
+
+const COMPANY: Rows = [
   ['footer.about', 'about'],
   ['footer.coverage', 'coverage'],
   ['footer.contact', 'contact'],
 ];
-const ARTISANS: Array<[StringKey, Destination]> = [
+const ARTISANS: Rows = [
   ['footer.apply', 'artisanApply'],
   ['footer.payouts', 'artisanPay'],
   ['footer.vetting', 'artisanVetting'],
   ['footer.artisanApp', 'artisanApp'],
 ];
-const SUPPORT: Array<[StringKey, Destination]> = [
+const SUPPORT: Rows = [
   ['footer.helpCentre', 'help'],
   ['footer.safety', 'safety'],
   ['footer.cancellations', 'cancellations'],
   ['footer.report', 'contact'],
 ];
 
-export default function SiteFooter() {
-  const { t } = useLang();
+const PRO_WORK: Rows = [
+  ['footer.apply', 'artisanApply'],
+  ['pro.nav.how', 'proHow'],
+  ['footer.payouts', 'artisanPay'],
+  ['footer.vetting', 'artisanVetting'],
+];
+const PRO_APP: Rows = [['footer.artisanApp', 'artisanApp']];
+const PRO_SUPPORT: Rows = [
+  ['footer.helpCentre', 'help'],
+  ['footer.contact', 'contact'],
+];
+const PRO_CUSTOMERS: Rows = [
+  ['pro.footer.getRepair', 'home'],
+  ['nav.howItWorks', 'howItWorks'],
+];
 
-  const column = (title: StringKey, rows: Array<[StringKey, Destination]>) => (
+export default function SiteFooter({ surface = 'customer' }: { surface?: 'customer' | 'pro' }) {
+  const { t } = useLang();
+  const pro = surface === 'pro';
+
+  const column = (title: StringKey, rows: Rows) => (
     <div>
       <div className={HEAD}>{t(title)}</div>
       <div className="flex flex-col gap-[11px]">
@@ -52,24 +74,37 @@ export default function SiteFooter() {
       <div className="mx-auto max-w-[1240px] px-[clamp(18px,4vw,32px)] pb-7 pt-[clamp(44px,5vw,64px)]">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-x-6 gap-y-8 pb-9">
           <div>
-            <img src={wordmarkLight} alt="Dashfixe" className="mb-4 block h-5 w-auto" />
-            <p className="max-w-[220px] text-[13.5px] font-medium leading-[1.6] text-onink">{t('footer.tagline')}</p>
-          </div>
-
-          <div>
-            <div className={HEAD}>{t('footer.services')}</div>
-            <div className="flex flex-col gap-[11px]">
-              {TRADE_SLUGS.map((s) => (
-                <Link key={s} to={tradeUrl(s)} className={LINK}>
-                  {t(`trades.${s}` as const)}
-                </Link>
-              ))}
+            <div className="mb-4 flex items-center gap-2">
+              <img src={wordmarkLight} alt="Dashfixe" className="block h-5 w-auto" />
+              {pro && <span className="rounded-full bg-brand px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-[.08em] text-white">Pro</span>}
             </div>
+            <p className="max-w-[220px] text-[13.5px] font-medium leading-[1.6] text-onink">{t(pro ? 'pro.footer.tagline' : 'footer.tagline')}</p>
           </div>
 
-          {column('footer.company', COMPANY)}
-          {column('footer.forArtisans', ARTISANS)}
-          {column('footer.support', SUPPORT)}
+          {pro ? (
+            <>
+              {column('pro.footer.work', PRO_WORK)}
+              {column('pro.nav.app', PRO_APP)}
+              {column('footer.support', PRO_SUPPORT)}
+              {column('pro.footer.customers', PRO_CUSTOMERS)}
+            </>
+          ) : (
+            <>
+              <div>
+                <div className={HEAD}>{t('footer.services')}</div>
+                <div className="flex flex-col gap-[11px]">
+                  {TRADE_SLUGS.map((s) => (
+                    <Link key={s} to={tradeUrl(s)} className={LINK}>
+                      {t(`trades.${s}` as const)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              {column('footer.company', COMPANY)}
+              {column('footer.forArtisans', ARTISANS)}
+              {column('footer.support', SUPPORT)}
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-4 border-t border-white/10 pt-[26px]">

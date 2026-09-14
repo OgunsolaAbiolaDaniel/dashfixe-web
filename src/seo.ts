@@ -36,7 +36,8 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.explore]: { title: 'seo.explore.title', description: 'seo.explore.desc' },
   // Parked: reachable at /waitlist, but no longer a front door — kept out of search.
   [ROUTES.waitlist]: { title: 'seo.waitlist.title', description: 'seo.waitlist.desc', noindex: true },
-  [ROUTES.forArtisans]: { title: 'seo.forArtisans.title', description: 'seo.forArtisans.desc' },
+  // Dashfixe Pro (rev 2.2): the landing is the old /for-artisans page, and indexed like it.
+  [ROUTES.pro]: { title: 'seo.forArtisans.title', description: 'seo.forArtisans.desc' },
   [ROUTES.howItWorks]: { title: 'seo.how.title', description: 'seo.how.desc' },
   [ROUTES.about]: { title: 'footer.about', description: 'seo.about.desc' },
   [ROUTES.help]: { title: 'footer.helpCentre', description: 'seo.help.desc' },
@@ -46,8 +47,8 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.login]: { title: 'seo.login.title', description: 'seo.home.desc', noindex: true },
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
   [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
-  // Sample data, like /artisan/*: shareable, not indexed.
-  [ROUTES.pro]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
+  // The app showcase is sample stills, like /artisan/*: shareable, not indexed.
+  [ROUTES.proApp]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
 };
 
 function normalise(pathname: string): string {
@@ -104,7 +105,7 @@ export function indexablePaths(_launched: boolean): string[] {
     ROUTES.explore,
     ...TRADE_SLUGS.map(tradeUrl),
     ROUTES.howItWorks,
-    ROUTES.forArtisans,
+    ROUTES.pro,
     ROUTES.about,
     ROUTES.help,
     ROUTES.privacy,

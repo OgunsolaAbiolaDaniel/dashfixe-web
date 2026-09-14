@@ -7,8 +7,8 @@ import ActivityPage from './pages/ActivityPage';
 import AccountPage from './pages/AccountPage';
 import ArtisanProfilePage from './pages/ArtisanProfilePage';
 import JobPage from './pages/JobPage';
-import ForArtisansPage from './pages/ForArtisansPage';
-import ProPage from './pages/ProPage';
+import ProLandingPage from './pages/ProLandingPage';
+import ProAppPage from './pages/ProAppPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
@@ -38,6 +38,12 @@ function HashScroll() {
     document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' });
   }, [hash, pathname]);
   return null;
+}
+
+/** A moved page keeps the section a link pointed at: /for-artisans#apply → /pro#apply. */
+function Moved({ to }: { to: string }) {
+  const { hash } = useLocation();
+  return <Navigate to={`${to}${hash}`} replace />;
 }
 
 /** Title, description, canonical and robots follow the route and the language (seo.ts). */
@@ -78,8 +84,10 @@ export default function AppRoutes() {
         <Route path={ROUTES.waitlist} element={launched() ? <Navigate to={ROUTES.home} replace /> : <WaitlistPage />} />
         <Route path={ROUTES.trade} element={<TradePage />} />
         <Route path={ROUTES.howItWorks} element={<HowItWorksPage />} />
-        <Route path={ROUTES.forArtisans} element={<ForArtisansPage />} />
-        <Route path={ROUTES.pro} element={<ProPage />} />
+        {/* Dashfixe Pro — the artisan world (rev 2.2). */}
+        <Route path={ROUTES.pro} element={<ProLandingPage />} />
+        <Route path={ROUTES.proApp} element={<ProAppPage />} />
+        <Route path={ROUTES.forArtisans} element={<Moved to={ROUTES.pro} />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path={ROUTES.privacy} element={<LegalPage kind="privacy" />} />

@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/notifications` (PR to `main`; everything
-through #18 is merged, and production passes `check-prod.mjs` 20/20) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/pro-shell` (PR to `main`; everything
+through #19 is merged, and production passes `check-prod.mjs` 20/20) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -45,11 +45,32 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   "Receipt ready" notice.
 - **Tests:** 155 Vitest and 17 Playwright.
 
-**Next (planned; the owner will say when to start): Dashfixe Pro.** A separate artisan
-world, like Uber's driver site: a `/pro` landing, `/pro/apply`, `/pro/login`, a
-`/pro/dashboard`, the `/pro/app` download page (today's `/pro` showcase moves there) and
-`/pro/help`. There are four PRs, in the order in BUILD_PLAN → "Dashfixe Pro". The name is
-agreed.
+**Now: Dashfixe Pro** (the owner said "continue till we finish"). It's a separate artisan
+world, like Uber's driver site, built in four PRs in the order in BUILD_PLAN →
+"Dashfixe Pro".
+
+**Revision 2.2**, on branch `feat/pro-shell`, is PR 1: the shell and the landing.
+
+- **One Header, now with a `pro` surface** (`ProHeader`):
+  - dark chrome, the logo and a Pro mark going to `/pro`
+  - How it works · Earnings · Vetting · The app
+  - "Need a repair?" back to `/`, and Apply
+  - never the customer menu
+- **The footer and shell follow.** `SiteFooter` and `MarketingShell` take
+  `surface="pro"`. The Pro footer has Work with Dashfixe, The app, Support and For
+  customers.
+- **`/pro` is the landing** (`pages/ProLandingPage.tsx`, formerly `ForArtisansPage`):
+  anchors `#how`, `#pay`, `#vetting`, `#app` (now a still of the app, not a stock photo)
+  and `#apply`. It's indexed, and it's in the sitemap in place of `/for-artisans`.
+- **`/pro/app` is the showcase** (`pages/ProAppPage.tsx`), with its own h1, "The
+  Dashfixe Pro app".
+- **The old address still works.** `/for-artisans` gets a permanent 308 in
+  `vercel.json`, plus an in-app redirect that keeps `#apply` and the like. Every
+  "Become an artisan" link now lands on `/pro`.
+- **Production checks:** `check-prod.mjs` now also cold-loads `/pro/app` and checks the
+  redirect (22 checks).
+
+**Next: PR 2, the application** (`/pro/apply`, several steps, then a status page).
 
 **Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
 through one change of direction: it began as an interactive walkthrough at `/pro`, and at

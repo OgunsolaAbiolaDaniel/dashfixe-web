@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MarketingShell from '../components/chrome/MarketingShell';
+import PhoneShot from '../components/shared/PhoneShot';
+import { TodayShot } from '../components/pro/Shots';
 import { ArrowRight, Bolt, Check, ChevronDown, Phone, Receipt, Verified, Wrench } from '../components/icons';
 import { ROUTES } from '../routes';
 import { useLang } from '../i18n';
@@ -8,12 +10,11 @@ import { api } from '../lib/api';
 import { TRADES } from '../search';
 
 /**
- * The artisan world on one page — ARCHITECTURE.md §4. Supply acquisition is manual
- * during the pilot: the page's only job is a credible pitch and a WhatsApp-first
- * application. Anchored depth (#pay, #vetting, #app, #apply) replaced the three
- * separate artisan pages that were cut in revision 1.
- *
- * Submissions are held in local state until POST /api/artisans/apply exists (Phase 5).
+ * Dashfixe Pro's landing (/pro, rev 2.2) — the artisan world's front door, in its
+ * own chrome (MarketingShell surface="pro"), like Uber's site for drivers. It was
+ * /for-artisans, which now redirects here. Supply acquisition is manual during the
+ * pilot: a credible pitch and a WhatsApp-first application. Anchored depth:
+ * #how, #pay, #vetting, #app, #apply.
  */
 export type ArtisanApplication = { fullName: string; phone: string; email: string; trade: string };
 
@@ -21,11 +22,11 @@ const FIELD_LABEL = 'mb-[7px] block text-label text-ink-40';
 const FIELD_INPUT =
   'h-12 w-full rounded-input border border-line bg-page px-[15px] text-[14.5px] font-semibold text-ink outline-offset-[6px] placeholder:text-ink-30';
 
-export default function ForArtisansPage() {
+export default function ProLandingPage() {
   const { t } = useLang();
 
   return (
-    <MarketingShell>
+    <MarketingShell surface="pro">
       {/* Hero — the one dark moment on this page (design rule: one dark thing per view) */}
       <section className="bg-ink">
         <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(48px,7vw,96px)]">
@@ -52,7 +53,7 @@ export default function ForArtisansPage() {
       </section>
 
       {/* Three steps */}
-      <section className="bg-panel">
+      <section id="how" className="scroll-mt-[88px] bg-panel">
         <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(44px,6vw,80px)]">
           <h2 className="mb-[30px] text-h2 text-ink">{t('fa.steps.title')}</h2>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-5">
@@ -131,20 +132,18 @@ export default function ForArtisansPage() {
               <h2 className="mb-4 text-h2 text-ink">{t('fa.app.title')}</h2>
               <p className="mb-6 max-w-[460px] text-lead text-ink-60">{t('fa.app.body')}</p>
               <Link
-                to={ROUTES.pro}
+                to={ROUTES.proApp}
                 className="inline-flex h-ctl items-center gap-2 rounded-btn bg-ink px-5 text-[14.5px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 {t('fa.app.try')}
                 <ArrowRight size={16} />
               </Link>
             </div>
-            <div className="overflow-hidden rounded-card bg-well">
-              <img
-                src="https://images.pexels.com/photos/8486972/pexels-photo-8486972.jpeg?auto=compress&cs=tinysrgb&w=1600"
-                alt=""
-                loading="lazy"
-                className="block h-[clamp(240px,26vw,340px)] w-full object-cover"
-              />
+            {/* A still of the app itself, rather than a stock photo. */}
+            <div className="flex justify-center">
+              <PhoneShot caption={t('pro.shot.today')}>
+                <TodayShot />
+              </PhoneShot>
             </div>
           </div>
         </div>

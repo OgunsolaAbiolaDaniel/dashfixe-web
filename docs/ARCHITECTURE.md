@@ -6,8 +6,10 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 2.1 — the bell works: notices about the
-customer's jobs and credit, an unread count, each linking where it's about.
+**Last revised:** 2026-09-14 · Revision 2.2 — Dashfixe Pro's shell: the artisan world gets
+its own frame and landing at `/pro` (was `/for-artisans`), with the app showcase at
+`/pro/app`. (Revision 2.1 — the bell works: notices about the
+customer's jobs and credit, an unread count, each linking where it's about.)
 (Revision 2.0 — the apps, shown honestly. `/pro` showcases the
 artisan app: preview screens from designs/Dashfixe Artisan App.dc.html, "coming soon" store
 badges and the way into the pilot. Customers get "Do more with the app" on the home and a
@@ -64,17 +66,20 @@ chrome.
 | | **Marketing surface** | **Product surface (the app)** |
 |---|---|---|
 | Job | Persuade and route | Get a repair done |
-| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/account`, `/artisan/:id`, `/job/:id` |
+| Pages | `/`, `/about`, `/help`, legal, `/waitlist` (and, in the Pro frame, `/pro`, `/pro/app`) | signed-in home, `/explore`, `/activity`, `/account`, `/artisan/:id`, `/job/:id` |
 | Chrome | `SiteNav` + `SiteFooter` | `AppBar`, no footer (map fills the viewport) |
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
 
-**A third world is planned: Dashfixe Pro** (BUILD_PLAN → "Dashfixe Pro"). Artisans get
-their own marketing, application, login and dashboard under `/pro/*`, with a `pro`
-variant of the one Header. It's the way Uber separates uber.com/drive and
-drivers.uber.com from the rider site. Until it's built, `/for-artisans` and the `/pro`
-app showcase (rev 2.0) are the artisan side.
+**The third world: Dashfixe Pro** (rev 2.2; BUILD_PLAN → "Dashfixe Pro"). Artisans get
+their own frame under `/pro/*`, the way Uber separates uber.com/drive and drivers.uber.com
+from the rider site.
+- **The frame** is `MarketingShell surface="pro"`: the dark Pro header and footer, the
+  Pro nav, and Apply. There's one link back to the customer site, and the two never
+  share a menu.
+- **Built:** the landing (`/pro`) and the app showcase (`/pro/app`).
+- **Next:** `/pro/apply`, `/pro/login` + `/pro/dashboard`, then `/pro/help`.
 
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
@@ -100,7 +105,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
      the date and window.
    - On the day it becomes the live job, on the same `/job/:id`.
 3. **Artisan Tiago** — heard about the pilot. Any page → *Become an artisan* →
-   `/for-artisans` (how it pays, vetting, the app) → applies with name + WhatsApp + trade →
+   `/pro` (how it pays, vetting, the app) → applies with name + WhatsApp + trade →
    a human calls him on WhatsApp within 48 h. Supply acquisition is manual by design.
 4. **Returning Rita** — signed in. `/` is the map with her composer, her active job and
    her rebook shortcuts; tapping a pin opens `/explore` with that artisan selected. Her
@@ -117,10 +122,10 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
 | `/activity` | app | Signed-in: every job, live and past (redirects visitors home) | built (rev 1.1; rev 1.8 jobs only) |
 | `/account` | app | Signed-in dashboard: profile, stats, credit, invite, artisans, places, preferences, data (visitors → `/login?next=/account`) | built (rev 1.8) |
-| `/pro` | marketing | The artisan app's showcase: four preview screens (Today, offer, estimate, earnings), what's in the app, "coming soon" store badges, apply to the pilot. Not interactive. Noindex (sample previews); `link('artisanApp')` and `/artisan-app` land here | built (rev 2.0) |
+| `/pro/app` | pro | The Dashfixe Pro app's showcase: four preview screens (Today, offer, estimate, earnings), what's in the app, "coming soon" store badges, apply to the pilot. Not interactive. Noindex (sample previews); `link('artisanApp')` and `/artisan-app` land here | built (rev 2.0 at `/pro`; moved rev 2.2) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
-| `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
+| `/pro` | pro | Dashfixe Pro landing: how it works (`#how`), pay (`#pay`), vetting (`#vetting`), the app (`#app`), pilot application (`#apply`). `/for-artisans` redirects here (a 308 in `vercel.json` and in the app, `#section` kept) | built (rev 2.2; was `/for-artisans`, rev 1) |
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
 | `/privacy` `/terms` `/cookies` | marketing | Minimal, honest, GDPR-aware | built (rev 1) |
@@ -136,7 +141,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/fix` | **redirect → `/explore`** | It was the same screen as `/explore` under another name. Uber has one request flow, not a "request" page and a "see drivers" page. One product surface. |
 | `/book` | **redirect → `/explore?when=later`** | Booking ahead is a *mode* of the search, not a place. The `when` toggle already lives in the URL; the date/window picker lives in the explore panel. |
 | `/for-artisans/details` | **cut** | One strong artisan page beats a lean one plus a long one. Depth becomes sections (`#pay`, `#vetting`, `#app`). |
-| `/artisan-app` | **cut** | An app that doesn't ship yet doesn't earn a route. It is a section of `/for-artisans`. |
+| `/artisan-app` | **cut** | An app that doesn't ship yet doesn't earn a route. It redirects to the app showcase, `/pro/app`. |
 | `/coverage` | **fold → `/about#coverage`** | One pilot area is a paragraph and a map, not a page. Returns as a page when there are areas to choose between. |
 | `/trade/:slug` | ~~defer~~ **built in rev 1.4** | Reversed: search has to find the pilot before the cohort is live, or launch day starts from zero. The split keeps both answers right — home tiles still deep-link `/explore?trade=x` (product intent), while the footer and search engines land on the trade page, one hop from `/explore`. |
 | Careers / Press links | **removed from footer** | A pre-launch company of one has neither. Footer links must all resolve to something true. |
@@ -162,7 +167,7 @@ and Twitter tags on every navigation and language switch. At build time, the
 matters because link-preview crawlers (WhatsApp, LinkedIn, X) never run JavaScript.
 
 - **Indexed:** the home, `/explore`, the five trade pages, `/how-it-works`,
-  `/for-artisans`, `/about`, `/help` and legal.
+  `/pro`, `/about`, `/help` and legal.
 - **`noindex`:** `/login`, `/activity`, `/account` and `/job/*`, because they are private
   (`robots.txt` also disallows `/activity` and `/account`).
   `/artisan/*` too, because those profiles are sample data. `/waitlist`, because it is
@@ -186,7 +191,10 @@ frame changes with the surface:
 - **Frames:** `contained` on marketing pages (via `SiteNav`), `full` on map screens (via
   `AppBar`), and `minimal` on `/login` (logo and language only, so there's nothing to
   wander off to mid-flow).
-- **Logo:** always `/`.
+- **Logo:** always `/`, except in Dashfixe Pro, where it goes to the Pro home (`/pro`).
+- **Dashfixe Pro frame** (`surface="pro"`, rev 2.2): a dark header with the logo and the
+  Pro mark; *How it works* · *Earnings* · *Vetting* · *The app*; "Need a repair?" back to
+  `/`; and Apply. It never shows the customer menu, the bell or the account menu.
 - **Signed out:** *Find an artisan* · *Book ahead* · *How it works* · *Become an artisan*,
   then Help, Log in, and Sign up (ink pill).
 - **Signed in:** *Home* · *Find an artisan* · *Activity*, then the bell and an account
@@ -200,7 +208,7 @@ frame changes with the surface:
 
 **`SiteFooter`** — marketing surface only. Four columns, every link true:
 *Services* (the `/trade/:slug` pages), *Company* (About, Coverage → `/about#coverage`,
-Contact → `/help#contact`), *For artisans* (Join → `/for-artisans#apply`, payouts/vetting/app
+Contact → `/help#contact`), *For artisans* (Join → `/pro#apply`, payouts/vetting/app
 anchors), *Support* (Help, Safety, Cancellations → `/help` anchors). Legal row at the bottom.
 
 Sections on `/` remain reachable by scrolling and by `/#anchor` links (the router's

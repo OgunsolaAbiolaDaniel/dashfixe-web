@@ -404,7 +404,7 @@ present an app. It also asked for the customer app to be promoted.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
-## Dashfixe Pro · the artisan world ⬜ (planned, owner-approved name)
+## Dashfixe Pro · the artisan world 🔄 (started 2026-09-14: "continue till we finish")
 
 The owner wants artisans to have a world of their own, the way Uber keeps drivers apart:
 uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
@@ -435,9 +435,16 @@ The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
   nav), so the "one header" rule holds.
 
 **Delivery, one PR each:**
-1. ⬜ **Pro shell and landing.** The `pro` header and footer, and `/pro` with the
-   For artisans content reworked. `/for-artisans` → `/pro`. The app showcase moves
-   to `/pro/app`.
+1. ✅ **Pro shell and landing** (rev 2.2, branch `feat/pro-shell`). The `pro` header
+   and footer, and `/pro` with the For artisans content reworked (plus a live app
+   still). `/for-artisans` → `/pro` with a 308 that keeps the `#section`. The app
+   showcase moved to `/pro/app`.
+
+   **Owner test:**
+   1. Open `/for-artisans`: you land on `/pro`, in the dark Pro header.
+   2. The nav has How it works, Earnings, Vetting and The app, plus Apply. "Need a
+      repair?" goes back to the customer site.
+   3. From the customer site, "Become an artisan" lands on `/pro`.
 2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
    then the status page.
 3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
