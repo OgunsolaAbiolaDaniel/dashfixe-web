@@ -55,6 +55,8 @@ describe('HomePage', () => {
 
     const where = await screen.findByTestId('where');
     expect(where).toHaveTextContent('need=leaking+tap');
+    // "tap" was recognised as plumbing on the way (lib/classify).
+    expect(where).toHaveTextContent('trade=plumbing');
     expect(where).toHaveTextContent('lng=-9.10120&lat=38.64030');
   });
 

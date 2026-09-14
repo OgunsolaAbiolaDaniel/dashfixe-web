@@ -144,7 +144,7 @@ export const en = {
   // Explore page
   'search.live': 'Amora & Seixal · pilot area',
   'search.title': 'Who is free right now',
-  'search.intro': 'Nine sample artisans within 5 km of you in this walkthrough. Pick one, agree the price in chat, and they travel once.',
+  'search.intro': '{n} sample artisans free within 5 km of you in this walkthrough. Pick one, agree the price in chat, and they travel once.',
   'search.online': 'Online',
   'search.median': 'Median arrival',
   'search.rating': 'Cohort rating',
@@ -536,6 +536,16 @@ export const en = {
   'error.reload': 'Reload',
   'error.home': 'Go to the home page',
   'cookies.p4': 'If we ever add analytics, this page will say exactly what, why, and how to refuse it.',
+  'picker.title': 'What kind of job is it?',
+  'picker.close': 'Close',
+  'picker.any': 'Any trade',
+  'picker.anyHint': 'Show every trade near you',
+  'picker.unsure': 'Not sure? Describe it to our assistant',
+  'picker.unsureHint': 'It works out the trade from your own words',
+  'trade.chip.label': 'Trade',
+  'trade.chip.change': 'Change',
+  'trade.chip.choose': 'Choose a trade',
+  'trade.chip.matched': 'matched from "{word}"',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -666,7 +676,7 @@ export const pt: Record<StringKey, string> = {
 
   'search.live': 'Amora e Seixal · zona piloto',
   'search.title': 'Quem está livre agora',
-  'search.intro': 'Nove profissionais de exemplo a menos de 5 km de si nesta demonstração. Escolha um, acorde o preço no chat, e deslocam-se uma só vez.',
+  'search.intro': '{n} profissionais de exemplo livres a menos de 5 km de si nesta demonstração. Escolha um, acorde o preço no chat, e deslocam-se uma só vez.',
   'search.online': 'Online',
   'search.median': 'Chegada mediana',
   'search.rating': 'Avaliação do grupo',
@@ -1042,6 +1052,16 @@ export const pt: Record<StringKey, string> = {
   'error.reload': 'Recarregar',
   'error.home': 'Ir para o início',
   'cookies.p4': 'Se algum dia adicionarmos análises, esta página dirá exatamente o quê, porquê e como recusar.',
+  'picker.title': 'Que tipo de trabalho é?',
+  'picker.close': 'Fechar',
+  'picker.any': 'Qualquer ofício',
+  'picker.anyHint': 'Mostrar todos os ofícios perto de si',
+  'picker.unsure': 'Não tem a certeza? Descreva ao nosso assistente',
+  'picker.unsureHint': 'Descobre o ofício pelas suas palavras',
+  'trade.chip.label': 'Ofício',
+  'trade.chip.change': 'Alterar',
+  'trade.chip.choose': 'Escolher ofício',
+  'trade.chip.matched': 'pela palavra "{word}"',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

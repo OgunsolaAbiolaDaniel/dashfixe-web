@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth';
@@ -68,6 +68,27 @@ describe('ExplorePage', () => {
     renderExplore('/explore', true);
     await user.click(screen.getAllByRole('button', { name: /^Chat/ })[0]!);
     expect(screen.getByLabelText('Message')).toBeInTheDocument();
+  });
+
+  it('recognises the trade in what was typed and shows only that trade', async () => {
+    const user = userEvent.setup();
+    renderExplore('/explore');
+    await user.type(screen.getByLabelText('What needs fixing'), 'socket is sparking{Enter}');
+    expect(await screen.findByRole('button', { name: /Trade: Electrical/ })).toBeInTheDocument();
+    expect(screen.getByText('matched from "socket"')).toBeInTheDocument();
+    expect(screen.getByText('Rita Almeida')).toBeInTheDocument();
+    expect(screen.queryByText('Tiago Ferreira')).not.toBeInTheDocument();
+  });
+
+  it('lets the customer pick the trade from the sheet', async () => {
+    const user = userEvent.setup();
+    renderExplore('/explore');
+    await user.click(screen.getByRole('button', { name: 'Choose a trade' }));
+    const sheet = screen.getByRole('dialog', { name: 'What kind of job is it?' });
+    await user.click(within(sheet).getByRole('button', { name: /^Painting/ }));
+    expect(screen.getByText('Sofia Marques')).toBeInTheDocument();
+    expect(screen.queryByText('Tiago Ferreira')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('selecting a marker selects the card', async () => {

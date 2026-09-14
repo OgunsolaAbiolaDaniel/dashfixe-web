@@ -11,6 +11,9 @@ import type { LngLat } from '../../lib/geo';
 import { searchAddress, type Place } from '../../lib/geocode';
 import { getPlace, isPilotHome, setPlace, usePlace } from '../../lib/place';
 import AddressField from '../shared/AddressField';
+import TradeField from '../shared/TradeField';
+import { classifyNeed } from '../../lib/classify';
+import type { TradeSlug } from '../../routes';
 import { LiveMap } from '../map/lazy';
 
 const FIELD = 'flex h-[56px] items-center gap-[13px] rounded-input bg-well px-[18px]';
@@ -32,6 +35,14 @@ export default function PublicHero() {
   // follow it. A returning visitor's saved address is filled back in.
   const place = usePlace();
   const [need, setNeed] = useState('');
+  // The trade is recognised from the words as they are typed (lib/classify) until
+  // the customer picks one by hand — then their choice stands.
+  const [trade, setTrade] = useState<TradeSlug | ''>('');
+  const [picked, setPicked] = useState(false);
+  const updateNeed = (value: string) => {
+    setNeed(value);
+    if (!picked) setTrade(classifyNeed(value)?.trade ?? '');
+  };
   const [address, setAddress] = useState(() => (isPilotHome(getPlace()) ? '' : getPlace().label));
   const [lngLat, setLngLat] = useState<LngLat | null>(() => (isPilotHome(getPlace()) ? null : getPlace().lngLat));
   const [when, setWhen] = useState<When>('now');
@@ -56,7 +67,7 @@ export default function PublicHero() {
       where = first?.lngLat ?? null;
       if (first) setPlace(first);
     }
-    navigate(exploreUrl({ need, address, lngLat: where, when }));
+    navigate(exploreUrl({ need, trade, address, lngLat: where, when }));
   };
 
   return (
@@ -100,13 +111,23 @@ export default function PublicHero() {
                 <input
                   type="text"
                   value={need}
-                  onChange={(e) => setNeed(e.target.value)}
+                  onChange={(e) => updateNeed(e.target.value)}
                   placeholder={t('hero.needPlaceholder')}
                   aria-label={t('hero.needLabel')}
                   className={INPUT}
                 />
                 <PhotoPick variant="round" />
               </div>
+
+              <TradeField
+                className="px-1"
+                trade={trade}
+                need={need}
+                onTrade={(next) => {
+                  setTrade(next);
+                  setPicked(true);
+                }}
+              />
 
               <AddressField
                 value={address}

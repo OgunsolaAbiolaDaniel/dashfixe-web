@@ -11,6 +11,7 @@ import AddressField from '../shared/AddressField';
 import { ROUTES, jobUrl } from '../../routes';
 import { activeJob, formatDate, formatEuro, useJobs } from '../../lib/jobs';
 import { useAuth } from '../../auth';
+import { classifyNeed } from '../../lib/classify';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -55,7 +56,8 @@ export default function AppHome() {
   const [draft, setDraft] = useState('');
   const to = (extra: Parameters<typeof exploreUrl>[0]) =>
     exploreUrl({ address: place.label, lngLat: place.lngLat, ...extra });
-  const find = () => navigate(to({ need, when }));
+  // The trade is recognised from the words (lib/classify); /explore shows it as a chip.
+  const find = () => navigate(to({ need, when, trade: classifyNeed(need)?.trade ?? '' }));
 
   return (
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
