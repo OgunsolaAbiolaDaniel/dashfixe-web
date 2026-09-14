@@ -40,8 +40,32 @@ actions, 14.5 at 44px elsewhere; section rhythm `pb-[clamp(48px,6vw,80px)]`.
   header; only the panel scrolls. Under 1024px the page stacks and the map is 520px tall.
 - **Frosted glass** is used only over the map (key card), per the design rule.
 
+## Colour and contrast (rev 1.6)
+
+Every text colour clears **WCAG 2.1 AA (4.5:1)** on all three grounds it sits on:
+`panel` (white), `page` and `well`. This is a launch requirement, because the European
+Accessibility Act has covered consumer e-commerce services in the EU since June 2025. It
+is enforced by `e2e/a11y.spec.ts`, which runs axe-core on eight landing pages in CI.
+
+Two ink tiers and the success green were darkened from the design file's values, since
+those failed:
+
+| Token | Design file | Now | On white | On well |
+|---|---|---|---|---|
+| `ink-60` (body, secondary) | `#5B6B8C` | `#4F5F80` | 6.6:1 | 6.0:1 |
+| `ink-40` (labels, meta, notes) | `#8A99B8` (2.8:1) | `#5F6F8E` | 5.1:1 | 4.6:1 |
+| `success` (available, paid) | `#16A34A` (3.0:1 on well) | `#15803D` | 5.0:1 | 4.6:1 |
+
+Rules:
+- **`ink-30` is not a text colour.** Use it for placeholders, dots, borders and the
+  deliberately dimmed "on a job" map markers only.
+- **Links inside running text are underlined** (`index.css`), so meaning never rides on
+  colour alone (WCAG 1.4.1).
+- **Icon-only buttons need an `aria-label`.**
+
 ## Honesty in the UI
 
-Sample supply is always badged: the warning-tint chip on Nearby cards and the
-"Sample artisans · real map" chip on the map. The live dot next to "Amora & Seixal · live"
-refers to the map, not to artisans.
+Sample supply is always badged: the warning-tint chip on Nearby cards and trade pages,
+the "Sample artisans · real map" chip on the map, "Sample artisan · scripted replies" in
+chat, and a Sample badge on receipts. The `/explore` area chip says "pilot area" with a
+still dot. Nothing pulses or says "live" about supply that isn't real.

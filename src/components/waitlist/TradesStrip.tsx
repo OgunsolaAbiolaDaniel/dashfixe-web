@@ -13,7 +13,7 @@ export default function TradesStrip() {
     <section className="border-t border-line-rule bg-panel">
       <div className="mx-auto max-w-[1200px] px-[clamp(18px,4vw,32px)] py-[26px]">
         <div className="flex flex-wrap items-center gap-x-[26px] gap-y-3.5">
-          <span className="flex-none text-label text-ink-30">Trades at launch</span>
+          <span className="flex-none text-label text-ink-40">Trades at launch</span>
           <ul className="flex flex-wrap gap-[9px]">
             {TRADES.map(({ Icon, label }) => (
               <li

@@ -18,11 +18,16 @@ export default {
           'tint-strong': '#DBE6FB',
           'on-dark': '#93B4FA',
         },
+        // Rev 1.6 accessibility pass: 60 and 40 darkened from the design file's
+        // #5B6B8C / #8A99B8 so every text tier clears WCAG AA (4.5:1) on panel,
+        // page AND well grounds — required under the European Accessibility Act.
+        // 40 → 5.1:1 on white, 4.6:1 on well. 30 stays for placeholders, dots
+        // and borders only — never body text (docs/DESIGN.md).
         ink: {
           DEFAULT: '#0F1B3D',
           80: '#26365E',
-          60: '#5B6B8C',
-          40: '#8A99B8',
+          60: '#4F5F80',
+          40: '#5F6F8E',
           30: '#A3AEC5',
         },
         // Grounds
@@ -43,7 +48,8 @@ export default {
           strong: '#DBE4F5',
         },
         success: {
-          DEFAULT: '#16A34A',
+          // #16A34A read 3.0:1 on well; #15803D clears 4.5:1 on white, well and tint.
+          DEFAULT: '#15803D',
           tint: '#DCFCE7',
           bright: '#34D399',
         },
