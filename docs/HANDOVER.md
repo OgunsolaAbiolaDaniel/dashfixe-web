@@ -5,19 +5,29 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-12 · **Branch:** `feat/product-polish` (PR to `main`) ·
+**Last updated:** 2026-09-12 · **Branch:** `main` (everything through #11 merged) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0–4 are done and merged. Phase 5's code is done. #1–#10 are merged, including
-revision 1.4 (#9) and the Vercel API fix (#10), and `main` is green. **Production login
-works:** it was verified live, with no database and no Twilio.
+Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is merged, and
+`main` is green in CI (check and smoke).
 
-**Revision 1.5**, on branch `feat/product-polish`, is the owner's review pass. Four
-commits, each one green:
+**Production, verified live on 2026-09-12** (`dashfixe-web.vercel.app`, merge
+`ec9d36d`):
+- ✅ **One-tap pilot login:** request-code, verify, then the name saved to the session.
+  No database and no Twilio needed.
+- ✅ **Per-route heads:** `/how-it-works`, `/trade/*` and `/explore` each ship their own
+  title.
+- ✅ **Sitemap:** 14 pages, with the waitlist parked.
+- ⚠️ **`AUTH_SECRET` is NOT set.** A session token signed with the public fallback key
+  was accepted by `/api/auth/me`, so anyone can forge a login. The owner sets it in Vercel
+  (Settings → Environment Variables), then redeploys, and the forged-token test should be
+  re-run. See "Going live" below.
+
+**Revision 1.5** (#11) is the owner's review pass. Four commits, each one green:
 
 - **One header on every page** (`components/chrome/Header.tsx`). `SiteNav` and `AppBar`
   are now thin wrappers around it.
@@ -54,8 +64,13 @@ Start any new session by reading `docs/ARCHITECTURE.md` rev 1.5:
 - §7 covers the maps and the lazy rule
 - §8 covers testing
 
-**Next:** Phase 5's operator steps (Vercel env vars, then `VITE_LAUNCHED` on launch day),
-then Phase 6, which is real supply and live operations.
+**Next:**
+1. `AUTH_SECRET` in Vercel (now).
+2. `DATABASE_URL`, a free Neon database, so signups persist.
+3. `TWILIO_*` when funded.
+4. `SITE_URL` once there is a domain.
+5. `VITE_LAUNCHED` on launch day.
+6. Then Phase 6: real supply and live operations.
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
@@ -73,42 +88,19 @@ then Phase 6, which is real supply and live operations.
 > and the test suite. Screenshot the real pages (`scripts/shot.mjs` prints console errors) before
 > shipping.
 
-Phase 2 as a whole:
-
-- **Map-peek hero.** The stock photo on `/` is the live map (`LiveMap variant="peek"`: no
-  chrome, no interaction). Picking an address re-centres it.
-- **One address, everywhere.** A picked address, or a typed one looked up on submit, rides
-  into `/explore` as `lng`/`lat`. The map, the list, distances and arrival times are all worked
-  out from it with `getSupply(home)`. "Use my location" refuses a position outside the pilot
-  box rather than pinning the customer 30 km from every sample artisan.
-- **Phone menu.** `components/shared/MobileMenu.tsx` on the public nav, the signed-in nav and
-  the `/explore` header. The language toggle is on all three.
-- **Address autocomplete.** `components/shared/AddressField.tsx` + `lib/geocode.ts`: Nominatim
-  bounded to the pilot area, 350 ms debounce, an offline list of pilot streets, and "use my
-  location" via Geolocation + reverse geocode.
-- **EN/PT across the customer side.** Every string on `/`, the signed-in home, `/explore`,
-  chat, the auth sheet and the map fallback reads from `src/i18n/`. A test fails if keys or
-  `{placeholders}` drift between languages. `i18n/Rich.tsx` handles sentences with links in
-  them. The choice persists in localStorage and sets `<html lang>`.
-- **Derived sample data.** The "Free in Amora" cards use `getNearby()`. The signed-in home's
-  buttons (find, rebook, open chat, quick request) open `/explore` at the saved address.
+Earlier phases (0–4, revisions 1.1–1.3) are recorded phase by phase in
+`docs/BUILD_PLAN.md`, and commit by commit in git. They are not repeated here.
 
 Known gaps, on purpose:
 
-- **`/waitlist` is not translated.** It keeps its own local EN/PT toggle and English copy. It
-  is a separate page with locked copy (`../Dashfixe.md` §6); translating it is its own task.
-- **"Change area"** in the hero still opens the auth sheet. It needs a real area picker once
-  there is more than one pilot area.
-
-What changed in the latest pass (Phase 2, second half):
-
-| Area | Change |
-|---|---|
-| `/explore` | Reads `lng`/`lat`; map, list, ETAs and median follow the address; header has the phone menu and shared language toggle |
-| i18n | Remaining home sections, footers, signed-in home, search panel, chat, auth sheet and map fallback moved onto `t()` |
-| Hero | Typed-but-unpicked addresses are looked up on submit (2.5 s cap); locations outside the pilot area are refused with a notice |
-| Data | `getNearby(home)` for the home cards; signed-in home actions carry the saved address into `/explore` |
-| Tests | New `HomePage.test.tsx` (composer, typed lookup, PT switch, phone menu, out-of-area location, derived cards) and URL-location test on `/explore` |
+- **`/waitlist` is parked and untranslated.** It keeps its own EN/PT toggle and the locked
+  English copy (`../Dashfixe.md` §6). Nothing links to it.
+- **One pilot area.** "Change area" opens `/about#coverage`. A real area picker arrives when
+  there is a second area.
+- **Sample data everywhere a backend is missing,** always labelled: supply, chat replies,
+  jobs (per browser), receipts and payments. That is Phase 6.
+- **`request-code` has no rate limit.** Add one, per phone and IP, before real SMS costs
+  money.
 
 ## Run
 
@@ -135,9 +127,10 @@ Optional 6th argument is a JS expression evaluated in the page and printed, e.g.
 1. Clone the repo and `npm install` (Node 24 is what this was built on; 20+ should work).
 2. Copy the parent folder's `designs/`, `Dashfixe.md`, `Dashfixemarklatest.md` alongside the
    repo if you want the design context — the code does not depend on them.
-3. `npm run check` — 108 tests should pass. Then `npx vite build && npm run smoke` —
+3. `npm run check` — 118 tests should pass. Then `npx vite build && npm run smoke` —
    6 smoke journeys (set `PW_CHANNEL=msedge` or run `npx playwright install chromium`).
-4. `npm run dev` and open `/`, `/waitlist`, `/explore`, `/trade/plumbing`.
+4. `npm run dev`, open `/login`, enter any number → Send code (pilot mode signs you in),
+   then `/`, `/explore` (chat with Tiago → approve → track), `/how-it-works`, `/trade/plumbing`.
 5. No env vars, no API keys. The map uses OpenFreeMap's public tiles (fair-use, attribution is
    rendered). If they ever rate-limit, set `VITE_MAP_STYLE` (read in `components/map/kit.ts`).
 

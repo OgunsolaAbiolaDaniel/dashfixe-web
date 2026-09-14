@@ -6,6 +6,9 @@
 > deliberately cut or folded in revision 1: `/fix` and `/book` are modes of `/explore`,
 > `/coverage` is a section of `/about`, and the three artisan pages are one `/for-artisans`
 > with anchors. Cut paths redirect — see `src/AppRoutes.tsx`.
+>
+> **Revision 1.5 (2026-09-12):** every designed customer screen is built. The statuses
+> below are current. `/how-it-works` was added (not in Flow), and the waitlist is parked.
 
 The canonical ordering comes from **`Dashfixe Flow.dc.html`** in the Claude Design project
 ("Dashfixe Home Repair Design", `3b0cdabf-620a-4669-bb28-0c9eae098362`). That file is the
@@ -25,12 +28,12 @@ Two front doors, depending on whether we have launched.
 
 | Screen | Design file | Route | Status |
 |---|---|---|---|
-| Waitlist landing | `Dashfixe waitlist.dc.html` | `/waitlist` | **built** |
+| Waitlist landing | `Dashfixe waitlist.dc.html` | `/waitlist` | **built · parked** (rev 1.5: not linked, `noindex`) |
 | Home — signed out | `Dashfixe Home v2(real).dc.html` | `/` | **built** |
-| Home — signed in | same file, second screen | `/` (after auth) | **built** |
+| Home — signed in | same file, second screen | `/` (after auth) | **built** (map-first, rev 1.1) |
 
-Pre-launch the waitlist is the real front door; at launch the home page takes over. Both are
-live now so the switch is a redirect decision, not a build.
+The home page is the front door. The waitlist is reachable but no longer promoted, and
+`VITE_LAUNCHED=true` redirects it to `/`.
 
 ---
 
@@ -42,16 +45,16 @@ Every screen lives inside one design file: `Dashfixe Customer Pages.dc.html`.
 
 | Screen | Anchor in the design | Route | Status |
 |---|---|---|---|
-| Fix now | `#now` | `/fix` | planned |
-| Artisan profile | `#profile` | `/artisan/:id` | planned |
-| Job & receipt | `#receipt` | `/job/:id` | planned |
+| Fix now | `#now` | `/fix` → `/explore` | **built** as `/explore` (redirect) |
+| Artisan profile | `#profile` | `/artisan/:id` | **built** (rev 1.2) |
+| Job & receipt | `#receipt` | `/job/:id` | **built** (booked · on the way · receipt, rev 1.5) |
 
 **Not urgent — the browsing path**
 
 | Screen | Anchor | Route | Status |
 |---|---|---|---|
-| Plumbing in Amora (trade page) | `#trade` | `/trade/:slug` | planned |
-| Book for later | `#book` | `/book` | planned |
+| Plumbing in Amora (trade page) | `#trade` | `/trade/:slug` | **built** (five trades, rev 1.4) |
+| Book for later | `#book` | `/book` → `/explore?when=later` | **built** as a mode of `/explore` |
 
 The browsing path rejoins the main path: on the day, a booking becomes a live job.
 
@@ -59,13 +62,15 @@ The browsing path rejoins the main path: on the day, a booking becomes a live jo
 
 | Screen | Anchor | Route | Status |
 |---|---|---|---|
-| Help centre | `#help` | `/help` | planned |
-| Coverage | `#coverage` | `/coverage` | planned |
-| About Dashfixe | `#about` | `/about` | planned |
-| Search + map app | `Dashfixe Web.dc.html` | `/explore` | **built** (live map) |
+| Help centre | `#help` | `/help` | **built** |
+| Coverage | `#coverage` | `/coverage` → `/about#coverage` | **built** as a section of `/about` |
+| About Dashfixe | `#about` | `/about` | **built** |
+| Search + map app | `Dashfixe Web.dc.html` | `/explore` | **built** (live map, chat → booking) |
 
-> `/explore` is rebuilt from `Dashfixe Web.dc.html` on real OpenFreeMap tiles
-> (`components/explore/LiveMap.tsx`). See `docs/DESIGN.md` for the map spec.
+> `/explore` is rebuilt from `Dashfixe Web.dc.html` on real OpenFreeMap tiles. The maps live
+> in `components/explore/LiveMap.tsx` and `components/job/TrackMap.tsx`, on the shared kit
+> in `components/map/kit.ts`, and always load through `components/map/lazy.tsx`. See
+> `docs/DESIGN.md` for the map spec.
 
 ---
 
@@ -75,10 +80,10 @@ Its own site on the navy ground, reached from every customer page.
 
 | Screen | Design file | Route | Status |
 |---|---|---|---|
-| For artisans (lean) | `Dashfixe for Artisans.dc.html` | `/for-artisans` | planned |
-| Create your profile | `Dashfixe for Artisans.dc.html#apply` | `/for-artisans/apply` | planned |
-| The artisan app | `Dashfixe Artisan App.dc.html` | `/artisan-app` | planned |
-| Long version, all on one page | `Dashfixe for Artisans (detailed).dc.html` | `/for-artisans/details` | planned |
+| For artisans (lean) | `Dashfixe for Artisans.dc.html` | `/for-artisans` | **built** |
+| Create your profile | `Dashfixe for Artisans.dc.html#apply` | `/for-artisans/apply` → `/for-artisans#apply` | **built** (real application form, posts to the API) |
+| The artisan app | `Dashfixe Artisan App.dc.html` | `/artisan-app` → `/for-artisans#app` | **built** as a section |
+| Long version, all on one page | `Dashfixe for Artisans (detailed).dc.html` | `/for-artisans/details` → `/for-artisans` | **folded** into the one page (`#pay`, `#vetting`) |
 
 Named in Flow as **to design** — no design file exists yet:
 
@@ -88,8 +93,9 @@ Named in Flow as **to design** — no design file exists yet:
 - AI calls
 - Artisan help centre
 
-Until `/for-artisans` is built, every artisan link points at `/waitlist#artisans` — the only
-real artisan sign-up that exists today. That redirect lives in one place, `src/routes.ts`.
+Every artisan link now lands on `/for-artisans` or one of its anchors, all resolved in one
+place, `src/routes.ts`. "How you're paid" and "Vetting & licensing" exist as its `#pay` and
+`#vetting` sections. The other three items are still to design.
 
 ---
 
@@ -116,16 +122,15 @@ Dashfixe hex. Do not apply it. Dashfixe's design system is Lane 4.
 
 ---
 
-## Build order
+## Build order — complete
 
-1. **`/for-artisans`** — the most-linked missing destination. Every nav, footer and CTA on the
-   home page currently detours to the waitlist because it does not exist.
-2. ~~**`/explore`**~~ — built. The search-and-map surface from `Dashfixe Web.dc.html`.
-3. **`/fix` → `/artisan/:id` → `/job/:id`** — the urgent path, in that order. They share
-   components, so building them together is cheaper than one at a time.
-4. **`/trade/:slug` and `/book`** — the browsing path.
-5. **`/help`, `/coverage`, `/about`** — footer pages, lowest urgency, but they kill the last
-   dead links.
+Every item of the original order is built:
 
-Routes 3–5 all come out of one design file, so read `Dashfixe Customer Pages.dc.html` once and
-build them as a set.
+1. ~~`/for-artisans`~~ — Phase 3.
+2. ~~`/explore`~~ — Phase 1.
+3. ~~`/fix` → `/artisan/:id` → `/job/:id`~~ — Phases 3–4. `/fix` became `/explore`.
+4. ~~`/trade/:slug` and `/book`~~ — rev 1.4. `/book` became `/explore?when=later`.
+5. ~~`/help`, `/coverage`, `/about`~~ — Phase 3. `/coverage` became `/about#coverage`.
+
+What remains is Phase 6 (real supply and live operations) in `docs/BUILD_PLAN.md`, plus
+the three artisan screens that are still to design.

@@ -177,7 +177,7 @@ from any search card.
 POST), log in with the on-screen pilot code from the Chat gate, add a saved place, sort by
 price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and watch rows land.
 
-### Revision 1.4 · Launch hardening ✅ (branch `feat/launch-hardening`)
+### Revision 1.4 · Launch hardening ✅ (merged, #9; Vercel API fix #10)
 
 - ✅ **Perf: MapLibre code-split.** Every map now loads through `components/map/lazy.tsx`,
   and ESLint rejects direct imports.
@@ -212,7 +212,7 @@ price, attach a photo. Then set `DATABASE_URL` + `AUTH_SECRET` in Vercel and wat
 4. Load `/help` with DevTools → Network open; no `LiveMap`/`MapCanvas` chunk should
    appear.
 
-### Revision 1.5 · Product polish ✅ (branch `feat/product-polish`)
+### Revision 1.5 · Product polish ✅ (merged, #11 — verified live in production)
 
 The owner's review asked for consistency, a location that reacts, a real chat and a login
 that just works without paid SMS:
