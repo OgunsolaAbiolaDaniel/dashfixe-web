@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/production-ready` (stacked on the docs PR #12 —
-merge #12 first; everything through #11 is on `main`) ·
+**Last updated:** 2026-09-14 · **Branch:** `fix/vercel-spa-fallback` (PR to `main`;
+everything through #13 is merged) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -23,10 +23,14 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
 - ✅ **Per-route heads:** `/how-it-works`, `/trade/*` and `/explore` each ship their own
   title.
 - ✅ **Sitemap:** 14 pages, with the waitlist parked.
-- ⚠️ **`AUTH_SECRET` is NOT set.** A session token signed with the public fallback key
-  was accepted by `/api/auth/me`, so anyone can forge a login. The owner sets it in Vercel
-  (Settings → Environment Variables), then redeploys, and the forged-token test should be
-  re-run. See "Going live" below.
+- ✅ **`AUTH_SECRET` is set** (the owner did this on 2026-09-14). A token signed with
+  the public fallback key is now rejected, and real logins still work.
+- ⚠️ **Cold loads of non-prerendered pages 404 on Vercel** (`/login`, `/activity`,
+  `/job/*`, `/artisan/*`, the 404 page); clicks inside the app work. The cause is
+  `cleanUrls` combined with a rewrite to `/index.html`. It's fixed on
+  `fix/vercel-spa-fallback` (the rewrite now targets `/`), and `scripts/check-prod.mjs`
+  plus `.github/workflows/prod-check.yml` now verify the real site after every production
+  deploy. Baseline before the fix: 11/16.
 
 **Revision 1.6**, on branch `feat/production-ready`, gets the site ready for real
 visitors, with no money or accounts needed:
@@ -82,12 +86,16 @@ Start any new session by reading `docs/ARCHITECTURE.md` rev 1.6:
 - §8 covers testing
 
 **Next:**
-1. `AUTH_SECRET` in Vercel (now).
+1. Merge `fix/vercel-spa-fallback`, then read the "production check" run on GitHub. It
+   should show 16/16.
 2. `DATABASE_URL`, a free Neon database, so signups persist.
 3. `TWILIO_*` when funded.
-4. `SITE_URL` once there is a domain.
+4. `SITE_URL` once there is a domain. Also set the repository variable `PROD_URL`, so the
+   production check follows the domain.
 5. `VITE_LAUNCHED` on launch day.
 6. Then Phase 6: real supply and live operations.
+
+**Checking production by hand, at any time:** `node scripts/check-prod.mjs`.
 
 
 > **What happened on 2026-09-10.** Phase 2 was built on two machines at once. The second working
@@ -216,6 +224,15 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Per-route pages are `<path>.html`, not `<path>/index.html`.** Vercel's `cleanUrls`
   and `vite preview` resolve `/trade/plumbing` to `trade/plumbing.html`; a directory
   index only matches with a trailing slash.
+- **With `cleanUrls` on, the SPA rewrite must target `/`, not `/index.html`.** Under
+  `cleanUrls`, `/index.html` answers with a 308 redirect, so a rewrite to it made Vercel
+  return its own plain 404. This hit every page without a pre-rendered file on a cold load
+  (`/login`, `/activity`, `/job/*`, `/artisan/*`, the 404 page). Clicks inside the app
+  still worked, and every local test passed, because `vite preview` is not Vercel. That is
+  why `scripts/check-prod.mjs` exists and runs after every production deploy.
+- **Preview deployments sit behind Vercel's login** (401 without a bypass token), so
+  routing changes can only be proven on production. `prod-check.yml` does exactly that,
+  against the production alias.
 - **Windows PowerShell 5.1 splits here-strings passed to native commands**, so
   `git commit -m @'…'@` with quotes in it fails. Write the message to a file and use
   `git commit -F <file>`.
