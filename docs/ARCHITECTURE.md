@@ -6,9 +6,11 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 1.9 — one designed slot picker
+**Last revised:** 2026-09-14 · Revision 2.0 — the artisan side: `/pro`, the artisan app as
+a public walkthrough (designs/Dashfixe Artisan App.dc.html), from the offer to the payout.
+(Revision 1.9 — one designed slot picker
 (`shared/SlotPicker`) replaces the browser's date and time controls on the home and in
-`/explore`, and the book-ahead horizon is a real 30 days. (Revision 1.8 — `/account`, the customer's own dashboard:
+`/explore`, and the book-ahead horizon is a real 30 days.) (Revision 1.8 — `/account`, the customer's own dashboard:
 profile, stats, Dashfixe credit (a walkthrough wallet that comes off the next job),
 invite code, their artisans, saved places, preferences and their data. Activity is now
 just the jobs.) (Revision 1.7 — smart search: the trade is recognised from
@@ -103,6 +105,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
 | `/activity` | app | Signed-in: every job, live and past (redirects visitors home) | built (rev 1.1; rev 1.8 jobs only) |
 | `/account` | app | Signed-in dashboard: profile, stats, credit, invite, artisans, places, preferences, data (visitors → `/login?next=/account`) | built (rev 1.8) |
+| `/pro` | artisan | The artisan app as a walkthrough: offer → brief → chat → estimate → approved → drive → extra estimate → close → paid, plus Today / Schedule / Earnings / Profile. Public, noindex, sample data; `link('artisanApp')` and `/artisan-app` land here | built (rev 2.0) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
@@ -217,6 +220,20 @@ product, so nav links point at routes.
   an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
   `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
   this for `/api/jobs`, keeping the same shapes.
+- **The artisan app** (`src/lib/pro.ts` + `components/pro/`, rev 2.0):
+  - **Money.** `quote(lines)` gives the subtotal, IVA at 23% on top, and the total the
+    customer pays. `payout(total)` takes a 12% commission, the design's example pilot
+    rate, only on a finished job. Everything is rounded to the cent at each step, so
+    €49.60 → €61.01 → €53.69 as in the design.
+  - **Store.** `dfx.pro` holds the online switch, the weekend switch, and the jobs
+    finished in the walkthrough, on top of a seeded sample week. `week()` sums the payout.
+  - **Flow.** `pages/ProPage.tsx` owns the stage (`components/pro/stages.ts`). An offer
+    arrives after going online; declining or letting it expire costs nothing.
+    `JobFlow` holds the job's estimate lines, second estimate, checklist and chat.
+    Customer replies and approvals are scripted and timed.
+  - **Honesty.** Every screen carries a "Walkthrough · sample job · nothing is sent"
+    ribbon.
+  - **Phase 6.** Artisan auth plus `/api/artisan/*` replace the store and the script.
 - **Dashfixe credit** (`src/lib/wallet.ts`, rev 1.8): `{credit, history, redeemed}` in
   localStorage (`dfx.wallet`), read through `useWallet()`.
   - Pilot promo codes (`PILOT10` €10, `BEMVINDO5` €5), each once per browser.

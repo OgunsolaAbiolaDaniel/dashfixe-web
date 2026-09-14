@@ -347,6 +347,30 @@ The owner said the "Plan it for later" calendar was the browser default:
 3. On a phone, both open as a sheet from the bottom.
 4. Late in the day, today is greyed out; earlier, today's passed windows are crossed out.
 
+### Revision 2.0 · The artisan app ✅ (branch `feat/artisan-app`)
+
+The owner agreed to build the artisan side next: Uber's driver app, for tradespeople.
+
+- ✅ **`/pro`** is a public walkthrough of the design's 12 screens.
+  - **The job:** offer, brief, chat, estimate builder, approval, driving, a second
+    estimate, closing the job, and payout.
+  - **The tabs:** Today, Schedule, Earnings and Profile.
+- ✅ **The estimate builder is real arithmetic:** IVA 23%, and a 12% commission (an
+  example pilot rate) only on finished jobs. No lead fees anywhere.
+- ✅ **Linked from For artisans** ("Try the artisan app"). It's labelled as a walkthrough
+  on every screen.
+- ✅ **Production checks** now cover `/account`, `/pro`, 30-day slot URLs and
+  `robots.txt`.
+
+**Owner test:**
+1. Open `/for-artisans` and tap "Try the artisan app".
+2. Flip "You are offline" on. An offer arrives, so tap **Accept job**.
+3. Message Sofia, tap the suggested reply, then **Build estimate**. Change a price and
+   watch "You receive" follow. Send it.
+4. Start driving, arrive, and send a second estimate. Finish: tick the checklist, then
+   **Mark complete & charge**.
+5. Back on Today, open **Earnings**: your job is in Friday's payout.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

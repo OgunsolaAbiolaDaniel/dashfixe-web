@@ -29,7 +29,7 @@ const expect = (cond, msg) => {
 const get = (path, init) => fetch(BASE + path, { redirect: 'manual', ...init });
 
 // ── Pages load cold (a refresh or a shared link, not a click inside the app) ──
-for (const path of ['/', '/explore', '/login', '/activity', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
+for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
   await check(`GET ${path} serves the app`, async () => {
     const r = await get(path);
     const type = r.headers.get('content-type') ?? '';
@@ -53,6 +53,10 @@ await check('manifest.webmanifest is served', async () => {
   const r = await get('/manifest.webmanifest');
   expect(r.status === 200, `status ${r.status}`);
   expect((await r.json()).short_name === 'Dashfixe', 'unexpected manifest');
+});
+await check('robots.txt keeps the private pages out', async () => {
+  const txt = await (await get('/robots.txt')).text();
+  expect(txt.includes('Disallow: /activity') && txt.includes('Disallow: /account'), 'missing Disallow for /activity or /account');
 });
 await check('sitemap lists /how-it-works and not the parked waitlist', async () => {
   const xml = await (await get('/sitemap.xml')).text();

@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import MarketingShell from '../components/chrome/MarketingShell';
-import { Bolt, Check, ChevronDown, Phone, Receipt, Verified, Wrench } from '../components/icons';
+import { ArrowRight, Bolt, Check, ChevronDown, Phone, Receipt, Verified, Wrench } from '../components/icons';
+import { ROUTES } from '../routes';
 import { useLang } from '../i18n';
 import { api } from '../lib/api';
 import { TRADES } from '../search';
@@ -127,7 +129,14 @@ export default function ForArtisansPage() {
           <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] items-center gap-[clamp(28px,4vw,56px)]">
             <div>
               <h2 className="mb-4 text-h2 text-ink">{t('fa.app.title')}</h2>
-              <p className="max-w-[460px] text-lead text-ink-60">{t('fa.app.body')}</p>
+              <p className="mb-6 max-w-[460px] text-lead text-ink-60">{t('fa.app.body')}</p>
+              <Link
+                to={ROUTES.pro}
+                className="inline-flex h-ctl items-center gap-2 rounded-btn bg-ink px-5 text-[14.5px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
+              >
+                {t('fa.app.try')}
+                <ArrowRight size={16} />
+              </Link>
             </div>
             <div className="overflow-hidden rounded-card bg-well">
               <img

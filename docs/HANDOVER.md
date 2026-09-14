@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/date-picker`, stacked on
-`feat/account` (#16, merge that first; everything through #15 is merged) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/artisan-app` (PR to `main`; everything
+through #17 is merged, and production passes `check-prod.mjs`) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -29,7 +29,42 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   redirects under `cleanUrls`. The "production check" workflow ran by itself after the
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
-**Revision 1.9**, on branch `feat/date-picker`, designs the book-ahead picker. The owner
+**Revision 2.0**, on branch `feat/artisan-app`, builds the other half of the marketplace:
+the artisan app, as a public walkthrough at `/pro`. It follows the 12 screens of
+`designs/Dashfixe Artisan App.dc.html`.
+
+- **The job, end to end** (`components/pro/JobFlow.tsx`):
+  - **Offer.** It arrives once the artisan goes online. The take-home is stated before
+    accepting, and there's a 30-second countdown. "Not now" is free.
+  - **Brief.** The address stays masked until the customer approves the price.
+  - **Chat.** Suggested replies; the customer's answers are scripted.
+  - **Estimate builder.** Every line is editable, and parts and labour can be added. It
+    shows the subtotal, IVA 23%, what the customer pays, the 12% commission and what the
+    artisan receives.
+  - **Approved.** The address unlocks, with Copy and Open maps.
+  - **Driving, then on site.** An optional second estimate needs its own approval.
+  - **Close.** Photos, then a checklist that gates "Mark complete & charge".
+  - **Paid.**
+- **Between jobs** (`components/pro/ProTabs.tsx`):
+  - **Today:** the online switch on a dark header, the day's numbers, the next booking
+    and Friday's payout.
+  - **Schedule.**
+  - **Earnings:** "Lead fees €0" is a permanent tile.
+  - **Profile & standing.**
+- **Money** (`lib/pro.ts`) reproduces the design to the cent: €61.01, €53.69, a second
+  estimate of €19.56, and a €70.90 payout. The walkthrough job joins a seeded week, for
+  €412.40.
+- **Where it's linked:** For artisans → "Try the artisan app"; `link('artisanApp')` and
+  `/artisan-app` now land on `/pro`. It's noindex, since it's sample data. Every screen
+  carries a "Walkthrough · sample job · nothing is sent" ribbon.
+- **Housekeeping.** `check-prod.mjs` now cold-loads `/account`, `/pro` and a 20-day slot
+  URL, and checks that `robots.txt` keeps `/activity` and `/account` out (19 checks).
+  The build's size warning is the MapLibre worker, which is lazy and only loads on map
+  pages. It's expected; its wiring is not to be touched.
+- **Tests:** 150 Vitest (the design's money to the cent; the whole walkthrough from
+  offer to Earnings; passing on an offer) and 17 Playwright (axe on `/pro`).
+
+**Revision 1.9**, on branch `feat/date-picker` (#17), designs the book-ahead picker. The owner
 saw the browser's default calendar on "Plan it for later".
 
 - **`components/shared/SlotPicker.tsx`** is the day and window picker for the home card

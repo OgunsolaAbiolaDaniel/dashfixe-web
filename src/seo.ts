@@ -46,6 +46,8 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.login]: { title: 'seo.login.title', description: 'seo.home.desc', noindex: true },
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
   [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
+  // Sample data, like /artisan/*: shareable, not indexed.
+  [ROUTES.pro]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
 };
 
 function normalise(pathname: string): string {
