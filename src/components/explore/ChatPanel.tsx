@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Close, ImageIcon, Send } from '../icons';
+import { Check, ChevronRight, Close, ImageIcon, Send } from '../icons';
+import ArtisanProfileModal from './ArtisanProfileModal';
 import { useLang } from '../../i18n';
-import { artisanUrl, jobUrl } from '../../routes';
+import { jobUrl } from '../../routes';
 import { formatEuro, getJob } from '../../lib/jobs';
 import { useWallet } from '../../lib/wallet';
 import { estimateFor, type Estimate } from '../../lib/estimate';
@@ -63,6 +64,8 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
   const [draft, setDraft] = useState(() => (mode === 'quote' && thread.stage === 'new' ? need : ''));
   const [typing, setTyping] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileBtn = useRef<HTMLButtonElement>(null);
   const timers = useRef<number[]>([]);
   const threadEl = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -150,17 +153,27 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
       aria-label={t('chat.title', { name: first })}
       className="fixed inset-0 z-[90] flex flex-col bg-panel lg:absolute lg:inset-auto lg:bottom-6 lg:right-6 lg:max-h-[calc(100%-48px)] lg:w-[400px] lg:max-w-[calc(100%-48px)] lg:overflow-hidden lg:rounded-[24px] lg:border lg:border-line-soft lg:shadow-panel"
     >
-      {/* Identity */}
+      {/* Identity — tap it for the artisan's profile card, without leaving the chat */}
       <div className="flex items-center gap-[11px] border-b border-line-rule px-4 py-3.5">
-        <span className="grid h-10 w-10 flex-none place-items-center rounded-well bg-avatar text-[12.5px] font-extrabold text-brand">
-          {artisan.initials}
-        </span>
-        <span className="mr-auto min-w-0">
-          <Link to={artisanUrl(artisan.id)} className="block truncate text-[15.5px] font-bold text-ink hover:text-brand">
-            {artisan.name}
-          </Link>
-          <span className="mt-px block truncate text-xs font-semibold text-ink-40">{t('chat.sampleStatus')}</span>
-        </span>
+        <button
+          ref={profileBtn}
+          type="button"
+          onClick={() => setProfileOpen(true)}
+          aria-haspopup="dialog"
+          aria-label={t('chat.viewProfile', { name: first })}
+          className="-m-1.5 mr-auto flex min-w-0 flex-1 items-center gap-[11px] rounded-[14px] p-1.5 text-left transition hover:bg-page"
+        >
+          <span className="grid h-10 w-10 flex-none place-items-center rounded-well bg-avatar text-[12.5px] font-extrabold text-brand">
+            {artisan.initials}
+          </span>
+          <span className="min-w-0">
+            <span className="flex items-center gap-1 text-[15.5px] font-bold text-ink">
+              <span className="truncate">{artisan.name}</span>
+              <ChevronRight size={14} className="flex-none text-ink-40" />
+            </span>
+            <span className="mt-px block truncate text-xs font-semibold text-ink-40">{t('chat.sampleStatus')}</span>
+          </span>
+        </button>
         <button
           type="button"
           onClick={onClose}
@@ -170,6 +183,16 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
           <Close size={16} className="text-ink-60" />
         </button>
       </div>
+
+      {profileOpen && (
+        <ArtisanProfileModal
+          artisan={artisan}
+          onClose={() => {
+            setProfileOpen(false);
+            profileBtn.current?.focus();
+          }}
+        />
+      )}
 
       {/* Job context */}
       <div className="flex items-center gap-[9px] border-b border-line-rule bg-page px-4 py-2.5">

@@ -392,6 +392,22 @@ present an app. It also asked for the customer app to be promoted.
 2. Close and reopen it: the count is gone.
 3. Enter `PILOT10` on Account: the bell shows **1** new, "€10.00 Dashfixe credit added".
 
+### Revision 2.4 · The artisan's profile card in the chat ✅ (branch `feat/chat-profile`)
+
+The owner asked for a way, with the chat open, to see the artisan's profile as a card.
+
+- ✅ **The chat header's avatar and name open the profile card:** verified, rating, jobs,
+  distance, available now with the ETA, price, about, stats, languages and sample
+  reviews. "Full profile" and "Back to chat" are at the foot.
+- ✅ **A card on desktop, a bottom sheet on phones.** Escape or the backdrop closes it,
+  and focus returns to the chat.
+- ✅ **One set of profile pieces** for the card and `/artisan/:id`.
+
+**Owner test:**
+1. Open a chat with Tiago on `/explore`.
+2. Tap his name at the top of the chat: his profile card opens over the conversation.
+3. Tap **Back to chat**: the conversation is exactly where it was.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
