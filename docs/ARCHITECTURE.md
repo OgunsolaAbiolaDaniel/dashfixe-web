@@ -6,10 +6,12 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 1.8 — `/account`, the customer's own dashboard:
+**Last revised:** 2026-09-14 · Revision 1.9 — one designed slot picker
+(`shared/SlotPicker`) replaces the browser's date and time controls on the home and in
+`/explore`, and the book-ahead horizon is a real 30 days. (Revision 1.8 — `/account`, the customer's own dashboard:
 profile, stats, Dashfixe credit (a walkthrough wallet that comes off the next job),
 invite code, their artisans, saved places, preferences and their data. Activity is now
-just the jobs. (Revision 1.7 — smart search: the trade is recognised from
+just the jobs.) (Revision 1.7 — smart search: the trade is recognised from
 what people type, "Something else" is an assistant, location is asked for on arrival, and
 "Book for later" flows through the home's slot picker.) (Revision 1.6 — production
 readiness: a crash screen, a real 404, honest legal pages, the Dashfixe icons and
@@ -193,6 +195,14 @@ product, so nav links point at routes.
 - **Search state** (`src/search.ts`): `need, trade, address, lng/lat, when, artisan` —
   parsed from and serialised to the URL. The composer, trade tiles, nearby cards and the
   signed-in home all speak this one language; `/explore` only reads it.
+- **Book-ahead slots** (`search.ts` + `components/shared/SlotPicker.tsx`, rev 1.9): `day`
+  (0–29, today = 0) and `win` (one of six two-hour windows) ride in the URL.
+  - Same-day windows need an hour's notice (`windowOpen`). `normalizeSlot` makes sure
+    the slot `/explore` books is the one the picker shows; nothing is silently clamped.
+  - The picker is a month calendar (Monday first, quick picks for today, tomorrow and
+    Saturday) plus window chips grouped morning, afternoon and evening. It opens as a
+    popover on desktop and a bottom sheet on phones, in a portal, with arrow-key
+    navigation.
 - **Auth** (`src/auth.tsx`): server-backed. `requireAuth(next)` sends the visitor to
   `/login?next=`, and `/api/auth/me` returns the phone and first name.
   - **Pilot mode** (no `TWILIO_*`): the login page verifies the code the server handed

@@ -41,6 +41,35 @@ export const DEFAULT_ADDRESS = 'Rua da Cooperativa 14, Amora';
 /** The bookable two-hour windows, shared by the explore picker and the home card. */
 export const WINDOWS = ['08\u201310', '10\u201312', '12\u201314', '14\u201316', '16\u201318', '18\u201320'] as const;
 
+/** How far ahead a slot can be held \u2014 the "up to 30 days ahead" promise. Day 0 is today. */
+export const HORIZON_DAYS = 30;
+
+/** A same-day window needs this much notice, in hours, before it starts. */
+const NOTICE_H = 1;
+
+/** Can window `win` still be booked on day `day` (0 = today)? */
+export function windowOpen(day: number, win: number, now: Date = new Date()): boolean {
+  if (day > 0) return true;
+  const start = 8 + 2 * win;
+  return start >= now.getHours() + now.getMinutes() / 60 + NOTICE_H;
+}
+
+/** The first window still open on `day`, or -1 when the day is over. */
+export function firstOpenWindow(day: number, now: Date = new Date()): number {
+  return WINDOWS.findIndex((_, i) => windowOpen(day, i, now));
+}
+
+/**
+ * A slot that can actually be booked: inside the horizon, not a day that's over,
+ * not a window that has passed. What the picker shows is what gets booked.
+ */
+export function normalizeSlot(day: number, win: number, now: Date = new Date()): { day: number; win: number } {
+  let d = Math.min(Math.max(0, day), HORIZON_DAYS - 1);
+  if (firstOpenWindow(d, now) < 0) d += 1;
+  const w = Math.min(Math.max(0, win), WINDOWS.length - 1);
+  return { day: d, win: windowOpen(d, w, now) ? w : firstOpenWindow(d, now) };
+}
+
 /** '€60–75' → 60, for price ordering. */
 export function priceFrom(price: string): number {
   return Number.parseInt(price.replace(/[^\d]/g, ' ').trim().split(' ')[0] ?? '0', 10);
@@ -71,7 +100,7 @@ export function parseSearch(params: URLSearchParams): Search {
     address: params.get('address') ?? '',
     lngLat: parseLngLat(params),
     when: params.get('when') === 'later' ? 'later' : 'now',
-    day: intParam(params, 'day', 6),
+    day: intParam(params, 'day', HORIZON_DAYS - 1),
     win: intParam(params, 'win', 5),
     sort: params.get('sort') === 'price' ? 'price' : 'arrival',
     artisan: params.get('artisan') ?? '',

@@ -5,9 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/account`, stacked on
-`feat/smart-search` (#15, merge that first; everything through #14 is merged and
-verified in production) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/date-picker`, stacked on
+`feat/account` (#16, merge that first; everything through #15 is merged) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -30,7 +29,27 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   redirects under `cleanUrls`. The "production check" workflow ran by itself after the
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
-**Revision 1.8**, on branch `feat/account`, gives the customer their own page. The owner
+**Revision 1.9**, on branch `feat/date-picker`, designs the book-ahead picker. The owner
+saw the browser's default calendar on "Plan it for later".
+
+- **`components/shared/SlotPicker.tsx`** is the day and window picker for the home card
+  and for `/explore`'s later mode.
+  - The day is a month calendar: Monday first, today marked, and quick picks for today,
+    tomorrow and Saturday.
+  - The window is a set of chips grouped morning, afternoon and evening.
+  - It opens as a popover on desktop (it flips above the field when there isn't room)
+    and as a bottom sheet on phones. Arrow keys move through the days; Escape closes and
+    hands focus back.
+- **The 30-day promise is real now.** The old date input allowed 30 days but the URL
+  kept only 7, so a date past the first week was quietly booked as day 7.
+  - `day` now runs 0–29.
+  - Same-day windows need an hour's notice, and the ones that have passed are crossed
+    out.
+  - `normalizeSlot` keeps what `/explore` books identical to what the picker shows.
+- **Tests:** 144 Vitest (the picker's calendar, keys, horizon and passed windows; the
+  slot rules) and 16 Playwright.
+
+**Revision 1.8**, on branch `feat/account` (#16), gives the customer their own page. The owner
 said the profile didn't belong at the bottom of Activity.
 
 - **`/account`** (`pages/AccountPage.tsx`) is a dashboard. It holds:

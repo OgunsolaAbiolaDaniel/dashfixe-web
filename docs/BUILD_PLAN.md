@@ -328,6 +328,25 @@ balance and credits:
    Dashfixe credit −€10.00. Back on Account, the credit is €0.00 and the history says
    where it went.
 
+### Revision 1.9 · A designed slot picker ✅ (branch `feat/date-picker`, after #16)
+
+The owner said the "Plan it for later" calendar was the browser default:
+
+- ✅ **One `SlotPicker`** for the home card and `/explore`: a month calendar with quick
+  picks, and two-hour windows grouped by time of day. A popover on desktop, a bottom
+  sheet on phones.
+- ✅ **A real 30-day horizon.** Dates past the first week used to be clamped to day 7
+  silently.
+- ✅ **Same-day windows need an hour's notice.** Passed windows are crossed out, and a
+  day that's over can't be picked.
+
+**Owner test:**
+1. On `/`, scroll to "Plan it for later" and tap the date: a calendar opens. Pick a day
+   three weeks out, then tap Next: `/explore` shows that same day.
+2. Tap the time: morning, afternoon and evening windows. Pick 16–18.
+3. On a phone, both open as a sheet from the bottom.
+4. Late in the day, today is greyed out; earlier, today's passed windows are crossed out.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

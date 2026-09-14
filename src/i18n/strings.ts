@@ -613,6 +613,13 @@ export const en = {
   'activity.accountLink': 'Account, credit and saved places',
   'chat.credit': 'Your {credit} credit comes off: you pay {pay}.',
   'job.creditLine': 'Dashfixe credit',
+  'slot.prevMonth': 'Previous month',
+  'slot.nextMonth': 'Next month',
+  'slot.horizon': 'Hold a slot up to 30 days ahead.',
+  'slot.morning': 'Morning',
+  'slot.afternoon': 'Afternoon',
+  'slot.evening': 'Evening',
+  'slot.todayNote': 'Windows today need an hour\'s notice.',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -1196,6 +1203,13 @@ export const pt: Record<StringKey, string> = {
   'activity.accountLink': 'Conta, crédito e locais guardados',
   'chat.credit': 'O seu crédito de {credit} é descontado: paga {pay}.',
   'job.creditLine': 'Crédito Dashfixe',
+  'slot.prevMonth': 'Mês anterior',
+  'slot.nextMonth': 'Mês seguinte',
+  'slot.horizon': 'Reserve um horário até 30 dias antes.',
+  'slot.morning': 'Manhã',
+  'slot.afternoon': 'Tarde',
+  'slot.evening': 'Fim do dia',
+  'slot.todayNote': 'Hoje, as janelas precisam de uma hora de antecedência.',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

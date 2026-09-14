@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, ChevronDown, ClockSmall, Star, Verified } from '../icons';
+import { Camera, ClockSmall, Star, Verified } from '../icons';
 import AddressField from '../shared/AddressField';
 import type { Place } from '../../lib/geocode';
 import { artisanUrl } from '../../routes';
 import { TOTAL_ONLINE, availableCount, type Artisan, type Supply } from './artisans';
 import TradeField from '../shared/TradeField';
 import type { TradeSlug } from '../../routes';
-import { TRADES, WINDOWS, priceFrom, type Search, type When } from '../../search';
+import { TRADES, priceFrom, type Search, type When } from '../../search';
+import SlotPicker from '../shared/SlotPicker';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 
@@ -258,56 +259,18 @@ export default function SearchPanel({
 
 
 function LaterPicker({ day, win, onSlot }: { day: number; win: number; onSlot: (day: number, win: number) => void }) {
-  const { t, lang } = useLang();
-
-  const fmt = new Intl.DateTimeFormat(lang === 'PT' ? 'pt-PT' : 'en-GB', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-  const dayLabel = (offset: number) => {
-    if (offset === 0) return t('later.mode.today');
-    if (offset === 1) return t('later.mode.tomorrow');
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    return fmt.format(d);
-  };
-
-  const SELECT =
-    'h-11 w-full appearance-none rounded-input border border-line bg-page px-[13px] pr-9 text-[14px] font-semibold text-ink';
-
+  const { t } = useLang();
   return (
     <div className="mt-3 border-t border-line-rule pt-3.5">
       <div className="mb-1.5 text-[14px] font-bold text-ink">{t('later.mode.title')}</div>
       <p className="mb-3 text-[12.5px] font-medium leading-[1.5] text-ink-60">{t('later.mode.intro')}</p>
-      <div className="flex gap-2.5">
-        <label className="min-w-0 flex-1">
-          <span className="mb-1.5 block text-label text-ink-40">{t('later.mode.day')}</span>
-          <span className="relative block">
-            <select value={day} onChange={(e) => onSlot(Number(e.target.value), win)} className={SELECT}>
-              {Array.from({ length: 7 }, (_, i) => (
-                <option key={i} value={i}>
-                  {dayLabel(i)}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-40" />
-          </span>
-        </label>
-        <label className="min-w-0 flex-1">
-          <span className="mb-1.5 block text-label text-ink-40">{t('later.mode.window')}</span>
-          <span className="relative block">
-            <select value={win} onChange={(e) => onSlot(day, Number(e.target.value))} className={SELECT}>
-              {WINDOWS.map((w, i) => (
-                <option key={w} value={i}>
-                  {w}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-40" />
-          </span>
-        </label>
-      </div>
+      <SlotPicker
+        variant="compact"
+        labels={[t('later.mode.day'), t('later.mode.window')]}
+        day={day}
+        win={win}
+        onChange={onSlot}
+      />
     </div>
   );
 }
