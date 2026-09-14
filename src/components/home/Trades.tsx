@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Bolt, Plus, Roller, Saw, Spray, Wrench } from '../icons';
 import { exploreUrl } from '../../search';
+import { useAssistant } from '../assistant/AssistantProvider';
 import { useLang } from '../../i18n';
 
 const TRADES = [
@@ -9,11 +10,18 @@ const TRADES = [
   { Icon: Roller, slug: 'painting' },
   { Icon: Saw, slug: 'carpentry' },
   { Icon: Spray, slug: 'cleaning' },
-  { Icon: Plus, slug: 'other' },
 ] as const;
 
+const TILE = 'block rounded-[18px] bg-well p-[22px] text-left transition hover:bg-line hover:text-ink';
+
+/**
+ * "Pick a trade": five tiles straight into the search for that trade, and
+ * "Something else", which opens the Dashfixe assistant — describing the problem
+ * in your own words beats guessing a category.
+ */
 export default function Trades() {
   const { t } = useLang();
+  const { openAssistant } = useAssistant();
   return (
     <section id="trades" className="scroll-mt-[88px] bg-panel">
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
@@ -23,11 +31,7 @@ export default function Trades() {
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-3.5">
           {TRADES.map(({ Icon, slug }) => (
-            <Link
-              key={slug}
-              to={exploreUrl({ trade: slug })}
-              className="block rounded-[18px] bg-well p-[22px] text-left transition hover:bg-line hover:text-ink"
-            >
+            <Link key={slug} to={exploreUrl({ trade: slug })} className={TILE}>
               <span className="mb-[18px] grid h-11 w-11 place-items-center rounded-full bg-panel">
                 <Icon size={21} strokeWidth={1.6} className="text-brand" />
               </span>
@@ -37,6 +41,13 @@ export default function Trades() {
               <span className="mt-1 block text-sm font-semibold text-ink-60">{t(`trades.${slug}.hint` as const)}</span>
             </Link>
           ))}
+          <button type="button" onClick={() => openAssistant()} className={TILE}>
+            <span className="mb-[18px] grid h-11 w-11 place-items-center rounded-full bg-ink">
+              <Plus size={21} strokeWidth={1.6} className="text-white" />
+            </span>
+            <span className="block text-[16.5px] font-bold tracking-[-.015em] text-ink">{t('trades.other')}</span>
+            <span className="mt-1 block text-sm font-semibold text-ink-60">{t('trades.other.hint')}</span>
+          </button>
         </div>
       </div>
     </section>

@@ -18,10 +18,15 @@ type Props = {
    * `peek` is the home hero: no chrome, no interaction, just pins on real ground.
    */
   variant?: 'full' | 'peek';
+  /** Only this trade's artisans (a trade slug); empty shows everyone. */
+  trade?: string;
 };
 
 const CONTROL =
   'grid h-[42px] w-[42px] place-items-center rounded-well bg-panel shadow-[0_6px_18px_-6px_rgba(15,27,61,.3)] transition hover:bg-page';
+
+/** A stable empty list, so a trade filter does not re-run effects every render. */
+const NO_MARKERS: MapMarker[] = [];
 
 /**
  * The live map — designs/Dashfixe Web.dc.html, on real tiles via the shared map
@@ -32,7 +37,7 @@ const CONTROL =
  * the tiles cannot load (offline, blocked, no WebGL) the drawn city from
  * MapCanvas takes over, so the page never shows an empty grey box.
  */
-export default function LiveMap({ home = HOME, selectedId = '', onSelect, variant = 'full' }: Props) {
+export default function LiveMap({ home = HOME, selectedId = '', onSelect, variant = 'full', trade = '' }: Props) {
   const { t } = useLang();
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibre | null>(null);
@@ -40,7 +45,10 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const peek = variant === 'peek';
-  const { available } = getSupply(home);
+  // Every artisan has a marker on the map; only the chosen trade's get content
+  // (the rest stay empty, so they are invisible) — switching trade needs no rebuild.
+  const { available } = getSupply(home, trade);
+  const mapOnly = trade ? NO_MARKERS : MAP_ONLY;
 
   // One DOM node per marker, created once. MapLibre owns their position; React owns
   // their contents. Marker ids are the same whatever the home, only distances change.
@@ -116,22 +124,22 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
     };
   }, [nodes, peek]);
 
-  // A new address moves the pin and the radius and refits the view.
+  // A new address (or a new trade) moves the pin and the radius and refits the view.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     homeMarker.current?.setLngLat(home);
     (map.getSource('radius') as GeoJSONSource | undefined)?.setData(circlePolygon(home, SEARCH_RADIUS_KM));
-    fitAll(map, home, peek, 700);
-  }, [home, ready, peek]);
+    fitAll(map, home, peek, 700, trade);
+  }, [home, ready, peek, trade]);
 
   // Selecting a card glides the map so both the artisan and the address stay in view.
   useEffect(() => {
     const map = mapRef.current;
-    const artisan = available.find((a) => a.id === selectedId) ?? MAP_ONLY.find((m) => m.id === selectedId);
+    const artisan = available.find((a) => a.id === selectedId) ?? mapOnly.find((m) => m.id === selectedId);
     if (!map || !ready || !artisan || peek) return;
     map.easeTo({ center: midpoint(home, artisan.lngLat), duration: 650, essential: false });
-  }, [selectedId, ready, home, available, peek]);
+  }, [selectedId, ready, home, available, mapOnly, peek]);
 
   if (failed) {
     return peek ? <MapCanvas variant="peek" /> : <MapCanvas selectedId={selectedId} onSelect={onSelect ?? (() => {})} />;
@@ -198,7 +206,7 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
       ))}
 
       {/* Available but unselected — solid outline */}
-      {[...available, ...MAP_ONLY]
+      {[...available, ...mapOnly]
         .filter((m) => m.id !== selected?.id)
         .map((m) => (
           <Portal key={m.id} node={nodes.get(m.id)!}>
@@ -258,11 +266,11 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
   );
 }
 
-function fitAll(map: MapLibre, home: LngLat, peek: boolean, duration = 0) {
+function fitAll(map: MapLibre, home: LngLat, peek: boolean, duration = 0, trade = '') {
   const points: LngLat[] = [
     home,
-    ...getSupply(home).available.map((a) => a.lngLat),
-    ...MAP_ONLY.map((m) => m.lngLat),
+    ...getSupply(home, trade).available.map((a) => a.lngLat),
+    ...(trade ? [] : MAP_ONLY.map((m) => m.lngLat)),
     ...ON_JOB.map((m) => m.lngLat),
   ];
   map.fitBounds(bounds(points), {

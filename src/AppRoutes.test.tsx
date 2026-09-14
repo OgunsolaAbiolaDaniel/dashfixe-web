@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
@@ -311,6 +311,72 @@ describe('the chat turns a search into a job (the commit point)', () => {
     await screen.findByText('Estimate', {}, { timeout: 4000 });
     await user.click(screen.getByRole('button', { name: 'Are parts included?' }));
     expect(await screen.findByText(/the parts line covers them/, {}, { timeout: 3000 })).toBeInTheDocument();
+  });
+});
+
+describe('the Dashfixe assistant ("Something else")', () => {
+  it('works out the trade from a description and opens the search with it filled in', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(screen.getByRole('button', { name: /Something else/ }));
+    const sheet = screen.getByRole('dialog', { name: 'Dashfixe assistant' });
+    await user.type(within(sheet).getByLabelText('Describe the problem…'), 'the toilet will not stop running');
+    await user.click(within(sheet).getByRole('button', { name: 'Send' }));
+    expect(await within(sheet).findByText(/sounds like a plumbing job/, {}, { timeout: 3000 })).toBeInTheDocument();
+
+    await user.click(await within(sheet).findByRole('button', { name: /See plumbers near me/ }));
+    expect(screen.getByRole('heading', { name: 'Who is free right now' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Trade: Plumbing/ })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('the toilet will not stop running')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('asks which trade when the words do not settle it', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    await user.click(screen.getByRole('button', { name: /Something else/ }));
+    const sheet = screen.getByRole('dialog', { name: 'Dashfixe assistant' });
+    await user.type(within(sheet).getByLabelText('Describe the problem…'), 'something is broken');
+    await user.click(within(sheet).getByRole('button', { name: 'Send' }));
+    await user.click(await within(sheet).findByRole('button', { name: 'Electrical' }, { timeout: 3000 }));
+    expect(await within(sheet).findByText(/Got it: electrical/, {}, { timeout: 3000 })).toBeInTheDocument();
+    await user.click(await within(sheet).findByRole('button', { name: /See electricians near me/ }));
+    expect(screen.getByRole('button', { name: /Trade: Electrical/ })).toBeInTheDocument();
+  });
+});
+
+describe('location on arrival (LocationPrompt)', () => {
+  const inSeixal = () =>
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({ coords: { longitude: -9.1012, latitude: 38.6403 } } as GeolocationPosition),
+      },
+    });
+
+  it('asks once on a map page, and the position becomes the saved place', async () => {
+    localStorage.removeItem('dfx.loc');
+    inSeixal();
+    const user = userEvent.setup();
+    renderAt('/');
+    const card = await screen.findByRole('dialog', { name: "See who's closest to you" });
+    await user.click(within(card).getByRole('button', { name: 'Share my location' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/Showing artisans near/);
+    expect(JSON.parse(localStorage.getItem('dfx.place')!).lngLat).toEqual([-9.1012, 38.6403]);
+    expect(localStorage.getItem('dfx.loc')).toBe('asked');
+  });
+
+  it('remembers "Not now" and never nags on pages without a map', async () => {
+    localStorage.removeItem('dfx.loc');
+    const user = userEvent.setup();
+    renderAt('/help');
+    expect(screen.queryByRole('dialog', { name: "See who's closest to you" })).not.toBeInTheDocument();
+    renderAt('/');
+    const card = await screen.findByRole('dialog', { name: "See who's closest to you" });
+    await user.click(within(card).getAllByRole('button', { name: 'Not now' })[0]!);
+    expect(screen.queryByRole('dialog', { name: "See who's closest to you" })).not.toBeInTheDocument();
+    expect(localStorage.getItem('dfx.loc')).toBe('asked');
   });
 });
 

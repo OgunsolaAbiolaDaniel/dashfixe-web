@@ -13,6 +13,7 @@ import type { Place } from '../lib/geocode';
 import { ROUTES } from '../routes';
 import type { LngLat } from '../lib/geo';
 import { setPlace as savePlace, usePlace } from '../lib/place';
+import { classifyNeed } from '../lib/classify';
 import { useAuth } from '../auth';
 
 /**
@@ -39,17 +40,20 @@ export default function ExplorePage() {
   // A search carried in the URL wins (shared links open where they were made);
   // otherwise the customer's saved place (lib/place) — never a hard-coded default.
   const place = usePlace();
-  const lng = search.lngLat?.[0];
-  const lat = search.lngLat?.[1];
+  // Keyed on a primitive string, so the memo holds for the React Compiler too.
+  const homeKey = search.lngLat ? `${search.lngLat[0]},${search.lngLat[1]}` : '';
   const home = useMemo<LngLat>(
-    () => (lng !== undefined && lat !== undefined ? [lng, lat] : place.lngLat),
-    [lng, lat, place.lngLat],
+    () => (homeKey ? (homeKey.split(',').map(Number) as LngLat) : place.lngLat),
+    [homeKey, place.lngLat],
   );
   const addressLabel = search.address || (search.lngLat ? '' : place.label);
-  const supply = getSupply(home);
+  // Only the chosen trade's artisans (from the chip, the picker, or the words typed).
+  const supply = getSupply(home, search.trade);
 
-  const arriving = supply.available.find((a) => a.id === search.artisan)?.id ?? supply.available[0]!.id;
+  const arriving = supply.available.find((a) => a.id === search.artisan)?.id ?? supply.available[0]?.id ?? '';
   const [selectedId, setSelectedId] = useState(arriving);
+  // Changing trade can filter the selected artisan out: fall back to the nearest.
+  const shown = supply.available.some((a) => a.id === selectedId) ? selectedId : (supply.available[0]?.id ?? '');
   const [chatWith, setChatWith] = useState<string | null>(null);
 
   const select = (id: string) => {
@@ -89,10 +93,26 @@ export default function ExplorePage() {
     setParams(next, { replace: true });
   };
 
+  /**
+   * A changed need also recognises its trade (lib/classify) — the chip under the
+   * field shows the word it matched on. An unchanged need never overrides a trade
+   * the customer picked by hand.
+   */
   const setNeed = (need: string) => {
+    const text = need.trim();
+    if (text === search.need) return;
     const next = new URLSearchParams(params);
-    if (need.trim()) next.set('need', need.trim());
+    if (text) next.set('need', text);
     else next.delete('need');
+    const match = classifyNeed(text);
+    if (match) next.set('trade', match.trade);
+    setParams(next, { replace: true });
+  };
+
+  const setTrade = (trade: string) => {
+    const next = new URLSearchParams(params);
+    if (trade) next.set('trade', trade);
+    else next.delete('trade');
     setParams(next, { replace: true });
   };
 
@@ -172,14 +192,15 @@ export default function ExplorePage() {
           onSlot={setSlot}
           onSort={toggleSort}
           onNeed={setNeed}
+          onTrade={setTrade}
           onPlace={choosePlace}
           addressLabel={addressLabel}
-          selectedId={selectedId}
+          selectedId={shown}
           onSelect={select}
           onChat={openChat}
         />
         <div className="relative min-h-[520px] min-w-0 lg:min-h-0">
-          <LiveMap home={home} selectedId={selectedId} onSelect={select} />
+          <LiveMap home={home} selectedId={shown} onSelect={select} trade={search.trade} />
           {chatArtisan && (
             <ChatPanel
               key={chatArtisan.id}

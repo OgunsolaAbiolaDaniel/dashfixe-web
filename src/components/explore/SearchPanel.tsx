@@ -4,7 +4,9 @@ import { Camera, ChevronDown, ClockSmall, Star, Verified } from '../icons';
 import AddressField from '../shared/AddressField';
 import type { Place } from '../../lib/geocode';
 import { artisanUrl } from '../../routes';
-import { AVAILABLE_COUNT, TOTAL_ONLINE, type Artisan, type Supply } from './artisans';
+import { TOTAL_ONLINE, availableCount, type Artisan, type Supply } from './artisans';
+import TradeField from '../shared/TradeField';
+import type { TradeSlug } from '../../routes';
 import { TRADES, WINDOWS, priceFrom, type Search, type When } from '../../search';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
@@ -18,6 +20,10 @@ type Props = {
   onSlot: (day: number, win: number) => void;
   onSort: () => void;
   onNeed: (need: string) => void;
+  /** Choose the trade (the TradePicker sheet); '' means any trade. */
+  onTrade: (trade: TradeSlug | '') => void;
+  /** Open the assistant, for when the trade isn't obvious. */
+  onAssistant?: () => void;
   onPlace: (place: Place) => void;
   /** The address the search is worked out from (URL, else the saved place). */
   addressLabel: string;
@@ -124,6 +130,8 @@ export default function SearchPanel({
   onSlot,
   onSort,
   onNeed,
+  onTrade,
+  onAssistant,
   onPlace,
   addressLabel,
   selectedId,
@@ -151,7 +159,7 @@ export default function SearchPanel({
         <h1 className="mb-2 max-w-[7em] text-[30px] font-extrabold leading-[1.06] tracking-[-.035em] text-ink [text-wrap:balance]">
           {t('search.title')}
         </h1>
-        <p className="text-[14.5px] leading-[1.5] text-ink-60">{t('search.intro')}</p>
+        <p className="text-[14.5px] leading-[1.5] text-ink-60">{t('search.intro', { n: availableCount(search.trade) })}</p>
       </div>
 
       <div className="flex gap-px overflow-hidden rounded-[20px] border border-[#e6ebf3] bg-[#e6ebf3]">
@@ -190,6 +198,7 @@ export default function SearchPanel({
             className="min-w-0 flex-1 border-0 bg-transparent text-[14.5px] font-bold text-ink outline-offset-8 placeholder:text-ink-40"
           />
         </form>
+        <TradeField className="mb-3" trade={search.trade} need={search.need} onTrade={onTrade} onAssistant={onAssistant} />
         <AddressField
           className="mb-3"
           variant="input"
@@ -218,7 +227,7 @@ export default function SearchPanel({
 
       <div className="-mb-2 flex items-baseline">
         <span className="mr-auto text-label text-ink-40">
-          {t('search.available', { n: AVAILABLE_COUNT, total: TOTAL_ONLINE })}
+          {t('search.available', { n: availableCount(search.trade), total: TOTAL_ONLINE })}
         </span>
         <button type="button" onClick={onSort} className="text-[13px] font-bold text-brand">
           {search.sort === 'price' ? t('search.sortPrice') : t('search.sortArrival')}

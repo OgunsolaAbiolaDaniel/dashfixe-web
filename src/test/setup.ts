@@ -1,7 +1,11 @@
 import '@testing-library/jest-dom/vitest';
-import { afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { resetChatStore } from '../components/explore/chatStore';
+
+// The location card (LocationPrompt) would float over every map page in every
+// test; mark it answered. The tests about it clear this first.
+beforeEach(() => localStorage.setItem('dfx.loc', 'asked'));
 
 afterEach(() => {
   cleanup();

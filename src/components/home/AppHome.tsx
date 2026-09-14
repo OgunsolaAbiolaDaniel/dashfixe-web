@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AppBar from '../chrome/AppBar';
 import { LiveMap } from '../map/lazy';
-import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Spray, Wrench } from '../icons';
+import { ArrowRightShort, Bolt, ChevronDown, MapPin, Saw, Sparkle, Spray, Wrench } from '../icons';
+import { useAssistant } from '../assistant/AssistantProvider';
 import PhotoPick from '../shared/PhotoPick';
 import { useLang } from '../../i18n';
 import { exploreUrl, type When } from '../../search';
@@ -11,6 +12,7 @@ import AddressField from '../shared/AddressField';
 import { ROUTES, jobUrl } from '../../routes';
 import { activeJob, formatDate, formatEuro, useJobs } from '../../lib/jobs';
 import { useAuth } from '../../auth';
+import { classifyNeed } from '../../lib/classify';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -38,6 +40,7 @@ export default function AppHome() {
   const { t } = useLang();
   const navigate = useNavigate();
   const { name } = useAuth();
+  const { openAssistant } = useAssistant();
   const { lang } = useLang();
   const live = activeJob(useJobs());
   const [when, setWhen] = useState<When>('now');
@@ -55,7 +58,8 @@ export default function AppHome() {
   const [draft, setDraft] = useState('');
   const to = (extra: Parameters<typeof exploreUrl>[0]) =>
     exploreUrl({ address: place.label, lngLat: place.lngLat, ...extra });
-  const find = () => navigate(to({ need, when }));
+  // The trade is recognised from the words (lib/classify); /explore shows it as a chip.
+  const find = () => navigate(to({ need, when, trade: classifyNeed(need)?.trade ?? '' }));
 
   return (
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
@@ -250,6 +254,16 @@ export default function AppHome() {
                   <span className="truncate text-[13.5px] font-bold text-ink">{t(`trades.${slug}` as const)}</span>
                 </Link>
               ))}
+              {/* Not one of those? Describe it to the assistant. */}
+              <button
+                type="button"
+                onClick={() => openAssistant(need)}
+                className="col-span-2 flex items-center gap-2.5 rounded-input border border-dashed border-line bg-panel px-3.5 py-3 text-left transition hover:border-brand"
+              >
+                <Sparkle size={17} className="flex-none text-brand" />
+                <span className="truncate text-[13.5px] font-bold text-ink">{t('trades.other')}</span>
+                <span className="ml-auto truncate text-[12.5px] font-semibold text-ink-40">{t('trades.other.hint')}</span>
+              </button>
             </div>
             <Link
               to={ROUTES.explore}

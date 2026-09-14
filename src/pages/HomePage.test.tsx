@@ -55,6 +55,8 @@ describe('HomePage', () => {
 
     const where = await screen.findByTestId('where');
     expect(where).toHaveTextContent('need=leaking+tap');
+    // "tap" was recognised as plumbing on the way (lib/classify).
+    expect(where).toHaveTextContent('trade=plumbing');
     expect(where).toHaveTextContent('lng=-9.10120&lat=38.64030');
   });
 
@@ -113,6 +115,31 @@ describe('HomePage', () => {
     expect(screen.getByText(`Plumbing · ${tiago.km} km`)).toBeInTheDocument();
     expect(screen.getAllByText(`Available · ${tiago.eta} min away`).length).toBeGreaterThan(0);
     expect(screen.getByText('Sample data')).toBeInTheDocument();
+  });
+
+  it('takes "Book for later" to the slot picker, which carries the need, trade and address', async () => {
+    const scroll = vi.spyOn(Element.prototype, 'scrollIntoView');
+    const user = userEvent.setup();
+    renderHome();
+    await user.type(screen.getByLabelText('What needs fixing'), 'leaking tap');
+    await user.click(screen.getByRole('button', { name: 'Choose when' }));
+
+    expect(scroll).toHaveBeenCalled();
+    expect(screen.getByText('For: leaking tap · Plumbing')).toBeInTheDocument();
+    const next = screen.getByRole('link', { name: 'Next' }).getAttribute('href')!;
+    expect(next).toContain('when=later');
+    expect(next).toContain('need=leaking+tap');
+    expect(next).toContain('trade=plumbing');
+    expect(next).toContain('address=Rua+da+Cooperativa+14');
+    scroll.mockRestore();
+  });
+
+  it('shows the saved area and "Change area" jumps to the address field', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    expect(screen.getByText('Amora, PT')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Change area' }));
+    expect(screen.getByRole('combobox', { name: 'Your address' })).toHaveFocus();
   });
 
   it('re-works every distance and ETA when the customer picks an address', async () => {
