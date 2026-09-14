@@ -1,0 +1,25 @@
+# After every successful PRODUCTION deploy, check the real site (not a local
+# server): cold page loads through Vercel's routing, static assets, the API login,
+# and that AUTH_SECRET is set. Local CI (check.yml) cannot see any of that —
+# see scripts/check-prod.mjs for the incident that made this necessary.
+#
+# Vercel reports deployments to GitHub, which fires `deployment_status`. The
+# production alias is used (per-deployment URLs sit behind Vercel's login). Set
+# the repository variable PROD_URL once a custom domain exists.
+name: production check
+
+on:
+  deployment_status:
+
+jobs:
+  prod:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Give the alias a moment to point at the new deployment.
+      - run: sleep 20
+      - run: node scripts/check-prod.mjs "${{ vars.PROD_URL || 'https://dashfixe-web.vercel.app' }}"
