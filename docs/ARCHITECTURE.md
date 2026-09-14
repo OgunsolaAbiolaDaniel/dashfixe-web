@@ -64,6 +64,12 @@ chrome.
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
 
+**A third world is planned: Dashfixe Pro** (BUILD_PLAN → "Dashfixe Pro"). Artisans get
+their own marketing, application, login and dashboard under `/pro/*`, with a `pro`
+variant of the one Header. It's the way Uber separates uber.com/drive and
+drivers.uber.com from the rider site. Until it's built, `/for-artisans` and the `/pro`
+walkthrough (rev 2.0) are the artisan side.
+
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
 and the panel carries the composer, the active job and the rebook shortcuts. It is not a

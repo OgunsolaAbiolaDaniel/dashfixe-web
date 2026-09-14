@@ -383,6 +383,45 @@ The owner agreed to build the artisan side next: Uber's driver app, for tradespe
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
+## Dashfixe Pro · the artisan world ⬜ (planned, owner-approved name)
+
+The owner wants artisans to have a world of their own, the way Uber keeps drivers apart:
+uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
+own navigation, look and sign-in, never mixed with the rider experience. Agreed on
+2026-09-14: the name is **Dashfixe Pro**, and it's planned only — the owner starts it.
+Build it on top of #18 (the `/pro` walkthrough), which becomes the dashboard's core.
+
+**The map (Uber → Dashfixe Pro):**
+
+| Uber | Dashfixe Pro | What it is |
+|---|---|---|
+| uber.com/drive | `/pro` | Artisan-only marketing: earnings, how it works, vetting, "no lead fees", FAQs. Own header and footer in the design's darker chrome. `/for-artisans` redirects here. |
+| Driver sign-up | `/pro/apply` | A multi-step application (trade, area, experience, documents, availability), then an application-status page. Replaces the short form. |
+| Driver login | `/pro/login` | Phone sign-in on the same auth, with the pilot bypass until SMS is funded. |
+| drivers.uber.com + Driver app | `/pro/app` | The artisan dashboard: Today, jobs, schedule, earnings, profile and documents. It grows from the #18 walkthrough into a real desktop layout, not only a phone frame. |
+| Driver help | `/pro/help` | Payouts, commission, cancellations, documents. |
+
+**Decisions already made:**
+- **A path, not a subdomain, for now.** There's no domain yet. `/pro` works today and can
+  later be served at `pro.<domain>` with a Vercel rewrite, with no rebuild.
+- **Worlds don't share a menu.** The customer site's "Become an artisan" goes to `/pro`.
+  On `/pro`, a small "Need a repair? Go to Dashfixe" link goes back.
+- **One account, two roles.** One Dashfixe account can be a customer and an artisan,
+  like one Uber account can ride and drive. The artisan side adds an artisan profile
+  with an application status (applied → in review → approved).
+- **Still one `Header` component.** It gets a `pro` surface variant (darker chrome, Pro
+  nav), so the "one header" rule holds.
+
+**Delivery, one PR each:**
+1. ⬜ **Pro shell and landing.** The `pro` header and footer, and `/pro` with the
+   For artisans content reworked. `/for-artisans` → `/pro`. The walkthrough moves to
+   `/pro/try`.
+2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
+   then the status page.
+3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/app`. Sample data stays
+   labelled until Phase 6 supplies real jobs.
+4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
+
 ## Phase 6 · Live operations ⬜
 
 The parts that need real supply and real infrastructure, in honesty order:

@@ -29,6 +29,11 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   redirects under `cleanUrls`. The "production check" workflow ran by itself after the
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
+**Next (planned; the owner will say when to start): Dashfixe Pro.** A separate artisan
+world, like Uber's driver site, with its own `/pro` landing, `/pro/apply`, `/pro/login`,
+`/pro/app` dashboard and `/pro/help`. There are four PRs, in the order in BUILD_PLAN →
+"Dashfixe Pro". The name is agreed. Build it on top of #18.
+
 **Revision 2.0**, on branch `feat/artisan-app`, builds the other half of the marketplace:
 the artisan app, as a public walkthrough at `/pro`. It follows the 12 screens of
 `designs/Dashfixe Artisan App.dc.html`.
