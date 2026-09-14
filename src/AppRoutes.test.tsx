@@ -345,6 +345,41 @@ describe('the Dashfixe assistant ("Something else")', () => {
   });
 });
 
+describe('location on arrival (LocationPrompt)', () => {
+  const inSeixal = () =>
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: {
+        getCurrentPosition: (ok: PositionCallback) =>
+          ok({ coords: { longitude: -9.1012, latitude: 38.6403 } } as GeolocationPosition),
+      },
+    });
+
+  it('asks once on a map page, and the position becomes the saved place', async () => {
+    localStorage.removeItem('dfx.loc');
+    inSeixal();
+    const user = userEvent.setup();
+    renderAt('/');
+    const card = await screen.findByRole('dialog', { name: "See who's closest to you" });
+    await user.click(within(card).getByRole('button', { name: 'Share my location' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/Showing artisans near/);
+    expect(JSON.parse(localStorage.getItem('dfx.place')!).lngLat).toEqual([-9.1012, 38.6403]);
+    expect(localStorage.getItem('dfx.loc')).toBe('asked');
+  });
+
+  it('remembers "Not now" and never nags on pages without a map', async () => {
+    localStorage.removeItem('dfx.loc');
+    const user = userEvent.setup();
+    renderAt('/help');
+    expect(screen.queryByRole('dialog', { name: "See who's closest to you" })).not.toBeInTheDocument();
+    renderAt('/');
+    const card = await screen.findByRole('dialog', { name: "See who's closest to you" });
+    await user.click(within(card).getAllByRole('button', { name: 'Not now' })[0]!);
+    expect(screen.queryByRole('dialog', { name: "See who's closest to you" })).not.toBeInTheDocument();
+    expect(localStorage.getItem('dfx.loc')).toBe('asked');
+  });
+});
+
 describe('the waitlist forms hit the real API', () => {
   it('joins the waitlist and collapses to the success state', async () => {
     const user = userEvent.setup();

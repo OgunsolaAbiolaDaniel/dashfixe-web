@@ -6,8 +6,11 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 1.6 — production readiness: a crash screen, a real
-404, honest legal pages, the Dashfixe icons and manifest, and WCAG 2.1 AA enforced in CI.
+**Last revised:** 2026-09-14 · Revision 1.7 — smart search: the trade is recognised from
+what people type, "Something else" is an assistant, location is asked for on arrival, and
+"Book for later" flows through the home's slot picker. (Revision 1.6 — production
+readiness: a crash screen, a real 404, honest legal pages, the Dashfixe icons and
+manifest, and WCAG 2.1 AA enforced in CI.)
 (Revision 1.5 — product polish: one header, one-tap pilot login, one shared place, and
 chat that turns a search into a job.)
 
@@ -201,6 +204,24 @@ product, so nav links point at routes.
 - **Chat** (`components/explore/chatStore.ts`): one thread per artisan that follows the
   customer from `/explore` to the job. Replies are scripted and labelled as such, until
   the Phase 6 chat backend.
+- **Trade recognition** (`src/lib/classify.ts`, rev 1.7): `classifyNeed(text)` maps
+  English and Portuguese keywords to a trade. It is accent- and case-insensitive, matches
+  whole words, and supports PT stems.
+  - The chip shows the matched word, and `TradePicker` overrides it.
+  - The trade lives in the URL (`trade=`). `getSupply(home, trade)` filters the list, the
+    markers and the fit-to-view.
+  - An AI classifier can replace `classifyNeed` behind the same signature.
+- **The assistant** (`components/assistant/`, rev 1.7): one `AssistantProvider` above
+  the routes, opened from "Something else", the trade picker's "Not sure?" and the
+  signed-in quick tiles.
+  - It runs the same `classifyNeed`, asks with quick picks when unsure, and hands off to
+    `/explore` with the need, the trade and the place.
+  - Labelled automatic; it never poses as a person.
+- **Location on arrival** (`components/shared/LocationPrompt.tsx`, rev 1.7): on `/` and
+  `/explore`, asked once per browser (`dfx.loc`).
+  - The browser permission prompt only follows a tap. Permission that was already granted
+    is used silently, and a denial never shows the card.
+  - The position becomes the saved place when it's inside the pilot area.
 - **Language** (`src/i18n/`): flat key dictionaries EN/PT with a parity test (keys and
   `{placeholders}` must match). `Rich` renders translated sentences containing links.
   Persisted per browser, mirrored to `<html lang>`.

@@ -25,7 +25,7 @@ export const en = {
   'nav.activity': 'Activity',
 
   // Hero
-  'hero.area': 'Amora, PT',
+  'hero.area': '{area}, PT',
   'hero.changeArea': 'Change area',
   'hero.title': 'Somebody good, close by',
   'hero.fixNow': 'Fix it now',
@@ -561,6 +561,13 @@ export const en = {
   'assist.near': 'Searching near {place}',
   'assist.close': 'Close the assistant',
   'assist.typing': 'The assistant is typing',
+  'loc.title': 'See who\'s closest to you',
+  'loc.body': 'Share your location once and the map, the pins and every arrival time start from where you are. It stays on this device.',
+  'loc.share': 'Share my location',
+  'loc.later': 'Not now',
+  'loc.done': 'Showing artisans near {place}',
+  'hero.areaHere': 'Near you',
+  'later.for': 'For: {need}',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -581,7 +588,7 @@ export const pt: Record<StringKey, string> = {
   'nav.language': 'Idioma',
   'nav.activity': 'Atividade',
 
-  'hero.area': 'Amora, PT',
+  'hero.area': '{area}, PT',
   'hero.changeArea': 'Mudar de zona',
   'hero.title': 'Alguém bom, aqui perto',
   'hero.fixNow': 'Reparar agora',
@@ -1092,6 +1099,13 @@ export const pt: Record<StringKey, string> = {
   'assist.near': 'A procurar perto de {place}',
   'assist.close': 'Fechar o assistente',
   'assist.typing': 'O assistente está a escrever',
+  'loc.title': 'Veja quem está mais perto de si',
+  'loc.body': 'Partilhe a sua localização uma vez e o mapa, os profissionais e os tempos de chegada partem de onde está. Fica neste dispositivo.',
+  'loc.share': 'Partilhar localização',
+  'loc.later': 'Agora não',
+  'loc.done': 'A mostrar profissionais perto de {place}',
+  'hero.areaHere': 'Perto de si',
+  'later.for': 'Para: {need}',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

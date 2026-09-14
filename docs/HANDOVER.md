@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `fix/vercel-spa-fallback` (PR to `main`;
-everything through #13 is merged) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/smart-search` (PR to `main`;
+everything through #14 is merged and verified in production) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -25,15 +25,30 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
 - ✅ **Sitemap:** 14 pages, with the waitlist parked.
 - ✅ **`AUTH_SECRET` is set** (the owner did this on 2026-09-14). A token signed with
   the public fallback key is now rejected, and real logins still work.
-- ⚠️ **Cold loads of non-prerendered pages 404 on Vercel** (`/login`, `/activity`,
-  `/job/*`, `/artisan/*`, the 404 page); clicks inside the app work. The cause is
-  `cleanUrls` combined with a rewrite to `/index.html`. It's fixed on
-  `fix/vercel-spa-fallback` (the rewrite now targets `/`), and `scripts/check-prod.mjs`
-  plus `.github/workflows/prod-check.yml` now verify the real site after every production
-  deploy. Baseline before the fix: 11/16.
+- ✅ **Every page loads cold** (#14). The SPA rewrite targets `/`, because `/index.html`
+  redirects under `cleanUrls`. The "production check" workflow ran by itself after the
+  deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
-**Revision 1.6**, on branch `feat/production-ready`, gets the site ready for real
-visitors, with no money or accounts needed:
+**Revision 1.7**, on branch `feat/smart-search`, is the owner's smart-search requests:
+
+- **Trade recognition.** `lib/classify.ts` matches English and Portuguese keywords to a
+  trade: tap and torneira go to plumbing, socket and disjuntor to electrical, and so on.
+  The chip shows the word it matched on, and `TradePicker` (a sheet with icon tiles)
+  changes it. Every trade now has sample artisans, and the list and the map filter by
+  trade.
+- **The Dashfixe assistant** (`components/assistant/`). "Something else" opens a
+  conversation that works out the trade from the customer's own words. When it can't tell,
+  it asks with quick picks. It then opens `/explore` with the need, the trade and the
+  address filled in. It is labelled as automatic.
+- **Location on arrival** (`LocationPrompt`). Map pages show a card that asks once for
+  the customer's position. The browser permission prompt only follows a tap. The position
+  becomes the saved place; outside the pilot area the search stays at the pilot address.
+  "Change area" focuses the address field.
+- **Book for later on the home.** It scrolls to "Plan it for later", which carries the
+  need, the trade and the address into the booking.
+
+**Revision 1.6** (#13) gets the site ready for real visitors, with no money or accounts
+needed:
 
 - **A crash safety net.** `ErrorBoundary` wraps every route: a crash shows a reload
   screen instead of a white page, and navigating away recovers.

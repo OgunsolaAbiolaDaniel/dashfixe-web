@@ -12,6 +12,8 @@ type Props = {
   /** Visual variant: the hero's soft well, or a bordered product input. */
   variant?: 'well' | 'input';
   className?: string;
+  /** An id for the input, so something else ("Change area") can focus it. */
+  inputId?: string;
 };
 
 const DEBOUNCE_MS = 350;
@@ -22,7 +24,7 @@ const DEBOUNCE_MS = 350;
  * Suggestions come from lib/geocode (Nominatim, bounded to the pilot area, with
  * an offline fallback). Keyboard: arrows move, Enter picks, Escape closes.
  */
-export default function AddressField({ value, onChange, onPlace, variant = 'well', className = '' }: Props) {
+export default function AddressField({ value, onChange, onPlace, variant = 'well', className = '', inputId }: Props) {
   const { t } = useLang();
   const listId = useId();
   const [places, setPlaces] = useState<Place[]>([]);
@@ -109,6 +111,7 @@ export default function AddressField({ value, onChange, onPlace, variant = 'well
       <div className={shell}>
         <MapPin size={19} className={variant === 'well' ? 'flex-none text-ink' : 'flex-none text-brand'} />
         <input
+          id={inputId}
           type="text"
           role="combobox"
           aria-expanded={showSuggestions}

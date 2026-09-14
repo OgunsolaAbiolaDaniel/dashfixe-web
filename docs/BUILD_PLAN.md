@@ -253,7 +253,7 @@ that just works without paid SMS:
 3. On `/explore`, chat with Tiago, send, then Approve €63.00 → Confirm → Track Tiago.
 4. On the job, choose "Walkthrough: finish this job", then rate it. It shows in Activity.
 
-### Revision 1.6 · Production readiness ✅ (branch `feat/production-ready`, stacked on #12)
+### Revision 1.6 · Production readiness ✅ (merged, #13; the cold-load routing fix #14)
 
 The site is complete; this pass makes it safe for real visitors. It needs no money or
 accounts:
@@ -275,6 +275,31 @@ accounts:
 2. The browser tab shows the Dashfixe mark.
 3. On a phone, open the site and choose "Add to Home Screen"; the Dashfixe icon appears.
 4. Read `/cookies`: it names the two cookies and what the browser keeps.
+
+### Revision 1.7 · Smart search ✅ (branch `feat/smart-search`)
+
+The owner asked for location on arrival, trade recognition, an assistant for "Something
+else", and Book for later through the home's slot picker:
+
+- ✅ **The trade is recognised from what's typed** (`lib/classify.ts`, EN and PT). The
+  chip shows the matched word, and the `TradePicker` sheet changes it. Every trade has
+  sample artisans, and the list and the map filter by trade.
+- ✅ **"Something else" opens the Dashfixe assistant.** The customer describes the
+  problem, it works out the trade (or asks), and it opens `/explore` filled in.
+- ✅ **Location is asked for on arrival** (map pages, once, only after a tap). It drives
+  every map and ETA, and "Change area" focuses the address field.
+- ✅ **"Book for later" on the home** scrolls to "Plan it for later", and **Next**
+  carries the need, the trade and the address.
+
+**Owner test:**
+1. Open `/` in a private window: the location card appears. Share, and "Around <your
+   street>" updates.
+2. Type "kitchen tap is leaking": the chip says Plumbing, matched from "tap". Tap it and
+   pick Electrical.
+3. Tap "Something else", then type "the socket sparks": it suggests electricians, and
+   "See electricians near me" opens the search filled in.
+4. Switch the hero to "Book for later": it scrolls to the calendar, and Next keeps your
+   words.
 
 ### Still open in Phase 5 (operator steps, no code)
 

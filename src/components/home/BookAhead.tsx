@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ChevronDown, Clock, Close, ReceiptSlim } from '../icons';
-import { link } from '../../routes';
+import { isTradeSlug, link } from '../../routes';
+import { usePlace } from '../../lib/place';
 import { WINDOWS, exploreUrl } from '../../search';
 import { useLang } from '../../i18n';
 
@@ -23,8 +24,11 @@ const iso = (d: Date) => d.toISOString().slice(0, 10);
  * into /explore?when=later with the slot in the URL (ARCHITECTURE §6: URL as
  * state). Booking beyond the 7-day sample horizon clamps to the last day.
  */
-export default function BookAhead() {
+export default function BookAhead({ need = '', trade = '' }: { need?: string; trade?: string }) {
   const { t } = useLang();
+  // The saved place (lib/place) and whatever was typed in the hero ride along.
+  const place = usePlace();
+  const what = need.trim();
   // Clocks are impure; read them once per mount.
   const [todayIso] = useState(() => iso(new Date()));
   const [maxIso] = useState(() => iso(new Date(Date.now() + 30 * DAY_MS)));
@@ -53,6 +57,7 @@ export default function BookAhead() {
                 <div className={FIELD}>
                   <Calendar size={18} className="flex-none text-ink-60" />
                   <input
+                    id="later-date"
                     type="date"
                     value={date}
                     min={todayIso}
@@ -79,8 +84,14 @@ export default function BookAhead() {
                   <ChevronDown size={15} className="flex-none text-ink-40" />
                 </div>
               </div>
+              {what && (
+                <p className="mb-3 max-w-[340px] truncate text-[13.5px] font-semibold text-ink-80">
+                  {t('later.for', { need: what })}
+                  {isTradeSlug(trade) && ` · ${t(`trades.${trade}` as const)}`}
+                </p>
+              )}
               <Link
-                to={exploreUrl({ when: 'later', day, win })}
+                to={exploreUrl({ when: 'later', day, win, need: what, trade, address: place.label, lngLat: place.lngLat })}
                 className="flex h-[52px] w-full max-w-[340px] items-center justify-center rounded-btn bg-ink text-[15px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 {t('later.next')}
