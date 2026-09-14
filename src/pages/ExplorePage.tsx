@@ -14,6 +14,7 @@ import { ROUTES } from '../routes';
 import type { LngLat } from '../lib/geo';
 import { setPlace as savePlace, usePlace } from '../lib/place';
 import { classifyNeed } from '../lib/classify';
+import { creditFor, spendCredit } from '../lib/wallet';
 import { useAuth } from '../auth';
 
 /**
@@ -141,6 +142,11 @@ export default function ExplorePage() {
   const approve = (a: Artisan, estimate: Estimate): string => {
     const later = search.when === 'later';
     const need = search.need.trim();
+    // Any Dashfixe credit (lib/wallet) comes off automatically, as its own line.
+    const credit = creditFor(estimate.total);
+    const lines = credit
+      ? [...estimate.lines, { label: { EN: translate('EN', 'job.creditLine'), PT: translate('PT', 'job.creditLine') }, amount: -credit }]
+      : estimate.lines;
     const job = createJob({
       artisanId: a.id,
       artisanName: a.name,
@@ -156,9 +162,10 @@ export default function ExplorePage() {
       ...(later
         ? { dayOffset: search.day ?? 0, slot: { window: WINDOWS[search.win ?? 2]! } }
         : { arrives: clockIn(a.eta) }),
-      lines: estimate.lines,
-      total: estimate.total,
+      lines,
+      total: estimate.total - credit,
     });
+    spendCredit(credit, job.id);
     return job.id;
   };
 

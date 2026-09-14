@@ -18,8 +18,10 @@ export const ROUTES = {
   login: '/login',
   /** THE product surface: search + map, `?when=later` for booking ahead. */
   explore: '/explore',
-  /** Signed-in only: past requests and saved places (Uber's Activity). */
+  /** Signed-in only: every job (Uber's Activity). */
   activity: '/activity',
+  /** Signed-in only: the customer's dashboard — profile, credit, places, data. */
+  account: '/account',
   /** Public trust page for one artisan (Phase 4). */
   artisan: '/artisan/:id',
   /** Signed-in: the live job or its receipt (Phase 4). */
@@ -47,6 +49,7 @@ const DESTINATIONS = {
   waitlist: ROUTES.waitlist,
   explore: ROUTES.explore,
   activity: ROUTES.activity,
+  account: ROUTES.account,
   login: ROUTES.login,
 
   // The artisan world: one page, anchored depth.

@@ -117,7 +117,11 @@ export default function Header({ layout = 'contained', minimal = false }: Props)
 
             {!minimal && (
               <MobileMenu
-                links={[...links, { label: t('nav.help'), to: link('help') }]}
+                links={[
+                  ...links,
+                  ...(signedIn ? [{ label: t('nav.account'), to: ROUTES.account }] : []),
+                  { label: t('nav.help'), to: link('help') },
+                ]}
                 actions={
                   signedIn ? (
                     <button
@@ -232,6 +236,9 @@ function AccountMenu() {
             {name && phone && <div className="text-[12.5px] font-semibold text-ink-40">{phone}</div>}
           </div>
           <div className="py-1.5">
+            <Link to={ROUTES.account} onClick={close} className={ROW}>
+              {t('nav.account')}
+            </Link>
             <Link to={ROUTES.activity} onClick={close} className={ROW}>
               {t('nav.activity')}
             </Link>

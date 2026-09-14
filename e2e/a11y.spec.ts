@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Accessibility gate (docs/ARCHITECTURE.md §8): axe-core against WCAG 2 A/AA on
@@ -19,22 +19,40 @@ const PAGES = [
   '/no-such-page',
 ];
 
-for (const path of PAGES) {
-  test(`a11y ${path}: no serious or critical WCAG violations`, async ({ page }) => {
-    await page.goto(path);
-    await expect(page.locator('h1').first()).toBeVisible();
+/** Signed-in pages, reached through the pilot login first. */
+const PRIVATE = ['/account', '/activity'];
 
-    const { violations } = await new AxeBuilder({ page })
+async function audit(page: Page, path: string) {
+  await expect(page.locator('h1').first()).toBeVisible();
+  const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .exclude('.maplibregl-canvas')
       .analyze();
 
-    const minor = violations.filter((v) => v.impact !== 'serious' && v.impact !== 'critical');
-    if (minor.length) console.log(`${path} (minor): ${minor.map((v) => v.id).join(', ')}`);
+  const minor = violations.filter((v) => v.impact !== 'serious' && v.impact !== 'critical');
+  if (minor.length) console.log(`${path} (minor): ${minor.map((v) => v.id).join(', ')}`);
 
-    const blocking = violations
-      .filter((v) => v.impact === 'serious' || v.impact === 'critical')
-      .map((v) => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
-    expect(blocking).toEqual([]);
+  const blocking = violations
+    .filter((v) => v.impact === 'serious' || v.impact === 'critical')
+    .map((v) => `${v.id} (${v.impact}) ×${v.nodes.length}: ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
+  expect(blocking).toEqual([]);
+}
+
+for (const path of PAGES) {
+  test(`a11y ${path}: no serious or critical WCAG violations`, async ({ page }) => {
+    await page.goto(path);
+    await audit(page, path);
+  });
+}
+
+for (const path of PRIVATE) {
+  test(`a11y ${path} (signed in): no serious or critical WCAG violations`, async ({ page }) => {
+    await page.goto(`/login?next=${path}`);
+    await page.getByLabel('Phone number').fill('912 345 678');
+    await page.getByRole('button', { name: 'Send code' }).click();
+    await page.getByLabel('First name').fill('Ana');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+    await audit(page, path);
   });
 }

@@ -58,6 +58,14 @@ test('pilot login: Send code signs in, a name once, land on next, stay signed in
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Account' })).toContainText('Ana');
+
+  // The account dashboard: profile from the session, walkthrough credit from a code.
+  await page.getByRole('link', { name: /Account, credit and saved places/ }).click();
+  await expect(page.getByRole('heading', { name: 'Account', level: 1 })).toBeVisible();
+  await expect(page.getByText('Ana', { exact: true }).last()).toBeVisible();
+  await page.getByLabel('Promo code').fill('PILOT10');
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByRole('status')).toContainText('Added €10.00');
 });
 
 test('the waitlist form reaches the API', async ({ page }) => {

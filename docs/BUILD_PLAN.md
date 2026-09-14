@@ -301,6 +301,33 @@ else", and Book for later through the home's slot picker:
 4. Switch the hero to "Book for later": it scrolls to the calendar, and Next keeps your
    words.
 
+### Revision 1.8 · The account dashboard ✅ (branch `feat/account`, after #15)
+
+The owner asked for the profile to have its own page, "like his own dashboard" with a
+balance and credits:
+
+- ✅ **`/account`:**
+  - profile editing and stats
+  - Dashfixe credit, with a promo code and a history
+  - an invite code
+  - your artisans, with Rebook
+  - saved places
+  - payment methods, honest that they come with the pilot
+  - preferences
+  - download or clear your data
+- ✅ **Credit is spent on the next booking,** said at the chat's confirm step, and shown
+  as its own receipt line.
+- ✅ **Activity is jobs only.** Account is in the account menu and the mobile sheet.
+
+**Owner test:**
+1. Sign in, open the account menu, then **Account**.
+2. Tap **Edit** by your name, change it and save: the header follows.
+3. Enter `PILOT10` and tap **Apply**: the balance shows €10.00. Apply it again and it
+   says it was already used.
+4. Book Tiago from `/explore`. Confirm says "you pay €53.00", and the job's receipt shows
+   Dashfixe credit −€10.00. Back on Account, the credit is €0.00 and the history says
+   where it went.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
