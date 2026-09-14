@@ -13,23 +13,37 @@ import { useLang } from '../../i18n';
  * reviews, price and arrival — without leaving the conversation.
  *
  * A centred card on desktop, a bottom sheet on phones; rendered in a portal so
- * the docked chat's rounded, clipped frame doesn't cut it. Focus starts on the
- * close button, Escape and the backdrop close it, and the caller hands focus back.
+ * the docked chat's rounded, clipped frame doesn't cut it. Escape and the
+ * backdrop close it.
+ *
+ * The card owns focus: on opening it remembers what had focus (the button that
+ * opened it) and moves to Close — once; when it's removed, its cleanup hands
+ * focus back, after the card has left the page. Parent re-renders (the chat's
+ * scripted replies) never re-run it.
  */
 export default function ArtisanProfileModal({ artisan, onClose }: { artisan: Artisan; onClose: () => void }) {
   const { t, lang } = useLang();
   const profile = getProfile(artisan.id);
   const titleId = useId();
   const closeBtn = useRef<HTMLButtonElement>(null);
+  // The latest onClose, without re-subscribing on every parent render.
+  const close = useRef(onClose);
+  useEffect(() => {
+    close.current = onClose;
+  });
 
   useEffect(() => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeBtn.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') close.current();
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      opener?.focus();
+    };
+  }, []);
 
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-[130] flex items-end justify-center bg-ink/50 backdrop-blur-[2px] sm:items-center sm:p-6">

@@ -65,7 +65,6 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
   const [typing, setTyping] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const profileBtn = useRef<HTMLButtonElement>(null);
   const timers = useRef<number[]>([]);
   const threadEl = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -156,7 +155,6 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
       {/* Identity — tap it for the artisan's profile card, without leaving the chat */}
       <div className="flex items-center gap-[11px] border-b border-line-rule px-4 py-3.5">
         <button
-          ref={profileBtn}
           type="button"
           onClick={() => setProfileOpen(true)}
           aria-haspopup="dialog"
@@ -187,10 +185,7 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
       {profileOpen && (
         <ArtisanProfileModal
           artisan={artisan}
-          onClose={() => {
-            setProfileOpen(false);
-            profileBtn.current?.focus();
-          }}
+          onClose={() => setProfileOpen(false)}
         />
       )}
 
