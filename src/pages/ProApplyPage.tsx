@@ -160,6 +160,9 @@ export default function ProApplyPage() {
       trade: d.trade,
       phone: d.phone.trim(),
       areas: d.areas,
+      licences: d.licences,
+      insurance: !!d.insurance,
+      availability: d.availability,
     });
     navigate(ROUTES.proApplication);
   };

@@ -5,9 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/pro-apply`, stacked on `feat/pro-shell`
-(#20; merge that first). Everything through #19 is merged, and production passes
-`check-prod.mjs` 20/20 ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/pro-dashboard`, stacked on
+`feat/pro-apply` (#21; merge that first). Everything through #20 is merged; #22 (the
+profile card in the chat) is separate ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -92,8 +92,29 @@ world, like Uber's driver site, built in four PRs in the order in BUILD_PLAN →
 - **Tests:** 158 Vitest, including the full four-step flow in the UI and the
   server's profile validation.
 
-**Next:** the owner asked for an artisan profile card that opens as a modal from the
-customer's chat. Then Pro PR 3 (`/pro/login` + `/pro/dashboard`) and PR 4 (`/pro/help`).
+The owner then asked for an artisan profile card in the customer's chat. That's #22,
+on its own branch.
+
+**Revision 2.5**, on branch `feat/pro-dashboard`, is Pro PR 3: artisans can log in.
+
+- **`/pro/login`** is `LoginPage surface="pro"`: the same phone sign-in and pilot bypass,
+  in the minimal Pro header, headed "Log in to Dashfixe Pro". It lands on
+  `/pro/dashboard`.
+- **`/pro/dashboard`** (`pages/ProDashboardPage.tsx`) is signed-in only. It's honest
+  that nobody is approved yet, so it shows:
+  - the application's status and next step
+  - a "get ready for your call" checklist built from the application: ID, NIF, IBAN,
+    and insurance and DGEG/gas licences if declared
+  - hours and radius
+  - the profile, with sign out
+  - a badged sample preview of the earnings view
+  - Choices are saved on this device (`lib/proDashboard.ts`); nothing is uploaded.
+- **The application record** now also keeps licences, insurance and availability, which
+  the checklist uses.
+- **The Pro header** shows Log in, or Dashboard once signed in. Robots now disallow
+  `/pro/login`, `/pro/dashboard` and `/pro/application`.
+
+**Next:** Pro PR 4 (`/pro/help`).
 
 **Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
 through one change of direction: it began as an interactive walkthrough at `/pro`, and at

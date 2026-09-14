@@ -139,6 +139,52 @@ describe('/pro (Dashfixe Pro, the artisan world)', () => {
     expect(screen.getByRole('link', { name: /See your application/ })).toHaveAttribute('href', '/pro/application');
   });
 
+  it('offers artisans their own log in', () => {
+    renderAt('/pro');
+    expect(screen.getAllByRole('link', { name: 'Log in' })[0]).toHaveAttribute('href', '/pro/login');
+  });
+
+  it('logs an artisan in, in Pro chrome, and lands on the dashboard', async () => {
+    const user = userEvent.setup();
+    renderAt('/pro/login');
+    expect(screen.getByRole('heading', { name: 'Log in to Dashfixe Pro' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Phone number'), '912 345 678');
+    await user.click(screen.getByRole('button', { name: 'Send code' }));
+    await user.type(await screen.findByLabelText('First name'), 'Tiago');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your Dashfixe Pro dashboard' })).toBeInTheDocument();
+    expect(screen.getByText('Hello, Tiago')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Start your application/ })).toHaveAttribute('href', '/pro/apply');
+  });
+
+  it('sends a signed-out visitor from the dashboard to the Pro log in', async () => {
+    renderAt('/pro/dashboard');
+    expect(await screen.findByRole('heading', { name: 'Log in to Dashfixe Pro' })).toBeInTheDocument();
+  });
+
+  it('builds the dashboard from the application: status, a checklist to tick off, and the hours', async () => {
+    saveApplication({
+      reference: 'A-1234',
+      submittedAt: '2026-09-14T10:00:00Z',
+      fullName: 'Tiago Ferreira',
+      trade: 'plumbing',
+      phone: '912345678',
+      areas: ['Amora'],
+      licences: ['gas'],
+      insurance: true,
+      availability: ['weekdays'],
+    });
+    const user = userEvent.setup();
+    renderSignedIn('/pro/dashboard');
+    expect(await screen.findByText('Application A-1234 · in review')).toBeInTheDocument();
+    expect(screen.getByText('0 of 5 ready')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Your gas licence (Lei n.º 15/2015)' }));
+    expect(screen.getByText('1 of 5 ready')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Weekdays' })).toBeChecked();
+    expect(screen.getByText('Preview · sample')).toBeInTheDocument();
+  });
+
   it('reads in Portuguese too', async () => {
     const user = userEvent.setup();
     renderAt('/pro');

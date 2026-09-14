@@ -40,6 +40,10 @@ export const ROUTES = {
   proApply: '/pro/apply',
   /** The applicant's status page, for the application sent from this device. */
   proApplication: '/pro/application',
+  /** Artisan log in — the same phone sign-in, in Pro chrome (rev 2.5). */
+  proLogin: '/pro/login',
+  /** Signed-in: the artisan's dashboard (Uber's drivers.uber.com), rev 2.5. */
+  proDashboard: '/pro/dashboard',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -66,6 +70,8 @@ const DESTINATIONS = {
   proHow: `${ROUTES.pro}#how`,
   artisanApply: ROUTES.proApply,
   proApplication: ROUTES.proApplication,
+  proLogin: ROUTES.proLogin,
+  proDashboard: ROUTES.proDashboard,
   artisanPay: `${ROUTES.pro}#pay`,
   artisanVetting: `${ROUTES.pro}#vetting`,
   artisanApp: ROUTES.proApp,

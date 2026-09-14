@@ -48,6 +48,8 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
   [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
   [ROUTES.proApply]: { title: 'seo.proApply.title', description: 'seo.proApply.desc' },
+  [ROUTES.proLogin]: { title: 'auth.pro.title', description: 'seo.proApply.desc', noindex: true },
+  [ROUTES.proDashboard]: { title: 'pro.dash.title', description: 'seo.proApply.desc', noindex: true },
   // One device's application status: private.
   [ROUTES.proApplication]: { title: 'seo.proStatus.title', description: 'seo.proApply.desc', noindex: true },
   // The app showcase is sample stills, like /artisan/*: shareable, not indexed.
@@ -168,6 +170,9 @@ export function robotsTxt(siteUrl: string): string {
     'Disallow: /login',
     'Disallow: /activity',
     'Disallow: /account',
+    'Disallow: /pro/login',
+    'Disallow: /pro/dashboard',
+    'Disallow: /pro/application',
     'Disallow: /job/',
     '',
     `Sitemap: ${siteUrl}/sitemap.xml`,

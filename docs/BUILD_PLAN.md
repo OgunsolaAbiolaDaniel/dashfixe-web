@@ -461,8 +461,18 @@ The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
    3. Send it: the status page shows your reference and the WhatsApp call as the next
       step.
    4. Back on `/pro`, the apply card says **See your application**.
-3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
-   labelled until Phase 6 supplies real jobs.
+3. ✅ **Artisan login and dashboard** (rev 2.5, branch `feat/pro-dashboard`, on top of
+   #21).
+   - `/pro/login` is the same phone sign-in, in the minimal Pro header.
+   - `/pro/dashboard` shows the status and next step, a call checklist based on the
+     application, hours and radius, the profile, and a badged sample preview.
+   - The Pro header shows Log in, or Dashboard once signed in.
+
+   **Owner test:**
+   1. On `/pro`, tap **Log in** and use any number: you land on your dashboard.
+   2. Apply first and the dashboard fills in: your reference, the WhatsApp call next,
+      and a checklist to tick off.
+   3. Change your hours and radius, then reload the page: they're kept.
 4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
 
 ## Phase 6 · Live operations ⬜

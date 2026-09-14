@@ -16,6 +16,10 @@ export type ProApplicationRecord = {
   trade: string;
   phone: string;
   areas: string[];
+  /** For the dashboard's "get ready" checklist (rev 2.5); absent on older records. */
+  licences?: string[];
+  insurance?: boolean;
+  availability?: string[];
 };
 
 const KEY = 'dfx.proApplication';

@@ -18,11 +18,12 @@ const PAGES = [
   '/pro',
   '/pro/app',
   '/pro/apply',
+  '/pro/login',
   '/no-such-page',
 ];
 
 /** Signed-in pages, reached through the pilot login first. */
-const PRIVATE = ['/account', '/activity'];
+const PRIVATE = ['/account', '/activity', '/pro/dashboard'];
 
 async function audit(page: Page, path: string) {
   await expect(page.locator('h1').first()).toBeVisible();
