@@ -16,6 +16,14 @@ through #19 is merged, and production passes `check-prod.mjs` 20/20) ·
 Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is merged, and
 `main` is green in CI (check and smoke).
 
+**Revision 2.4**, on branch `feat/chat-profile` (owner request, made mid-way through the
+Pro work), adds the artisan's profile card to the chat. In the chat header, the avatar
+and name are now a "View Tiago's profile" button. It opens `ArtisanProfileModal`, a card
+on desktop and a sheet on phones, with the same pieces as `/artisan/:id`
+(`ArtisanProfileParts.tsx`), plus "Full profile" and "Back to chat". Escape closes it
+and focus returns to the chat. Tests: 158 Vitest (the card opens, shows the profile,
+closes and returns focus, closes on Escape) and 17 Playwright.
+
 **Production, verified live on 2026-09-12** (`dashfixe-web.vercel.app`, merge
 `ec9d36d`):
 - ✅ **One-tap pilot login:** request-code, verify, then the name saved to the session.

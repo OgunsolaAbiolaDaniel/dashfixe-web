@@ -241,6 +241,37 @@ describe('/account (the customer dashboard)', () => {
   });
 });
 
+describe('the profile card in the chat', () => {
+  it('opens the artisan\'s profile over the chat, and hands focus back when closed', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/explore?artisan=tf&need=Leaking%20tap');
+    await user.click(screen.getByRole('button', { name: 'Chat with Tiago' }));
+    const trigger = screen.getByRole('button', { name: "View Tiago's profile" });
+    await user.click(trigger);
+
+    const card = screen.getByRole('dialog', { name: 'Tiago Ferreira' });
+    expect(within(card).getByText('Verified pro')).toBeInTheDocument();
+    expect(within(card).getByText(/Available now/)).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Full profile' })).toHaveAttribute('href', '/artisan/tf');
+    expect(within(card).getByRole('button', { name: 'Close profile' })).toHaveFocus();
+
+    await user.click(within(card).getByRole('button', { name: 'Back to chat' }));
+    expect(screen.queryByRole('dialog', { name: 'Tiago Ferreira' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    // The conversation is still there.
+    expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+  });
+
+  it('closes on Escape', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/explore?artisan=tf');
+    await user.click(screen.getByRole('button', { name: 'Chat with Tiago' }));
+    await user.click(screen.getByRole('button', { name: "View Tiago's profile" }));
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Tiago Ferreira' })).not.toBeInTheDocument();
+  });
+});
+
 describe('/artisan/:id (public trust page)', () => {
   it('shows the profile and routes the commit back into /explore', async () => {
     const user = userEvent.setup();

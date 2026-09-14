@@ -714,6 +714,11 @@ export const en = {
   'pro.footer.customers': 'For customers',
   'pro.footer.getRepair': 'Get a repair',
   'pro.show.title': 'The Dashfixe Pro app',
+  'chat.viewProfile': 'View {name}\'s profile',
+  'chat.profile.close': 'Close profile',
+  'chat.profile.back': 'Back to chat',
+  'chat.profile.full': 'Full profile',
+  'chat.profile.available': 'Available now · {eta} min away',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -1398,6 +1403,11 @@ export const pt: Record<StringKey, string> = {
   'pro.footer.customers': 'Para clientes',
   'pro.footer.getRepair': 'Pedir uma reparação',
   'pro.show.title': 'A app Dashfixe Pro',
+  'chat.viewProfile': 'Ver o perfil de {name}',
+  'chat.profile.close': 'Fechar perfil',
+  'chat.profile.back': 'Voltar ao chat',
+  'chat.profile.full': 'Perfil completo',
+  'chat.profile.available': 'Disponível agora · a {eta} min',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

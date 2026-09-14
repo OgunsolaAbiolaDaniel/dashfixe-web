@@ -281,6 +281,17 @@ product, so nav links point at routes.
 - **Preferences** (`dfx.prefs`, rev 1.8): SMS updates and offers switches, saved on this
   device until accounts sync. `/account` can export every `dfx.*` key as JSON, or clear
   them and sign out.
+- **The profile card in the chat** (rev 2.4, owner request): in the chat header, the
+  artisan's avatar and name are a "View Tiago's profile" button.
+  - It opens `ArtisanProfileModal` over the chat: a centred card on desktop, a bottom
+    sheet on phones, in a portal.
+  - The card shows verification, rating, jobs and distance, available now with the ETA,
+    the price range, about, stats, languages and two sample reviews. It has "Full
+    profile" (`/artisan/:id`) and "Back to chat".
+  - Focus starts on Close; Escape and the backdrop close it; focus returns to the
+    trigger.
+  - The pieces are shared with `/artisan/:id` (`ArtisanProfileParts.tsx`), so the page
+    and the card can't drift apart.
 - **Chat** (`components/explore/chatStore.ts`): one thread per artisan that follows the
   customer from `/explore` to the job. Replies are scripted and labelled as such, until
   the Phase 6 chat backend.
