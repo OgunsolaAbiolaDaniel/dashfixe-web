@@ -702,6 +702,18 @@ export const en = {
   'notif.count': 'Notifications, {n} new',
   'notif.new': 'New',
   'notif.all': 'See all activity',
+  'pro.nav.home': 'Dashfixe Pro — home',
+  'pro.nav.how': 'How it works',
+  'pro.nav.pay': 'Earnings',
+  'pro.nav.vetting': 'Vetting',
+  'pro.nav.app': 'The app',
+  'pro.nav.apply': 'Apply',
+  'pro.nav.customer': 'Need a repair?',
+  'pro.footer.tagline': 'Dashfixe for tradespeople in Amora & Seixal. Work comes to you; you keep the job.',
+  'pro.footer.work': 'Work with Dashfixe',
+  'pro.footer.customers': 'For customers',
+  'pro.footer.getRepair': 'Get a repair',
+  'pro.show.title': 'The Dashfixe Pro app',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -1374,6 +1386,18 @@ export const pt: Record<StringKey, string> = {
   'notif.count': 'Notificações, {n} novas',
   'notif.new': 'Nova',
   'notif.all': 'Ver toda a atividade',
+  'pro.nav.home': 'Dashfixe Pro — início',
+  'pro.nav.how': 'Como funciona',
+  'pro.nav.pay': 'Ganhos',
+  'pro.nav.vetting': 'Verificação',
+  'pro.nav.app': 'A app',
+  'pro.nav.apply': 'Candidatar',
+  'pro.nav.customer': 'Precisa de uma reparação?',
+  'pro.footer.tagline': 'A Dashfixe para profissionais da Amora e do Seixal. O trabalho vem ter consigo; e continua a ser seu.',
+  'pro.footer.work': 'Trabalhe com a Dashfixe',
+  'pro.footer.customers': 'Para clientes',
+  'pro.footer.getRepair': 'Pedir uma reparação',
+  'pro.show.title': 'A app Dashfixe Pro',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;

@@ -9,7 +9,7 @@ import { link } from '../routes';
 import type { StringKey } from '../i18n/strings';
 
 /**
- * /pro — the artisan app's showcase (the way a product page presents an app to
+ * /pro/app — the Dashfixe Pro app's showcase (the way a product page presents an app to
  * download): the pitch, stills of the app (designs/Dashfixe Artisan App.dc.html),
  * what's in it, and how to get it. Not interactive — a reference page.
  *
@@ -31,15 +31,15 @@ const FEATURES: ReadonlyArray<{ Icon: typeof Bolt; title: StringKey; body: Strin
   { Icon: Euro, title: 'pro.step4', body: 'pro.f4' },
 ];
 
-export default function ProPage() {
+export default function ProAppPage() {
   const { t } = useLang();
   return (
-    <MarketingShell>
+    <MarketingShell surface="pro">
       {/* The pitch and the stills, on the artisan app's darker chrome. */}
       <section className="overflow-hidden bg-ink">
         <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pt-[clamp(48px,7vw,88px)] text-center">
           <p className="mb-4 text-label text-brand-on-dark">{t('pro.show.eyebrow')}</p>
-          <h1 className="mx-auto max-w-[780px] text-display text-white">{t('fa.hero.title')}</h1>
+          <h1 className="mx-auto max-w-[780px] text-display text-white">{t('pro.show.title')}</h1>
           <p className="mx-auto mt-5 max-w-[560px] text-lead text-onink-strong">{t('fa.hero.body')}</p>
           <div className="mt-8 flex justify-center">
             <StoreBadges tone="light" />

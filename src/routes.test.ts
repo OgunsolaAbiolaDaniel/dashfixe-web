@@ -13,15 +13,16 @@ describe('link', () => {
     expect(link('fix')).toBe('/explore');
     expect(link('book')).toBe('/explore?when=later');
     expect(link('coverage')).toBe('/about#coverage');
-    expect(link('artisanDetails')).toBe('/for-artisans');
-    expect(link('artisanApp')).toBe('/pro');
+    expect(link('artisanDetails')).toBe('/pro');
+    expect(link('artisanApp')).toBe('/pro/app');
   });
 
-  it('anchors the artisan depth into the one artisan page', () => {
-    expect(link('forArtisans')).toBe('/for-artisans');
-    expect(link('artisanApply')).toBe('/for-artisans#apply');
-    expect(link('artisanPay')).toBe('/for-artisans#pay');
-    expect(link('artisanVetting')).toBe('/for-artisans#vetting');
+  it('sends the artisan world to Dashfixe Pro, with anchored depth', () => {
+    expect(link('forArtisans')).toBe('/pro');
+    expect(link('proHow')).toBe('/pro#how');
+    expect(link('artisanApply')).toBe('/pro#apply');
+    expect(link('artisanPay')).toBe('/pro#pay');
+    expect(link('artisanVetting')).toBe('/pro#vetting');
   });
 
   it('gives support links real destinations on /help', () => {

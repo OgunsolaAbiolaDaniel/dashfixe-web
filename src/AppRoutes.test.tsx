@@ -70,20 +70,29 @@ describe('the route tree (ARCHITECTURE.md §4)', () => {
   });
 });
 
-describe('/for-artisans', () => {
-  it('pitches honestly and folds the cut pages in as anchors', () => {
-    renderAt('/for-artisans');
-    expect(screen.getByRole('heading', { name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
+describe('/pro (Dashfixe Pro, the artisan world)', () => {
+  it('pitches honestly in its own chrome, and folds the depth in as anchors', () => {
+    renderAt('/pro');
+    expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
     expect(screen.getAllByText(/limited cohort/i).length).toBeGreaterThan(0);
-    expect(document.getElementById('pay')).not.toBeNull();
-    expect(document.getElementById('vetting')).not.toBeNull();
-    expect(document.getElementById('app')).not.toBeNull();
-    expect(document.getElementById('apply')).not.toBeNull();
+    for (const id of ['how', 'pay', 'vetting', 'app', 'apply']) expect(document.getElementById(id)).not.toBeNull();
+    // Its own nav — never the customer menu — and one way back to the customer side.
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toHaveAttribute('href', '/pro');
+    expect(screen.getAllByRole('link', { name: 'Earnings' })[0]).toHaveAttribute('href', '/pro#pay');
+    expect(screen.getAllByRole('link', { name: 'The app' })[0]).toHaveAttribute('href', '/pro/app');
+    expect(screen.getAllByRole('link', { name: 'Need a repair?' })[0]).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('link', { name: 'Book ahead' })).not.toBeInTheDocument();
+  });
+
+  it('is where /for-artisans went', () => {
+    renderAt('/for-artisans');
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
   });
 
   it('takes an application and confirms the WhatsApp follow-up', async () => {
     const user = userEvent.setup();
-    renderAt('/for-artisans');
+    renderAt('/pro');
     await user.type(screen.getByLabelText('Full name'), 'Tiago Ferreira');
     await user.type(screen.getByLabelText('WhatsApp / phone number'), '+351 912 345 678');
     await user.type(screen.getByLabelText('Email address'), 'tiago@example.com');
@@ -96,7 +105,7 @@ describe('/for-artisans', () => {
 
   it('reads in Portuguese too', async () => {
     const user = userEvent.setup();
-    renderAt('/for-artisans');
+    renderAt('/pro');
     await user.click(screen.getByRole('button', { name: 'Language' }));
     expect(screen.getByRole('heading', { name: /O trabalho vem ter consigo/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar candidatura' })).toBeInTheDocument();
@@ -153,16 +162,16 @@ describe('/activity', () => {
   });
 });
 
-describe('/pro (the artisan app showcase)', () => {
+describe('/pro/app (the Dashfixe Pro app showcase)', () => {
   it('shows the app with honest "coming soon" store badges and the way into the pilot', () => {
-    renderAt('/pro');
-    expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
+    renderAt('/pro/app');
+    expect(screen.getByRole('heading', { level: 1, name: 'The Dashfixe Pro app' })).toBeInTheDocument();
     expect(screen.getAllByText('Coming soon on the').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Google Play').length).toBeGreaterThan(0);
     // Nothing implies the app is out: the badges link nowhere.
     expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
     expect(screen.getByText('Screens are previews with sample data.')).toBeInTheDocument();
-    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/for-artisans#apply');
+    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/pro#apply');
   });
 });
 
@@ -181,7 +190,7 @@ describe('the customer app promo', () => {
   it('closes the visitor home with "Do more with the app", and points tradespeople to /pro', () => {
     renderAt('/');
     expect(screen.getByRole('heading', { name: 'Do more with the app' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /See the Dashfixe Pro app/ })).toHaveAttribute('href', '/pro');
+    expect(screen.getByRole('link', { name: /See the Dashfixe Pro app/ })).toHaveAttribute('href', '/pro/app');
     expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
   });
 

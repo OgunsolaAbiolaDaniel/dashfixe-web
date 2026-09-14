@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
+  "redirects": [
+    { "source": "/for-artisans", "destination": "/pro", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/router?path=:path*" },
     { "source": "/((?!api/).*)", "destination": "/" }

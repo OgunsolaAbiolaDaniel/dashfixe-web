@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ComponentType, type RefObject } from 
 import { Link, useLocation } from 'react-router-dom';
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
+import wordmarkLight from '../../assets/dashfixe-wordmark-light.png';
 import { Bell, CalendarCheck, ChevronDown, Close, Euro, Globe, Navigation, Receipt, Star, Wrench } from '../icons';
 import { ROUTES, link } from '../../routes';
 import { formatDate, useJobs } from '../../lib/jobs';
@@ -20,14 +21,22 @@ import MobileMenu from '../shared/MobileMenu';
  * - `full` (map screens): edge to edge, so it lines up with the panel + map.
  * - `minimal` (/login): logo + language only — nothing to wander off to mid-flow.
  */
-type Props = { layout?: 'contained' | 'full'; minimal?: boolean };
+type Props = {
+  layout?: 'contained' | 'full';
+  minimal?: boolean;
+  /** `pro` is Dashfixe Pro, the artisan world: its own dark frame and nav (rev 2.2). */
+  surface?: 'customer' | 'pro';
+};
 
 const LINK = 'rounded-xl px-3.5 py-2 text-nav transition';
 
-export default function Header({ layout = 'contained', minimal = false }: Props) {
+export default function Header({ layout = 'contained', minimal = false, surface = 'customer' }: Props) {
   const { signedIn, requireAuth, signOut } = useAuth();
   const { t, lang, setLang } = useLang();
   const { pathname, search } = useLocation();
+
+  // The artisan world never shares the customer menu (like Uber's driver site).
+  if (surface === 'pro') return <ProHeader />;
 
   const links = signedIn
     ? [
@@ -151,6 +160,81 @@ export default function Header({ layout = 'contained', minimal = false }: Props)
                 }
               />
             )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/**
+ * The Dashfixe Pro frame: the artisan world's darker chrome (designs/Dashfixe
+ * Artisan App.dc.html: "darker chrome"), its own nav, Apply as the one action,
+ * and a single way back to the customer site. The logo goes to the Pro home.
+ */
+function ProHeader() {
+  const { t, lang, setLang } = useLang();
+  const { pathname } = useLocation();
+  const links = [
+    { label: t('pro.nav.how'), to: link('proHow') },
+    { label: t('pro.nav.pay'), to: link('artisanPay') },
+    { label: t('pro.nav.vetting'), to: link('artisanVetting') },
+    { label: t('pro.nav.app'), to: link('artisanApp') },
+  ];
+
+  return (
+    <header className="sticky top-0 z-[60] border-b border-white/10 bg-ink">
+      <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)]">
+        <div className="flex h-[68px] items-center gap-5">
+          <Link to={ROUTES.pro} aria-label={t('pro.nav.home')} className="flex flex-none items-center gap-2.5">
+            <img src={mark} alt="" className="block h-7 w-auto" />
+            <img src={wordmarkLight} alt="Dashfixe" className="block h-[17px] w-auto" />
+            <span className="rounded-full bg-brand px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-[.08em] text-white">Pro</span>
+          </Link>
+
+          <nav className="hidden items-center gap-0.5 md:flex">
+            {links.map((l) => {
+              const current = l.to === pathname;
+              return (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  aria-current={current ? 'page' : undefined}
+                  className={LINK + (current ? ' bg-white/10 font-bold text-white' : ' text-onink-strong hover:bg-white/10 hover:text-white')}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-1.5">
+            <Link to={ROUTES.home} className={`${LINK} hidden text-onink hover:bg-white/10 hover:text-white lg:block`}>
+              {t('pro.nav.customer')}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setLang(lang === 'EN' ? 'PT' : 'EN')}
+              aria-label={t('nav.language')}
+              title={t('nav.language')}
+              className="flex h-ctl items-center gap-2 rounded-xl px-3 text-nav text-white transition hover:bg-white/10"
+            >
+              <Globe size={17} className="text-onink" />
+              {lang}
+            </button>
+            <Link
+              to={link('artisanApply')}
+              className="hidden h-ctl items-center rounded-full bg-brand px-5 text-nav text-white transition hover:bg-brand-hover hover:text-white md:flex"
+            >
+              {t('pro.nav.apply')}
+            </Link>
+            <MobileMenu
+              links={[
+                ...links,
+                { label: t('pro.nav.apply'), to: link('artisanApply') },
+                { label: t('pro.nav.customer'), to: ROUTES.home },
+              ]}
+            />
           </div>
         </div>
       </div>

@@ -30,10 +30,12 @@ export const ROUTES = {
   trade: '/trade/:slug',
   /** The customer journey end to end — the header's "How it works". */
   howItWorks: '/how-it-works',
-  /** Supply landing + pilot application. */
+  /** Moved to /pro (rev 2.2): kept only as a permanent redirect, hash and all. */
   forArtisans: '/for-artisans',
-  /** The artisan app, as a walkthrough (sample job, nothing sent). */
+  /** Dashfixe Pro — the artisan world's landing, with the pilot application. */
   pro: '/pro',
+  /** The Dashfixe Pro app's showcase: stills, "coming soon" store badges. */
+  proApp: '/pro/app',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -54,16 +56,16 @@ const DESTINATIONS = {
   account: ROUTES.account,
   login: ROUTES.login,
 
-  // The artisan world: one page, anchored depth.
-  forArtisans: ROUTES.forArtisans,
-  artisanApply: `${ROUTES.forArtisans}#apply`,
-  artisanPay: `${ROUTES.forArtisans}#pay`,
-  artisanVetting: `${ROUTES.forArtisans}#vetting`,
-  /** The artisan app itself: the /pro walkthrough (rev 2.0). */
-  artisanApp: ROUTES.pro,
+  // The artisan world is Dashfixe Pro (rev 2.2): a landing with anchored depth, and the app.
+  forArtisans: ROUTES.pro,
   pro: ROUTES.pro,
+  proHow: `${ROUTES.pro}#how`,
+  artisanApply: `${ROUTES.pro}#apply`,
+  artisanPay: `${ROUTES.pro}#pay`,
+  artisanVetting: `${ROUTES.pro}#vetting`,
+  artisanApp: ROUTES.proApp,
   /** Cut page: the long version folded into the one artisan page. */
-  artisanDetails: ROUTES.forArtisans,
+  artisanDetails: ROUTES.pro,
 
   // Cut pages: one product surface, two modes.
   fix: ROUTES.explore,
