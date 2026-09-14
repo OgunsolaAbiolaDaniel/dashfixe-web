@@ -10,7 +10,7 @@ import type { StringKey } from '../i18n/strings';
 const CONTENT: Record<'privacy' | 'terms' | 'cookies', { title: StringKey; paragraphs: StringKey[] }> = {
   privacy: { title: 'privacy.title', paragraphs: ['privacy.p1', 'privacy.p2', 'privacy.p3', 'privacy.p4', 'privacy.p5'] },
   terms: { title: 'terms.title', paragraphs: ['terms.p1', 'terms.p2', 'terms.p3', 'terms.p4'] },
-  cookies: { title: 'cookies.title', paragraphs: ['cookies.p1', 'cookies.p2', 'cookies.p3'] },
+  cookies: { title: 'cookies.title', paragraphs: ['cookies.p1', 'cookies.p2', 'cookies.p3', 'cookies.p4'] },
 };
 
 export default function LegalPage({ kind }: { kind: keyof typeof CONTENT }) {

@@ -79,7 +79,8 @@ export function pageMeta(pathname: string, lang: Lang): PageMeta {
   }
 
   const entry = PAGES[path];
-  if (!entry) return { ...pageMeta(ROUTES.home, lang), path: ROUTES.home };
+  // Unknown paths render the 404 page: titled for the tab, never indexed.
+  if (!entry) return { title: withSite(t('seo.notFound.title')), description: t('seo.home.desc'), path, noindex: true };
   return {
     title: path === ROUTES.home ? t(entry.title) : withSite(t(entry.title)),
     description: t(entry.description),

@@ -61,9 +61,11 @@ describe('the route tree (ARCHITECTURE.md §4)', () => {
     expect(screen.getByRole('heading', { name: 'Straight answers' })).toBeInTheDocument();
   });
 
-  it('sends unknown paths home', () => {
+  it('shows an honest 404 for unknown paths, with doors back in', () => {
     renderAt('/definitely-not-a-page');
-    expect(screen.getByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: "We can't find that page" })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Find an artisan/ })[0]).toHaveAttribute('href', '/explore');
+    expect(document.querySelector('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   });
 });
 

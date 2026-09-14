@@ -2,7 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- The Dashfixe mark (this was Vite's template logo until rev 1.6). favicon.ico is
+         also served at the root, where browsers look for it unprompted. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <!-- Installable: "Add to home screen" on phones (the web app is the product today). -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- SEO defaults = the home page. seo.ts owns the values: the app rewrites them per
          route at runtime, and the build bakes them into a static copy per public route.

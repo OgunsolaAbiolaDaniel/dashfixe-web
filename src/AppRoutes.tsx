@@ -13,6 +13,8 @@ import LegalPage from './pages/LegalPage';
 import LoginPage from './pages/LoginPage';
 import TradePage from './pages/TradePage';
 import HowItWorksPage from './pages/HowItWorksPage';
+import NotFoundPage from './pages/NotFoundPage';
+import ErrorBoundary from './components/shared/ErrorBoundary';
 import { ROUTES, link } from './routes';
 import { launched } from './config';
 import { applyMeta, pageMeta } from './seo';
@@ -45,10 +47,13 @@ function RouteMeta() {
 }
 
 export default function AppRoutes() {
+  const { pathname } = useLocation();
   return (
     <>
       <HashScroll />
       <RouteMeta />
+      {/* A crash on one page shows a reload screen; navigating away clears it. */}
+      <ErrorBoundary resetKey={pathname}>
       <Routes>
         {/* Product surface (ARCHITECTURE.md §2) */}
         <Route path={ROUTES.home} element={<HomePage />} />
@@ -79,8 +84,10 @@ export default function AppRoutes() {
         <Route path="/for-artisans/details" element={<Navigate to={link('forArtisans')} replace />} />
         <Route path="/artisan-app" element={<Navigate to={link('artisanApp')} replace />} />
 
-        <Route path="*" element={<Navigate to={ROUTES.home} replace />} />
+        {/* Anything else is an honest 404 (noindex), not a silent trip home. */}
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </ErrorBoundary>
     </>
   );
 }

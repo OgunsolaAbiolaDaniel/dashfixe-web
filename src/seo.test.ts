@@ -24,9 +24,9 @@ describe('pageMeta', () => {
     expect(pageMeta('/explore', 'EN').noindex).toBe(false);
   });
 
-  it('falls back to the home for unknown paths (they redirect there)', () => {
-    expect(pageMeta('/nope', 'EN')).toEqual(pageMeta('/', 'EN'));
-    expect(pageMeta('/trade/juggling', 'EN').path).toBe('/');
+  it('titles unknown paths as not found and keeps them out of the index', () => {
+    expect(pageMeta('/nope', 'EN')).toMatchObject({ title: 'Page not found · Dashfixe', noindex: true });
+    expect(pageMeta('/trade/juggling', 'EN').noindex).toBe(true);
   });
 });
 
