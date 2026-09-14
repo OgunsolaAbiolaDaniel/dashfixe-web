@@ -404,7 +404,7 @@ present an app. It also asked for the customer app to be promoted.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
-## Dashfixe Pro · the artisan world 🔄 (started 2026-09-14: "continue till we finish")
+## Dashfixe Pro · the artisan world ✅ (built 2026-09-14: "continue till we finish")
 
 The owner wants artisans to have a world of their own, the way Uber keeps drivers apart:
 uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
@@ -473,7 +473,15 @@ The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
    2. Apply first and the dashboard fills in: your reference, the WhatsApp call next,
       and a checklist to tick off.
    3. Change your hours and radius, then reload the page: they're kept.
-4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
+4. ✅ **Help for artisans** (rev 2.6, branch `feat/pro-help`, on top of #23).
+   - `/pro/help` covers pay, jobs, estimates, papers, safety and your account, then a
+     person to talk to.
+   - It's linked from the Pro header, mobile menu, footer and dashboard. It's indexed,
+     in the sitemap, covered by axe and the production checks.
+
+   **Owner test:**
+   1. From any Pro page, tap **Help**. The topic chips jump to each section.
+   2. The Pro footer's Help centre and Contact links stay in the Pro world.
 
 ## Phase 6 · Live operations ⬜
 

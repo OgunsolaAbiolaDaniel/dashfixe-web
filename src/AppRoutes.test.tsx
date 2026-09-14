@@ -185,6 +185,17 @@ describe('/pro (Dashfixe Pro, the artisan world)', () => {
     expect(screen.getByText('Preview · sample')).toBeInTheDocument();
   });
 
+  it('answers artisans at /pro/help, by topic, with a person to talk to', () => {
+    renderAt('/pro/help');
+    expect(screen.getByRole('heading', { level: 1, name: 'Answers for artisans' })).toBeInTheDocument();
+    for (const id of ['pay', 'jobs', 'estimates', 'documents', 'safety', 'account', 'contact']) expect(document.getElementById(id)).not.toBeNull();
+    expect(screen.getByRole('heading', { name: 'What does Dashfixe take?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashfixe Pro — home' })).toBeInTheDocument();
+    // The Pro footer's help goes here, not to the customer help centre.
+    expect(screen.getAllByRole('link', { name: 'Help centre' })[0]).toHaveAttribute('href', '/pro/help');
+    expect(screen.getByRole('link', { name: /Start your application/ })).toHaveAttribute('href', '/pro/apply');
+  });
+
   it('reads in Portuguese too', async () => {
     const user = userEvent.setup();
     renderAt('/pro');

@@ -210,6 +210,15 @@ function ProHeader({ minimal = false }: { minimal?: boolean }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5">
+            {!minimal && (
+              <Link
+                to={ROUTES.proHelp}
+                aria-current={pathname === ROUTES.proHelp ? 'page' : undefined}
+                className={`${LINK} hidden text-onink-strong hover:bg-white/10 hover:text-white lg:block`}
+              >
+                {t('nav.help')}
+              </Link>
+            )}
             <Link to={ROUTES.home} className={`${LINK} hidden text-onink hover:bg-white/10 hover:text-white lg:block`}>
               {t('pro.nav.customer')}
             </Link>
@@ -252,6 +261,7 @@ function ProHeader({ minimal = false }: { minimal?: boolean }) {
                     ? { label: t('pro.nav.dashboard'), to: ROUTES.proDashboard }
                     : { label: t('pro.nav.login'), to: ROUTES.proLogin },
                   { label: t('pro.nav.apply'), to: link('artisanApply') },
+                  { label: t('nav.help'), to: ROUTES.proHelp },
                   { label: t('pro.nav.customer'), to: ROUTES.home },
                 ]}
               />

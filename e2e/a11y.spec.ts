@@ -19,6 +19,7 @@ const PAGES = [
   '/pro/app',
   '/pro/apply',
   '/pro/login',
+  '/pro/help',
   '/no-such-page',
 ];
 

@@ -5,9 +5,10 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/pro-dashboard`, stacked on
-`feat/pro-apply` (#21; merge that first). Everything through #20 is merged; #22 (the
-profile card in the chat) is separate ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/pro-help`, stacked on
+`feat/pro-dashboard` (#23), which is stacked on `feat/pro-apply` (#21). Merge in order:
+#21, #23, then this one. Everything through #20 is merged; #22 (the profile card in the
+chat) is separate ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -114,7 +115,22 @@ on its own branch.
 - **The Pro header** shows Log in, or Dashboard once signed in. Robots now disallow
   `/pro/login`, `/pro/dashboard` and `/pro/application`.
 
-**Next:** Pro PR 4 (`/pro/help`).
+**Revision 2.6**, on branch `feat/pro-help`, is Pro PR 4, and Dashfixe Pro is complete.
+
+- **`/pro/help`** (`pages/ProHelpPage.tsx`) gives straight answers in the Pro frame. It
+  has topic chips at the top, each a section: pay, jobs, estimates, papers, safety and
+  your account.
+- **Honest pre-pilot.** Where something is still being set up (the rate, the payout
+  day), it says it's confirmed at onboarding.
+- **`#contact`** points applicants to WhatsApp and to their dashboard, and everyone else
+  to Apply.
+- **Linked from** the Pro header (Help, `lg` and up), the mobile menu, the footer (Help
+  centre and Contact now stay in the Pro world) and the dashboard.
+
+**What's left is the owner's (no code):** set `DATABASE_URL` (free on Neon), so
+applications and the waitlist survive restarts. Choose a domain, then set `SITE_URL`
+and the `PROD_URL` repo variable. Set the `TWILIO_*` variables when SMS is funded, and
+`VITE_LAUNCHED` on launch day. After that comes Phase 6: real supply.
 
 **Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
 through one change of direction: it began as an interactive walkthrough at `/pro`, and at

@@ -44,6 +44,8 @@ export const ROUTES = {
   proLogin: '/pro/login',
   /** Signed-in: the artisan's dashboard (Uber's drivers.uber.com), rev 2.5. */
   proDashboard: '/pro/dashboard',
+  /** Help for artisans: pay, jobs, estimates, papers, safety, account (rev 2.6). */
+  proHelp: '/pro/help',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -72,6 +74,8 @@ const DESTINATIONS = {
   proApplication: ROUTES.proApplication,
   proLogin: ROUTES.proLogin,
   proDashboard: ROUTES.proDashboard,
+  proHelp: ROUTES.proHelp,
+  proContact: `${ROUTES.proHelp}#contact`,
   artisanPay: `${ROUTES.pro}#pay`,
   artisanVetting: `${ROUTES.pro}#vetting`,
   artisanApp: ROUTES.proApp,

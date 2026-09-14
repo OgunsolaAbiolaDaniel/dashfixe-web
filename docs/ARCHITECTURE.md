@@ -6,9 +6,11 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 2.5 — artisans can log in: `/pro/login` (the same
+**Last revised:** 2026-09-14 · Revision 2.6 — `/pro/help`, straight answers for artisans.
+Dashfixe Pro is complete: landing, app showcase, application and status, log in,
+dashboard, help. (Revision 2.5 — artisans can log in: `/pro/login` (the same
 phone sign-in, in Pro chrome) and `/pro/dashboard` (the application's status, a checklist
-for the call, their hours, their profile, and a sample preview).
+for the call, their hours, their profile, and a sample preview).)
 (Revision 2.3 — the Dashfixe Pro application: `/pro/apply`
 (four checked steps and a review) and `/pro/application` (the applicant's status), and the
 apply API takes a profile.) (Revision 2.2 — Dashfixe Pro's shell: the artisan world gets
@@ -84,9 +86,10 @@ from the rider site.
   Pro nav, and Apply. There's one link back to the customer site, and the two never
   share a menu.
 - **Built:** the landing (`/pro`), the app showcase (`/pro/app`), the application
-  (`/pro/apply`) and its status page (`/pro/application`), the log in (`/pro/login`) and
-  the dashboard (`/pro/dashboard`).
-- **Next:** `/pro/help`.
+  (`/pro/apply`) and its status page (`/pro/application`), the log in (`/pro/login`), the
+  dashboard (`/pro/dashboard`) and help (`/pro/help`). All four planned PRs are done.
+- **Phase 6** adds what needs real supply: artisan approval, real offers and jobs, and
+  payouts.
 - **Accounts:** one Dashfixe account, two roles. The same session signs in on both
   sides. The Pro header shows *Log in*, or *Dashboard* once signed in.
 
@@ -136,6 +139,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/pro/application` | pro | The applicant's status: reference, then WhatsApp call → documents → onboarding → ready. It shows what this device sent. Noindex | built (rev 2.3) |
 | `/pro/login` | pro | Artisan log in: `LoginPage surface="pro"`, the same phone sign-in and pilot bypass, in the minimal Pro header; it lands on `/pro/dashboard` (`?next=` honoured). Noindex, robots-disallowed | built (rev 2.5) |
 | `/pro/dashboard` | pro | Signed-in (visitors → `/pro/login?next=`): the application's status and next step, a "get ready for your call" checklist built from what they applied with, their hours and radius (saved on this device), their profile and sign out, and a badged sample preview of the earnings view. Without an application: Start your application. Noindex, robots-disallowed | built (rev 2.5) |
+| `/pro/help` | pro | Help for artisans: pay (`#pay`), jobs (`#jobs`), estimates (`#estimates`), papers (`#documents`), safety (`#safety`), account (`#account`), then a person (`#contact`). The Pro header, mobile menu, footer and dashboard link here. Indexed | built (rev 2.6) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/pro` | pro | Dashfixe Pro landing: how it works (`#how`), pay (`#pay`), vetting (`#vetting`), the app (`#app`), pilot application (`#apply`). `/for-artisans` redirects here (a 308 in `vercel.json` and in the app, `#section` kept) | built (rev 2.2; was `/for-artisans`, rev 1) |

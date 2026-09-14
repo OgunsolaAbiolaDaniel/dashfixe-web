@@ -44,8 +44,8 @@ const PRO_WORK: Rows = [
 ];
 const PRO_APP: Rows = [['footer.artisanApp', 'artisanApp']];
 const PRO_SUPPORT: Rows = [
-  ['footer.helpCentre', 'help'],
-  ['footer.contact', 'contact'],
+  ['footer.helpCentre', 'proHelp'],
+  ['footer.contact', 'proContact'],
 ];
 const PRO_CUSTOMERS: Rows = [
   ['pro.footer.getRepair', 'home'],

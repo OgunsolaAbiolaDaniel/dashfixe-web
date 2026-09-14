@@ -12,6 +12,7 @@ import ProAppPage from './pages/ProAppPage';
 import ProApplyPage from './pages/ProApplyPage';
 import ProApplicationPage from './pages/ProApplicationPage';
 import ProDashboardPage from './pages/ProDashboardPage';
+import ProHelpPage from './pages/ProHelpPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
@@ -94,6 +95,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.proApplication} element={<ProApplicationPage />} />
         <Route path={ROUTES.proLogin} element={<LoginPage surface="pro" />} />
         <Route path={ROUTES.proDashboard} element={<ProDashboardPage />} />
+        <Route path={ROUTES.proHelp} element={<ProHelpPage />} />
         <Route path={ROUTES.forArtisans} element={<Moved to={ROUTES.pro} />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />

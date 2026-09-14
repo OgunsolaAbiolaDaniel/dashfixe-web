@@ -247,6 +247,10 @@ export default function ProDashboardPage() {
                 <h2 className="mb-1 text-[15.5px] font-bold text-ink-80">{t('pro.dash.help')}</h2>
                 <p className="mb-3 text-[13.5px] font-medium leading-[1.5] text-ink-60">{t('pro.dash.helpBody')}</p>
                 <div className="flex flex-col gap-1.5">
+                  <Link to={ROUTES.proHelp} className="inline-flex items-center gap-1.5 text-[14px] font-bold text-brand transition hover:text-brand-hover">
+                    {t('pro.dash.helpCentre')}
+                    <ArrowRight size={15} />
+                  </Link>
                   <Link to={link('artisanPay')} className="inline-flex items-center gap-1.5 text-[14px] font-bold text-brand transition hover:text-brand-hover">
                     {t('pro.status.howPay')}
                     <ArrowRight size={15} />

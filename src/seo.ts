@@ -48,6 +48,7 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
   [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
   [ROUTES.proApply]: { title: 'seo.proApply.title', description: 'seo.proApply.desc' },
+  [ROUTES.proHelp]: { title: 'seo.proHelp.title', description: 'seo.proHelp.desc' },
   [ROUTES.proLogin]: { title: 'auth.pro.title', description: 'seo.proApply.desc', noindex: true },
   [ROUTES.proDashboard]: { title: 'pro.dash.title', description: 'seo.proApply.desc', noindex: true },
   // One device's application status: private.
@@ -112,6 +113,7 @@ export function indexablePaths(_launched: boolean): string[] {
     ROUTES.howItWorks,
     ROUTES.pro,
     ROUTES.proApply,
+    ROUTES.proHelp,
     ROUTES.about,
     ROUTES.help,
     ROUTES.privacy,
