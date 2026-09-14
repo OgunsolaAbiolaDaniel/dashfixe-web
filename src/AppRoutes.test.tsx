@@ -166,6 +166,17 @@ describe('/pro (the artisan app showcase)', () => {
   });
 });
 
+describe('the bell', () => {
+  it('lists updates from the jobs, counts the new ones, and clears the count once opened', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/activity');
+    await user.click(await screen.findByRole('button', { name: 'Notifications, 5 new' }));
+    expect(screen.getByRole('link', { name: /Tiago is on the way, arriving around 14:35/ })).toHaveAttribute('href', '/job/dfx-1042');
+    expect(screen.getByRole('link', { name: /Rate your job with Rita/ })).toHaveAttribute('href', '/job/dfx-1031');
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument();
+  });
+});
+
 describe('the customer app promo', () => {
   it('closes the visitor home with "Do more with the app", and points tradespeople to /pro', () => {
     renderAt('/');

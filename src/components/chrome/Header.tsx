@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type RefObject } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import mark from '../../assets/dashfixe-mark.png';
 import wordmark from '../../assets/dashfixe-wordmark.png';
-import { Bell, ChevronDown, Globe } from '../icons';
+import { Bell, CalendarCheck, ChevronDown, Close, Euro, Globe, Navigation, Receipt, Star, Wrench } from '../icons';
 import { ROUTES, link } from '../../routes';
+import { formatDate, useJobs } from '../../lib/jobs';
+import { useWallet } from '../../lib/wallet';
+import { buildNotices, markSeen, useSeen, type NoticeKind } from '../../lib/notifications';
 import { initialsOf, useAuth } from '../../auth';
 import { useLang } from '../../i18n';
 import MobileMenu from '../shared/MobileMenu';
@@ -174,28 +177,104 @@ function useDismiss(ref: RefObject<HTMLElement | null>, open: boolean, close: ()
 
 const POPOVER = 'absolute right-0 top-[calc(100%+8px)] z-[80] w-[280px] rounded-[18px] border border-line-soft bg-panel shadow-panel';
 
-/** The bell — honest: there is no notifications backend yet, and it says so. */
+const NOTICE_ICON: Record<NoticeKind, { Icon: ComponentType<{ size?: number; className?: string }>; tone: string }> = {
+  travelling: { Icon: Navigation, tone: 'bg-brand-tint text-brand' },
+  booked: { Icon: CalendarCheck, tone: 'bg-brand-tint text-brand' },
+  working: { Icon: Wrench, tone: 'bg-brand-tint text-brand' },
+  receipt: { Icon: Receipt, tone: 'bg-success-tint text-success' },
+  rate: { Icon: Star, tone: 'bg-warning-tint text-warning' },
+  cancelled: { Icon: Close, tone: 'bg-well text-ink-60' },
+  credit: { Icon: Euro, tone: 'bg-success-tint text-success' },
+};
+
+/**
+ * The bell: updates about this customer's jobs and credit (lib/notifications),
+ * each linking where it's about. The badge counts what's new; opening the panel
+ * marks it read, while still highlighting what was new this time.
+ */
 function BellMenu() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const jobs = useJobs();
+  const wallet = useWallet();
+  const seen = useSeen();
   const [open, setOpen] = useState(false);
+  const [fresh, setFresh] = useState<string[]>([]);
   const wrap = useRef<HTMLDivElement>(null);
-  useDismiss(wrap, open, () => setOpen(false));
+  const close = () => setOpen(false);
+  useDismiss(wrap, open, close);
+
+  const notices = buildNotices(jobs, wallet);
+  const unseen = notices.filter((n) => !seen.includes(n.id));
+
+  const toggle = () => {
+    if (!open) {
+      setFresh(unseen.map((n) => n.id));
+      markSeen(notices.map((n) => n.id));
+    }
+    setOpen((v) => !v);
+  };
 
   return (
     <div ref={wrap} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label={t('customer.notifications')}
+        onClick={toggle}
+        aria-label={unseen.length ? t('notif.count', { n: unseen.length }) : t('customer.notifications')}
         aria-expanded={open}
-        className="grid h-ctl w-ctl place-items-center rounded-xl transition hover:bg-well"
+        className="relative grid h-ctl w-ctl place-items-center rounded-xl transition hover:bg-well"
       >
         <Bell size={19} className="text-ink-60" />
+        {unseen.length > 0 && (
+          <span
+            aria-hidden="true"
+            className="absolute right-1 top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border-2 border-panel bg-brand px-1 text-[10px] font-extrabold leading-none text-white"
+          >
+            {unseen.length > 9 ? '9+' : unseen.length}
+          </span>
+        )}
       </button>
       {open && (
-        <div className={`${POPOVER} p-4`}>
-          <div className="mb-1.5 text-label text-ink-40">{t('notif.title')}</div>
-          <p className="text-[13.5px] font-medium leading-[1.5] text-ink-60">{t('notif.empty')}</p>
+        <div className="absolute right-0 top-[calc(100%+8px)] z-[80] w-[340px] max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-line-soft bg-panel shadow-panel">
+          <div className="border-b border-line-rule px-4 py-3 text-label text-ink-40">{t('notif.title')}</div>
+          {notices.length === 0 ? (
+            <p className="p-4 text-[13.5px] font-medium leading-[1.5] text-ink-60">{t('notif.empty')}</p>
+          ) : (
+            <ul className="max-h-[min(380px,60vh)] overflow-y-auto py-1">
+              {notices.slice(0, 12).map((n) => {
+                const { Icon, tone } = NOTICE_ICON[n.kind];
+                const isNew = fresh.includes(n.id);
+                return (
+                  <li key={n.id}>
+                    <Link
+                      to={n.to}
+                      onClick={close}
+                      className={'flex items-start gap-3 px-4 py-3 text-ink no-underline transition hover:bg-page hover:text-ink' + (isNew ? ' bg-brand-tint/40' : '')}
+                    >
+                      <span className={`grid h-9 w-9 flex-none place-items-center rounded-[12px] ${tone}`}>
+                        <Icon size={16} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13.5px] font-semibold leading-[1.4] text-ink">{t(n.key, n.vars)}</span>
+                        <span className="mt-0.5 block text-[12px] font-medium text-ink-40">{formatDate(n.date, lang)}</span>
+                      </span>
+                      {isNew && (
+                        <span className="mt-1 flex-none rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-[.04em] text-white">
+                          {t('notif.new')}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          <Link
+            to={ROUTES.activity}
+            onClick={close}
+            className="block border-t border-line-rule px-4 py-2.5 text-center text-[13px] font-bold text-brand transition hover:bg-page hover:text-brand-hover"
+          >
+            {t('notif.all')}
+          </Link>
         </div>
       )}
     </div>
