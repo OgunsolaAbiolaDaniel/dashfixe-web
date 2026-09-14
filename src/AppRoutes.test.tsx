@@ -153,55 +153,30 @@ describe('/activity', () => {
   });
 });
 
-describe('/pro (the artisan app walkthrough)', () => {
-  it('takes a sample job from the offer to the payout, with the money right at every step', async () => {
-    const user = userEvent.setup();
+describe('/pro (the artisan app showcase)', () => {
+  it('shows the app with honest "coming soon" store badges and the way into the pilot', () => {
     renderAt('/pro');
-    expect(screen.getByText('Walkthrough · sample job · nothing is sent')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
+    expect(screen.getAllByText('Coming soon on the').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Google Play').length).toBeGreaterThan(0);
+    // Nothing implies the app is out: the badges link nowhere.
+    expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Screens are previews with sample data.')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/for-artisans#apply');
+  });
+});
 
-    // Take the work.
-    await user.click(screen.getByRole('switch', { name: /You are offline/ }));
-    await user.click(await screen.findByRole('button', { name: 'Accept job' }, { timeout: 4000 }));
-    expect(screen.getByText('Exact address shown after approval')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Message Sofia' }));
+describe('the customer app promo', () => {
+  it('closes the visitor home with "Do more with the app", and points tradespeople to /pro', () => {
+    renderAt('/');
+    expect(screen.getByRole('heading', { name: 'Do more with the app' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /See the Dashfixe Pro app/ })).toHaveAttribute('href', '/pro');
+    expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
+  });
 
-    // Price it before you drive.
-    await user.click(screen.getByRole('button', { name: /Is it dripping all the time/ }));
-    expect(await screen.findByText('All the time.', {}, { timeout: 3000 })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Build estimate' }));
-    expect(screen.getByText('€61.01')).toBeInTheDocument();
-    expect(screen.getByText('€53.69')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Send for approval' }));
-
-    // Do the job: the address unlocks, a second estimate is approved separately.
-    await user.click(await screen.findByRole('button', { name: 'Start driving' }, { timeout: 4000 }));
-    await user.click(screen.getByRole('button', { name: 'I have arrived' }));
-    await user.click(screen.getByRole('button', { name: /Send a second estimate/ }));
-    expect(screen.getByText('Job total becomes €80.57')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Send to Sofia' }));
-    await user.click(await screen.findByRole('button', { name: 'Finish the job' }, { timeout: 4000 }));
-
-    // Close it: charging waits for the checklist.
-    const charge = screen.getByRole('button', { name: 'Mark complete & charge' });
-    expect(charge).toBeDisabled();
-    for (const box of screen.getAllByRole('checkbox')) await user.click(box);
-    expect(screen.getByText('€70.90')).toBeInTheDocument();
-    await user.click(charge);
-
-    // Get paid: it lands in this week's payout.
-    expect(await screen.findByRole('heading', { name: '€70.90 is yours.' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Back to Today' }));
-    await user.click(screen.getByRole('button', { name: 'Earnings' }));
-    expect(screen.getByText('€412.40')).toBeInTheDocument();
-    expect(screen.getByText('Lead fees')).toBeInTheDocument();
-  }, 30000);
-
-  it('lets an artisan pass on an offer at no cost', async () => {
-    const user = userEvent.setup();
-    renderAt('/pro');
-    await user.click(screen.getByRole('switch', { name: /You are offline/ }));
-    await user.click(await screen.findByRole('button', { name: 'Not now' }, { timeout: 4000 }));
-    expect(screen.getByText('You passed on that one. Declining is free and quiet.')).toBeInTheDocument();
+  it('gives signed-in customers a "Do more on the Dashfixe app" band', async () => {
+    renderSignedIn('/activity');
+    expect(await screen.findByRole('complementary', { name: 'Do more on the Dashfixe app' })).toBeInTheDocument();
   });
 });
 

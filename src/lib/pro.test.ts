@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { payout, quote, recordPaid, resetPro, week, type QuoteLine } from './pro';
+import { payout, quote, type QuoteLine } from './pro';
 
 const line = (amount: number, kind: QuoteLine['kind'] = 'part'): QuoteLine => ({ id: String(amount), kind, label: 'x', detail: '', amount });
 
@@ -16,14 +16,5 @@ describe('artisan money (designs/Dashfixe Artisan App.dc.html)', () => {
 
   it('ignores blank or negative amounts', () => {
     expect(quote([line(Number.NaN), line(-5), line(10)]).subtotal).toBe(10);
-  });
-
-  it("adds a finished walkthrough job to the seeded week, and starts over clean", () => {
-    expect(week([]).net).toBe(341.5);
-    const store = recordPaid({ initials: 'SL', title: { EN: 'Tap', PT: 'Torneira' }, total: 80.57 });
-    expect(store.net).toBe(70.9);
-    expect(week([store]).net).toBe(412.4);
-    expect(week([store]).jobs).toHaveLength(7);
-    resetPro();
   });
 });

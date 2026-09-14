@@ -1,5 +1,6 @@
 import { Link, Navigate } from 'react-router-dom';
 import AppBar from '../components/chrome/AppBar';
+import AppPromoBand from '../components/shared/AppPromoBand';
 import { ArrowRight, Check, Close, Navigation } from '../components/icons';
 import { formatDate, formatEuro, useJobs, type Job } from '../lib/jobs';
 import { useAuth } from '../auth';
@@ -44,6 +45,7 @@ export default function ActivityPage() {
           {t('activity.accountLink')}
           <ArrowRight size={16} className="text-ink-40" />
         </Link>
+        <AppPromoBand className="mt-5" />
       </main>
     </div>
   );

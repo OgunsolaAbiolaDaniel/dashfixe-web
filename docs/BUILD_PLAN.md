@@ -351,25 +351,31 @@ The owner said the "Plan it for later" calendar was the browser default:
 
 The owner agreed to build the artisan side next: Uber's driver app, for tradespeople.
 
-- ✅ **`/pro`** is a public walkthrough of the design's 12 screens.
-  - **The job:** offer, brief, chat, estimate builder, approval, driving, a second
-    estimate, closing the job, and payout.
-  - **The tabs:** Today, Schedule, Earnings and Profile.
-- ✅ **The estimate builder is real arithmetic:** IVA 23%, and a 12% commission (an
-  example pilot rate) only on finished jobs. No lead fees anywhere.
-- ✅ **Linked from For artisans** ("Try the artisan app"). It's labelled as a walkthrough
-  on every screen.
+It started as an interactive walkthrough. The owner then asked for a reference page
+instead: preview screens and "download for iOS and Android", the way product sites
+present an app. It also asked for the customer app to be promoted.
+
+- ✅ **`/pro`** is the artisan app's showcase: the pitch, four still screens (Today,
+  offer, estimate, earnings), what's in the app, and "Get the app with the pilot". It's
+  not interactive.
+- ✅ **Store badges say "Coming soon"** and link nowhere. This follows the honesty rule
+  as the owner updated it on 2026-09-14 (`../Dashfixe.md`). They become real links when
+  the apps are published.
+- ✅ **"Do more with the app"** closes the visitor home, with customer-app stills.
+  Signed-in customers get the **"Do more on the Dashfixe app"** band on the home panel,
+  Activity and Account.
+- ✅ **The design's money is kept as real arithmetic** (`lib/pro.ts`): IVA 23%, and a 12%
+  example commission on finished jobs only. The stills show €61.01 → €53.69.
 - ✅ **Production checks** now cover `/account`, `/pro`, 30-day slot URLs and
   `robots.txt`.
 
 **Owner test:**
-1. Open `/for-artisans` and tap "Try the artisan app".
-2. Flip "You are offline" on. An offer arrives, so tap **Accept job**.
-3. Message Sofia, tap the suggested reply, then **Build estimate**. Change a price and
-   watch "You receive" follow. Send it.
-4. Start driving, arrive, and send a second estimate. Finish: tick the checklist, then
-   **Mark complete & charge**.
-5. Back on Today, open **Earnings**: your job is in Friday's payout.
+1. On `/` signed out, scroll to the end: **Do more with the app**, with three phone
+   screens and "Coming soon" badges.
+2. Tap **See the Dashfixe Pro app** to open `/pro`: four app screens, and what's in the
+   app.
+3. Sign in, then open **Activity** or **Account**: the **Do more on the Dashfixe app**
+   band is at the bottom.
 
 ### Still open in Phase 5 (operator steps, no code)
 
@@ -389,7 +395,7 @@ The owner wants artisans to have a world of their own, the way Uber keeps driver
 uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
 own navigation, look and sign-in, never mixed with the rider experience. Agreed on
 2026-09-14: the name is **Dashfixe Pro**, and it's planned only — the owner starts it.
-Build it on top of #18 (the `/pro` walkthrough), which becomes the dashboard's core.
+The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
 
 **The map (Uber → Dashfixe Pro):**
 
@@ -398,7 +404,8 @@ Build it on top of #18 (the `/pro` walkthrough), which becomes the dashboard's c
 | uber.com/drive | `/pro` | Artisan-only marketing: earnings, how it works, vetting, "no lead fees", FAQs. Own header and footer in the design's darker chrome. `/for-artisans` redirects here. |
 | Driver sign-up | `/pro/apply` | A multi-step application (trade, area, experience, documents, availability), then an application-status page. Replaces the short form. |
 | Driver login | `/pro/login` | Phone sign-in on the same auth, with the pilot bypass until SMS is funded. |
-| drivers.uber.com + Driver app | `/pro/app` | The artisan dashboard: Today, jobs, schedule, earnings, profile and documents. It grows from the #18 walkthrough into a real desktop layout, not only a phone frame. |
+| drivers.uber.com | `/pro/dashboard` | The artisan's web dashboard: jobs, schedule, earnings, profile and documents. The #18 walkthrough in git history (`1689211`) is a head start. |
+| Driver app page | `/pro/app` | The artisan app's download page. Today's `/pro` showcase moves here when the Pro landing takes `/pro`. |
 | Driver help | `/pro/help` | Payouts, commission, cancellations, documents. |
 
 **Decisions already made:**
@@ -414,11 +421,11 @@ Build it on top of #18 (the `/pro` walkthrough), which becomes the dashboard's c
 
 **Delivery, one PR each:**
 1. ⬜ **Pro shell and landing.** The `pro` header and footer, and `/pro` with the
-   For artisans content reworked. `/for-artisans` → `/pro`. The walkthrough moves to
-   `/pro/try`.
+   For artisans content reworked. `/for-artisans` → `/pro`. The app showcase moves
+   to `/pro/app`.
 2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
    then the status page.
-3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/app`. Sample data stays
+3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
    labelled until Phase 6 supplies real jobs.
 4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
 

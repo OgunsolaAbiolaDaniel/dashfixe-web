@@ -30,13 +30,34 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
 **Next (planned; the owner will say when to start): Dashfixe Pro.** A separate artisan
-world, like Uber's driver site, with its own `/pro` landing, `/pro/apply`, `/pro/login`,
-`/pro/app` dashboard and `/pro/help`. There are four PRs, in the order in BUILD_PLAN →
-"Dashfixe Pro". The name is agreed. Build it on top of #18.
+world, like Uber's driver site: a `/pro` landing, `/pro/apply`, `/pro/login`, a
+`/pro/dashboard`, the `/pro/app` download page (today's `/pro` showcase moves there) and
+`/pro/help`. There are four PRs, in the order in BUILD_PLAN → "Dashfixe Pro". The name is
+agreed.
 
-**Revision 2.0**, on branch `feat/artisan-app`, builds the other half of the marketplace:
-the artisan app, as a public walkthrough at `/pro`. It follows the 12 screens of
-`designs/Dashfixe Artisan App.dc.html`.
+**Revision 2.0**, on branch `feat/artisan-app` (#18), shows the apps, honestly. It went
+through one change of direction: it began as an interactive walkthrough at `/pro`, and at
+the owner's request that became a showcase page instead ("like a reference page… preview
+screens… download for iOS and Android").
+
+- **`/pro`** is the artisan app's showcase (`pages/ProPage.tsx`):
+  - a dark hero with the pitch
+  - four still screens from `designs/Dashfixe Artisan App.dc.html`: Today, a job offer,
+    the estimate builder and Earnings (`components/pro/Shots.tsx`, framed by `PhoneShot`)
+  - what's in the app, then "Get the app with the pilot"
+- **Store badges are "Coming soon"** (`StoreBadges`) and link nowhere. The owner updated
+  the honesty rule in `../Dashfixe.md` on 2026-09-14: the apps are promoted as coming
+  soon while the product is built, and badges become links only once the apps are
+  published.
+- **Customers:** the visitor home closes with **"Do more with the app"**
+  (`home/Apps.tsx`): benefits, badges, three customer-app stills (`home/AppShots.tsx`)
+  and a link for tradespeople to `/pro`. Signed-in customers get the **"Do more on the
+  Dashfixe app"** band (`AppPromoBand`) at the end of the home panel, Activity and
+  Account.
+- **Strings:** 138 walkthrough and old `apps.*` keys were pruned from both dictionaries.
+
+*The walkthrough, for the record* (it's in git history, `1689211`, and the notes below
+describe it):
 
 - **The job, end to end** (`components/pro/JobFlow.tsx`):
   - **Offer.** It arrives once the artisan goes online. The take-home is stated before

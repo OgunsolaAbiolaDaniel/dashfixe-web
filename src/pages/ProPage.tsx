@@ -1,129 +1,103 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Header from '../components/chrome/Header';
-import JobFlow from '../components/pro/JobFlow';
-import ProTabs from '../components/pro/ProTabs';
-import { Check } from '../components/icons';
-import { PACE, stepOf, type Stage } from '../components/pro/stages';
-import { resetPro, usePro } from '../lib/pro';
+import MarketingShell from '../components/chrome/MarketingShell';
+import PhoneShot from '../components/shared/PhoneShot';
+import StoreBadges from '../components/shared/StoreBadges';
+import { EarningsShot, EstimateShot, OfferShot, TodayShot } from '../components/pro/Shots';
+import { Bolt, Euro, Receipt, Wrench } from '../components/icons';
 import { useLang } from '../i18n';
 import { link } from '../routes';
+import type { StringKey } from '../i18n/strings';
 
 /**
- * /pro — the artisan app, as a walkthrough (designs/Dashfixe Artisan App.dc.html).
+ * /pro — the artisan app's showcase (the way a product page presents an app to
+ * download): the pitch, stills of the app (designs/Dashfixe Artisan App.dc.html),
+ * what's in it, and how to get it. Not interactive — a reference page.
  *
- * The other half of the marketplace: what a pilot artisan will use. Go online,
- * take a sample job, price it before driving, do it, close it, and see the
- * payout. Public (it's a recruiting tool as much as a product), noindex (it's
- * sample data), and it never sends anything — the ribbon says so on every screen.
- *
- * Phones get the app full-screen; desktop shows it at phone width beside a short
- * explainer that tracks which of the design's four chapters you're in.
+ * The store badges say "coming soon" and link nowhere: the app ships with the
+ * pilot cohort (../Dashfixe.md: never imply a live app). The way in today is
+ * the pilot application.
  */
-const STEPS = ['pro.step1', 'pro.step2', 'pro.step3', 'pro.step4'] as const;
+const SHOTS = [
+  { caption: 'pro.shot.today', Shot: TodayShot },
+  { caption: 'pro.shot.offer', Shot: OfferShot },
+  { caption: 'pro.shot.estimate', Shot: EstimateShot },
+  { caption: 'pro.shot.earnings', Shot: EarningsShot },
+] as const;
+
+const FEATURES: ReadonlyArray<{ Icon: typeof Bolt; title: StringKey; body: StringKey }> = [
+  { Icon: Bolt, title: 'pro.step1', body: 'pro.f1' },
+  { Icon: Receipt, title: 'pro.step2', body: 'pro.f2' },
+  { Icon: Wrench, title: 'pro.step3', body: 'pro.f3' },
+  { Icon: Euro, title: 'pro.step4', body: 'pro.f4' },
+];
 
 export default function ProPage() {
   const { t } = useLang();
-  const pro = usePro();
-  const [now] = useState(() => Date.now());
-  const [stage, setStage] = useState<Stage>('home');
-  const [finished, setFinished] = useState(false);
-  const [passes, setPasses] = useState(0);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [run, setRun] = useState(0);
-
-  // Online and idle: an offer arrives (sooner the first time than after a pass).
-  useEffect(() => {
-    if (!pro.online || stage !== 'home' || finished) return;
-    const id = window.setTimeout(
-      () => {
-        setNotice(null);
-        setStage('offer');
-      },
-      passes ? PACE.again : PACE.offer,
-    );
-    return () => window.clearTimeout(id);
-  }, [pro.online, stage, finished, passes]);
-
-  const reset = () => {
-    resetPro();
-    setStage('home');
-    setFinished(false);
-    setPasses(0);
-    setNotice(null);
-    setRun((r) => r + 1);
-  };
-
-  const step = stepOf(stage, finished);
-
   return (
-    <div className="min-h-screen bg-canvas">
-      <Header minimal />
-      <main className="lg:mx-auto lg:flex lg:max-w-[1120px] lg:items-start lg:justify-center lg:gap-[clamp(40px,6vw,96px)] lg:px-10 lg:py-10">
-        <aside className="lg:sticky lg:top-[108px] lg:max-w-[440px] lg:flex-1 lg:pt-8">
-          <p className="mb-3 hidden text-label text-brand lg:block">{t('pro.eyebrow')}</p>
-          <h1 className="sr-only lg:not-sr-only lg:mb-4 lg:block lg:text-display lg:text-ink">{t('fa.hero.title')}</h1>
-          <p className="mb-7 hidden max-w-[420px] text-lead text-ink-60 lg:block">{t('pro.intro')}</p>
-          <ol className="mb-7 hidden flex-col gap-2 lg:flex">
-            {STEPS.map((key, i) => (
-              <li
-                key={key}
-                aria-current={step === i ? 'step' : undefined}
-                className={
-                  'flex items-center gap-3 rounded-[16px] px-3.5 py-3 text-[15px] font-bold transition ' +
-                  (step === i ? 'bg-panel text-ink shadow-card' : step > i ? 'text-ink-80' : 'text-ink-60')
-                }
-              >
-                <span
-                  className={
-                    'grid h-7 w-7 flex-none place-items-center rounded-full text-[12.5px] font-extrabold ' +
-                    (step > i ? 'bg-success text-white' : step === i ? 'bg-brand text-white' : 'bg-well text-ink-60')
-                  }
-                >
-                  {step > i ? <Check size={14} strokeWidth={3} /> : i + 1}
-                </span>
-                {t(key)}
-              </li>
-            ))}
-          </ol>
-          <div className="hidden flex-wrap items-center gap-3 lg:flex">
-            <Link
-              to={link('artisanApply')}
-              className="flex h-ctl items-center rounded-btn bg-ink px-5 text-[14.5px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
-            >
-              {t('fa.hero.apply')}
-            </Link>
-            <button type="button" onClick={reset} className="h-ctl rounded-btn px-4 text-[14.5px] font-bold text-ink-60 transition hover:bg-well hover:text-ink">
-              {t('pro.restart')}
-            </button>
+    <MarketingShell>
+      {/* The pitch and the stills, on the artisan app's darker chrome. */}
+      <section className="overflow-hidden bg-ink">
+        <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pt-[clamp(48px,7vw,88px)] text-center">
+          <p className="mb-4 text-label text-brand-on-dark">{t('pro.show.eyebrow')}</p>
+          <h1 className="mx-auto max-w-[780px] text-display text-white">{t('fa.hero.title')}</h1>
+          <p className="mx-auto mt-5 max-w-[560px] text-lead text-onink-strong">{t('fa.hero.body')}</p>
+          <div className="mt-8 flex justify-center">
+            <StoreBadges tone="light" />
           </div>
-        </aside>
+          <p className="mt-3 text-[13px] font-medium text-onink">{t('store.note')}</p>
+          <Link
+            to={link('artisanApply')}
+            className="mt-6 inline-flex h-ctl items-center rounded-btn border border-white/25 px-5 text-[14.5px] font-bold text-white transition hover:bg-white/10 hover:text-white"
+          >
+            {t('fa.hero.apply')}
+          </Link>
+        </div>
+        <div className="mx-auto mt-[clamp(40px,5vw,64px)] flex max-w-[1280px] snap-x gap-6 overflow-x-auto px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)] lg:justify-center">
+          {SHOTS.map(({ caption, Shot }, i) => (
+            <PhoneShot key={caption} caption={t(caption)} onDark className={i % 2 ? 'lg:mt-12' : ''}>
+              <Shot />
+            </PhoneShot>
+          ))}
+        </div>
+        <p className="pb-8 text-center text-[12.5px] font-medium text-onink">{t('pro.show.previews')}</p>
+      </section>
 
-        {/* The app: full screen on a phone, a phone-sized device on desktop. */}
-        <div className="lg:w-[400px] lg:flex-none">
-          <div className="flex h-[calc(100dvh-69px)] flex-col overflow-hidden bg-page lg:h-[min(800px,calc(100dvh-140px))] lg:min-h-[620px] lg:rounded-[44px] lg:border-[10px] lg:border-ink lg:shadow-panel">
-            <p className="flex-none bg-warning-tint px-4 py-1.5 text-center text-[12px] font-bold text-warning">{t('pro.ribbon')}</p>
-            {stage === 'home' ? (
-              <ProTabs key={run} now={now} finished={finished} notice={notice} onReset={reset} />
-            ) : (
-              <JobFlow
-                key={run}
-                stage={stage}
-                go={setStage}
-                onPass={(why) => {
-                  setPasses((p) => p + 1);
-                  setNotice(t(why === 'expired' ? 'pro.offer.expired' : 'pro.offer.passed'));
-                  setStage('home');
-                }}
-                onDone={() => {
-                  setFinished(true);
-                  setStage('home');
-                }}
-              />
-            )}
+      {/* What's in it — one line per chapter of the design. */}
+      <section className="bg-page">
+        <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(48px,6vw,80px)]">
+          <h2 className="mb-8 text-h2 text-ink">{t('pro.show.inside')}</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,250px),1fr))] gap-4">
+            {FEATURES.map(({ Icon, title, body }) => (
+              <article key={title} className="rounded-card border border-line-soft bg-panel p-6">
+                <Icon size={22} className="mb-4 text-brand" />
+                <h3 className="mb-1.5 text-[16.5px] font-bold tracking-[-.015em] text-ink">{t(title)}</h3>
+                <p className="text-[14px] font-medium leading-[1.55] text-ink-60">{t(body)}</p>
+              </article>
+            ))}
           </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Get it. */}
+      <section className="bg-panel">
+        <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] py-[clamp(48px,6vw,80px)]">
+          <div className="flex flex-wrap items-center gap-8 rounded-hero bg-brand-tint p-[clamp(24px,4vw,48px)]">
+            <div className="min-w-[260px] flex-1">
+              <h2 className="mb-2 text-h2 text-ink">{t('pro.show.cta')}</h2>
+              <p className="max-w-[520px] text-lead text-ink-60">{t('pro.show.ctaBody')}</p>
+            </div>
+            <div className="flex flex-col items-start gap-4">
+              <StoreBadges />
+              <Link
+                to={link('artisanApply')}
+                className="flex h-ctl items-center rounded-btn bg-ink px-5 text-[14.5px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
+              >
+                {t('fa.hero.apply')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </MarketingShell>
   );
 }

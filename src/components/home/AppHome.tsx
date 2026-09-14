@@ -13,6 +13,7 @@ import { ROUTES, jobUrl } from '../../routes';
 import { activeJob, formatDate, formatEuro, useJobs } from '../../lib/jobs';
 import { useAuth } from '../../auth';
 import { classifyNeed } from '../../lib/classify';
+import AppPromoBand from '../shared/AppPromoBand';
 
 /**
  * The signed-in home — ARCHITECTURE.md §2, Uber's m.uber.com pattern. The map IS
@@ -273,6 +274,9 @@ export default function AppHome() {
               <ChevronDown size={14} className="-rotate-90" />
             </Link>
           </section>
+
+          {/* The app, at the end of the panel: "do more on the app". */}
+          <AppPromoBand />
         </div>
 
         {/* The map IS the home. Tapping a pin opens the search with that artisan. */}

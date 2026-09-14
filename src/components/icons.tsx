@@ -296,6 +296,16 @@ export const Apple = ({ size = 18, className }: IconProps) => (
   </svg>
 );
 
+/** Google Play's triangle, monochrome (currentColor), for the store badges. */
+export const GooglePlay = ({ size = 18, className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M3.6 2.3 13.3 12l-9.7 9.7c-.3-.3-.5-.7-.5-1.2V3.5c0-.5.2-.9.5-1.2Z" />
+    <path d="M4.8 1.7 16.4 8.4l-2.4 2.9L4.8 1.7Z" />
+    <path d="M4.8 22.3 14 12.7l2.4 2.9-11.6 6.7Z" />
+    <path d="m17.4 9 3 1.7c1 .6 1 2 0 2.6l-3 1.7-2.6-3 2.6-3Z" />
+  </svg>
+);
+
 export const Star = ({ size = 12, className }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
     <path d="m12 2 3 6.5 7 .9-5 4.8 1.2 7L12 17.8 5.8 21.2 7 14.2 2 9.4l7-.9Z" />
