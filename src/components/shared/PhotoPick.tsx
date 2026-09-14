@@ -52,7 +52,13 @@ export default function PhotoPick({ variant }: { variant: 'round' | 'chip' }) {
           </button>
         </span>
       ) : (
-        <button type="button" onClick={() => input.current?.click()} className={trigger}>
+        <button
+          type="button"
+          onClick={() => input.current?.click()}
+          // The round variant is icon-only: it needs a name for screen readers.
+          aria-label={variant === 'round' ? t('hero.attachPhoto') : undefined}
+          className={trigger}
+        >
           <Camera size={variant === 'round' ? 18 : 17} className={variant === 'chip' ? 'text-brand' : undefined} />
           {variant === 'chip' && t('customer.addPhoto')}
         </button>

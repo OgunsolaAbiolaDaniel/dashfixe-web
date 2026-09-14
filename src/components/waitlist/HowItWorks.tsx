@@ -51,7 +51,7 @@ export default function HowItWorks() {
                 <span className="grid h-[46px] w-[46px] flex-none place-items-center rounded-well bg-brand-tint">
                   <Icon size={21} className="text-brand" />
                 </span>
-                <span className="text-[13px] font-extrabold tracking-[.06em] text-ink-30">{n}</span>
+                <span className="text-[13px] font-extrabold tracking-[.06em] text-ink-40">{n}</span>
               </div>
               <h3 className="mb-2 text-section text-ink">{title}</h3>
               <p className="text-[14.5px] font-medium leading-[1.55] text-ink-60 [text-wrap:pretty]">

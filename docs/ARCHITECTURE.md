@@ -6,8 +6,10 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-12 · Revision 1.5 — product polish: one header, one-tap pilot
-login, one shared place, and chat that turns a search into a job.
+**Last revised:** 2026-09-14 · Revision 1.6 — production readiness: a crash screen, a real
+404, honest legal pages, the Dashfixe icons and manifest, and WCAG 2.1 AA enforced in CI.
+(Revision 1.5 — product polish: one header, one-tap pilot login, one shared place, and
+chat that turns a search into a job.)
 
 ---
 
@@ -117,7 +119,11 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 ### Redirect policy
 
 Old paths never 404. `/fix`, `/book`, `/coverage` are real `<Route>` entries that issue
-client redirects to their new homes. `src/routes.ts` stays the single place any internal
+client redirects to their new homes. **Genuinely unknown paths** (rev 1.6) render
+`NotFoundPage`, an honest 404 marked `noindex` that links to the usual destinations, rather
+than a silent bounce home. That bounce confused people and read as a "soft 404" to search
+engines. Unknown trade slugs and artisan ids still redirect into `/explore`, because that
+is what they meant. `src/routes.ts` stays the single place any internal
 link resolves through (`link()`), so a future re-cut is a one-file change.
 
 ### Search and sharing (rev 1.4)
@@ -316,6 +322,16 @@ that pipeline with sample data. Geocoding: Nominatim within its fair-use policy 
 - **CI:** GitHub Actions runs `check` (gate + build), then `smoke` (Chromium), on every
   PR, keeping traces on failure. No PR merges red. That one rule would have prevented the
   2026-09-10 main breakage.
+
+- **Accessibility (rev 1.6):** `e2e/a11y.spec.ts` runs axe-core against WCAG 2.1 A/AA on
+  eight landing pages, including the 404, on the built app, inside the CI smoke job.
+  - Serious or critical violations fail the build.
+  - The colour tokens are chosen to pass (`docs/DESIGN.md` → "Colour and contrast").
+  - It's a launch requirement: the European Accessibility Act covers consumer e-commerce
+    in the EU.
+- **Runtime safety (rev 1.6):** an `ErrorBoundary` around the routes means a page crash
+  shows a reload screen, and navigating away recovers. `ErrorBoundary.test.tsx` covers
+  both.
 
 ## 9. Delivery
 

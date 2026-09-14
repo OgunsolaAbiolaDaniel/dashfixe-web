@@ -253,6 +253,29 @@ that just works without paid SMS:
 3. On `/explore`, chat with Tiago, send, then Approve €63.00 → Confirm → Track Tiago.
 4. On the job, choose "Walkthrough: finish this job", then rate it. It shows in Activity.
 
+### Revision 1.6 · Production readiness ✅ (branch `feat/production-ready`, stacked on #12)
+
+The site is complete; this pass makes it safe for real visitors. It needs no money or
+accounts:
+
+- ✅ **A crash screen instead of a white page** (`ErrorBoundary`). Navigating away
+  recovers.
+- ✅ **A real 404** (`NotFoundPage`, `noindex`) instead of a silent redirect home.
+- ✅ **Privacy, cookies and terms rewritten to match what is actually stored:** the
+  `dfx_session` and `dfx_otp` cookies, plus local storage for language, address, places
+  and walkthrough jobs.
+- ✅ **The Dashfixe icons.** The tab showed Vite's template logo. Now there's a favicon, a
+  `favicon.ico`, touch and app icons, and a web app manifest (installable on phones).
+- ✅ **WCAG 2.1 AA, enforced by axe in CI.**
+  - The first run failed 6 of 8 pages.
+  - Fixed through contrast tokens, underlined in-text links, and named icon buttons.
+
+**Owner test:**
+1. Open `/no-such-page` and you get the 404, with links back in.
+2. The browser tab shows the Dashfixe mark.
+3. On a phone, open the site and choose "Add to Home Screen"; the Dashfixe icon appears.
+4. Read `/cookies`: it names the two cookies and what the browser keeps.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

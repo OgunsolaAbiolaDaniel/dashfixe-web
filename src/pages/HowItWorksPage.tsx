@@ -61,7 +61,7 @@ export default function HowItWorksPage() {
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-panel">
                     <Icon size={19} strokeWidth={1.7} className="text-brand" />
                   </span>
-                  <span className="text-[13px] font-extrabold text-ink-30">{String(n).padStart(2, '0')}</span>
+                  <span className="text-[13px] font-extrabold text-ink-40">{String(n).padStart(2, '0')}</span>
                 </div>
                 <h2 className="mb-2 text-[16.5px] font-bold leading-[1.3] tracking-[-.01em] text-ink">{t(`how.step${n}.title`)}</h2>
                 <p className="text-[14px] font-medium leading-[1.55] text-ink-60">{t(`how.step${n}.body`)}</p>

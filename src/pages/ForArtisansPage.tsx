@@ -66,7 +66,7 @@ export default function ForArtisansPage() {
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-panel">
                     <Icon size={21} strokeWidth={1.6} className="text-brand" />
                   </span>
-                  <span className="text-[13px] font-extrabold tracking-[.08em] text-ink-30">{n}</span>
+                  <span className="text-[13px] font-extrabold tracking-[.08em] text-ink-40">{n}</span>
                 </div>
                 <h3 className="mb-2 text-h3 text-ink">{t(title)}</h3>
                 <p className="text-[14.5px] font-medium leading-[1.55] text-ink-60">{t(body)}</p>

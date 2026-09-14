@@ -5,7 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-12 · **Branch:** `main` (everything through #11 merged) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/production-ready` (stacked on the docs PR #12 —
+merge #12 first; everything through #11 is on `main`) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -26,6 +27,22 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   was accepted by `/api/auth/me`, so anyone can forge a login. The owner sets it in Vercel
   (Settings → Environment Variables), then redeploys, and the forged-token test should be
   re-run. See "Going live" below.
+
+**Revision 1.6**, on branch `feat/production-ready`, gets the site ready for real
+visitors, with no money or accounts needed:
+
+- **A crash safety net.** `ErrorBoundary` wraps every route: a crash shows a reload
+  screen instead of a white page, and navigating away recovers.
+- **A real 404.** `NotFoundPage` replaces the silent redirect home. It is `noindex`, and
+  it links to the pages people usually meant.
+- **Honest legal pages.** Privacy, cookies and terms now state exactly what is stored:
+  the two httpOnly cookies, and what the browser keeps in local storage.
+- **The Dashfixe icons.** The browser tab was showing Vite's template logo. Now there's a
+  favicon, `favicon.ico`, the touch and app icons, and a web app manifest, so the site can
+  be added to a phone's home screen.
+- **WCAG 2.1 AA.** axe-core runs on eight landing pages inside the CI smoke job. The
+  contrast tokens were darkened, links in running text are underlined, and icon-only
+  buttons have names. `docs/DESIGN.md` has a "Colour and contrast" section.
 
 **Revision 1.5** (#11) is the owner's review pass. Four commits, each one green:
 
@@ -58,7 +75,7 @@ Revision 1.4 (#9, launch hardening), for reference:
 - **Two honesty/UX fixes:** the explore chip no longer says "live", and the address
   field's suggestion list no longer opens on load.
 
-Start any new session by reading `docs/ARCHITECTURE.md` rev 1.5:
+Start any new session by reading `docs/ARCHITECTURE.md` rev 1.6:
 - §4 covers the route map, and search and sharing
 - §6 holds the endpoints and the env table
 - §7 covers the maps and the lazy rule
@@ -127,8 +144,9 @@ Optional 6th argument is a JS expression evaluated in the page and printed, e.g.
 1. Clone the repo and `npm install` (Node 24 is what this was built on; 20+ should work).
 2. Copy the parent folder's `designs/`, `Dashfixe.md`, `Dashfixemarklatest.md` alongside the
    repo if you want the design context — the code does not depend on them.
-3. `npm run check` — 118 tests should pass. Then `npx vite build && npm run smoke` —
-   6 smoke journeys (set `PW_CHANNEL=msedge` or run `npx playwright install chromium`).
+3. `npm run check` — 119 tests should pass. Then `npx vite build && npm run smoke` —
+   14 Playwright tests, 6 smoke journeys and 8 accessibility pages (set `PW_CHANNEL=msedge`
+   or run `npx playwright install chromium`).
 4. `npm run dev`, open `/login`, enter any number → Send code (pilot mode signs you in),
    then `/`, `/explore` (chat with Tiago → approve → track), `/how-it-works`, `/trade/plumbing`.
 5. No env vars, no API keys. The map uses OpenFreeMap's public tiles (fair-use, attribution is
