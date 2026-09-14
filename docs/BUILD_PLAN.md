@@ -377,6 +377,21 @@ present an app. It also asked for the customer app to be promoted.
 3. Sign in, then open **Activity** or **Account**: the **Do more on the Dashfixe app**
    band is at the bottom.
 
+### Revision 2.1 · A working bell ✅ (branch `feat/notifications`)
+
+- ✅ **Notices come from the customer's own jobs and credit:** booked, on the way,
+  started, receipt ready, "rate your job" until rated, cancelled with no charge, and
+  credit added.
+- ✅ **An unread count on the bell.** Opening the panel marks everything read, and a job
+  that moves on raises a fresh notice.
+- ✅ **Each notice links where it's about;** "See all activity" closes the panel.
+
+**Owner test:**
+1. Sign in: the bell shows **5**. Open it to see Tiago on the way, two receipts, "Rate
+   your job with Rita" and a cancelled job.
+2. Close and reopen it: the count is gone.
+3. Enter `PILOT10` on Account: the bell shows **1** new, "€10.00 Dashfixe credit added".
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/artisan-app` (PR to `main`; everything
-through #17 is merged, and production passes `check-prod.mjs`) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/notifications` (PR to `main`; everything
+through #18 is merged, and production passes `check-prod.mjs` 20/20) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -28,6 +28,22 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
 - ✅ **Every page loads cold** (#14). The SPA rewrite targets `/`, because `/index.html`
   redirects under `cleanUrls`. The "production check" workflow ran by itself after the
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
+
+**Revision 2.1**, on branch `feat/notifications`, makes the bell work. It used to say
+"nothing yet" whatever happened.
+
+- **`lib/notifications.ts`** derives notices from what the browser already has:
+  - every job's state: booked, on the way, started, receipt ready, a rating nudge
+    until rated, cancelled with no charge
+  - every promo credit
+- **The panel.** Each notice links to its job (or to Account, for credit), newest first,
+  with "See all activity" at the bottom.
+- **Unread count.** The bell shows a count of new notices, and its accessible name says
+  it ("Notifications, 5 new"). Opening the panel marks everything read, while still
+  highlighting what was new.
+- **A new state is a new notice.** Ids are per state, so finishing a job brings a fresh
+  "Receipt ready" notice.
+- **Tests:** 155 Vitest and 17 Playwright.
 
 **Next (planned; the owner will say when to start): Dashfixe Pro.** A separate artisan
 world, like Uber's driver site: a `/pro` landing, `/pro/apply`, `/pro/login`, a

@@ -6,10 +6,12 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 2.0 — the apps, shown honestly. `/pro` showcases the
+**Last revised:** 2026-09-14 · Revision 2.1 — the bell works: notices about the
+customer's jobs and credit, an unread count, each linking where it's about.
+(Revision 2.0 — the apps, shown honestly. `/pro` showcases the
 artisan app: preview screens from designs/Dashfixe Artisan App.dc.html, "coming soon" store
 badges and the way into the pilot. Customers get "Do more with the app" on the home and a
-"do more on the app" band once signed in.
+"do more on the app" band once signed in.)
 (Revision 1.9 — one designed slot picker
 (`shared/SlotPicker`) replaces the browser's date and time controls on the home and in
 `/explore`, and the book-ahead horizon is a real 30 days.) (Revision 1.8 — `/account`, the customer's own dashboard:
@@ -189,6 +191,8 @@ frame changes with the surface:
   then Help, Log in, and Sign up (ink pill).
 - **Signed in:** *Home* · *Find an artisan* · *Activity*, then the bell and an account
   menu (name, phone, Account, Activity, Help, Sign out). The mobile sheet adds Account.
+  The bell (rev 2.1) shows a count of new notices; its panel lists them, newest first,
+  each linking to its job or to Account, then "See all activity".
 - **Active link:** a well background. It tells `/explore` apart from
   `/explore?when=later`.
 - **Under `md`:** everything collapses into the shared `MobileMenu` sheet.
@@ -230,6 +234,16 @@ product, so nav links point at routes.
   an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
   `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
   this for `/api/jobs`, keeping the same shapes.
+- **Notifications** (`src/lib/notifications.ts`, rev 2.1):
+  - **Derived, not stored.** There is no push backend yet. `buildNotices(jobs, wallet)`
+    turns each job's *state* into one notice (booked, on the way, started, receipt ready,
+    a rating nudge until rated, cancelled with no charge) and adds each promo credit.
+  - **Ids are per state** (`dfx-1042:travelling`), so a job that moves on raises a new,
+    unread notice.
+  - **Only what was seen is stored** (`dfx.notif`). Opening the bell marks everything
+    read, while highlighting what was new this time.
+  - **Phase 6** replaces the derivation with a notifications feed; the `Notice` shape
+    stays.
 - **The apps, shown honestly** (rev 2.0):
   - **`StoreBadges`** (`components/shared/`) is the only place store badges exist. They
     read "Coming soon on the App Store / Google Play" and are not links. When the apps

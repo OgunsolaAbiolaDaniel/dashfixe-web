@@ -376,7 +376,7 @@ export const en = {
   'search.sortArrival': 'Sort: arrival',
   'search.sortPrice': 'Sort: price',
   'notif.title': 'Notifications',
-  'notif.empty': 'Nothing yet — updates about your jobs will land here.',
+  'notif.empty': 'Nothing yet. Updates about your jobs will land here.',
   'hero.photoAttached': 'Photo attached',
   'hero.removePhoto': 'Remove photo',
   'customer.placeName': 'Name',
@@ -692,6 +692,16 @@ export const en = {
   'pro.f2': 'Build the estimate in the app. The customer approves it before you set off, then the address unlocks.',
   'pro.f3': 'Found more to fix? Send a second estimate with a photo. Nothing extra is charged without approval.',
   'pro.f4': 'Finished jobs pay out weekly. The commission only exists on finished work — no lead fees, ever.',
+  'notif.travelling': '{name} is on the way, arriving around {time}',
+  'notif.booked': 'Booked with {name}, {window}',
+  'notif.working': '{name} has started the job',
+  'notif.receipt': 'Receipt ready: {total} paid to {name}',
+  'notif.rate': 'Rate your job with {name}',
+  'notif.cancelled': 'Cancelled before {name} set off. No charge.',
+  'notif.credit': '{amount} Dashfixe credit added ({code})',
+  'notif.count': 'Notifications, {n} new',
+  'notif.new': 'New',
+  'notif.all': 'See all activity',
 } as const;
 
 export type StringKey = keyof typeof en;
@@ -1038,7 +1048,7 @@ export const pt: Record<StringKey, string> = {
   'search.sortArrival': 'Ordenar: chegada',
   'search.sortPrice': 'Ordenar: preço',
   'notif.title': 'Notificações',
-  'notif.empty': 'Ainda nada — as novidades dos seus trabalhos chegam aqui.',
+  'notif.empty': 'Ainda nada. As novidades dos seus trabalhos chegam aqui.',
   'hero.photoAttached': 'Foto anexada',
   'hero.removePhoto': 'Remover foto',
   'customer.placeName': 'Nome',
@@ -1354,6 +1364,16 @@ export const pt: Record<StringKey, string> = {
   'pro.f2': 'Faça o orçamento na app. O cliente aprova antes de sair e só então vê a morada.',
   'pro.f3': 'Encontrou mais para arranjar? Envie um segundo orçamento com foto. Nada extra é cobrado sem aprovação.',
   'pro.f4': 'Os trabalhos concluídos são pagos à semana. A comissão só existe em trabalho concluído — nunca há taxas por contacto.',
+  'notif.travelling': '{name} está a caminho e chega por volta das {time}',
+  'notif.booked': 'Marcado com {name}, {window}',
+  'notif.working': '{name} começou o trabalho',
+  'notif.receipt': 'Recibo pronto: {total} pago a {name}',
+  'notif.rate': 'Avalie o trabalho de {name}',
+  'notif.cancelled': 'Cancelado antes de {name} sair. Sem custos.',
+  'notif.credit': '{amount} de crédito Dashfixe adicionado ({code})',
+  'notif.count': 'Notificações, {n} novas',
+  'notif.new': 'Nova',
+  'notif.all': 'Ver toda a atividade',
 };
 
 export const dictionaries = { EN: en, PT: pt } as const;
