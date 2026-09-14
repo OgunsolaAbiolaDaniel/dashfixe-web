@@ -196,7 +196,7 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
           <div
             title={`${m.initials} · ${t('map.onJob')}`}
             className={
-              'grid place-items-center rounded-xl border-[1.5px] border-dashed border-ink-30 bg-panel font-bold text-ink-30 ' +
+              'grid place-items-center rounded-xl border-[1.5px] border-dashed border-ink-30 bg-panel font-bold text-ink-40 ' +
               (peek ? 'h-7 w-7 text-[9px]' : 'h-9 w-9 text-[11px]')
             }
           >
@@ -237,7 +237,7 @@ export default function LiveMap({ home = HOME, selectedId = '', onSelect, varian
           <div className="relative z-[3] grid place-items-center">
             <span className="pulse-dot absolute h-[72px] w-[72px] rounded-full bg-brand/[.16] text-brand/[.16]" />
             <span className="relative flex items-center gap-[9px] rounded-full border-[3px] border-white bg-brand py-1.5 pl-1.5 pr-[15px] shadow-[0_12px_26px_-6px_rgba(37,99,235,.6)]">
-              <i className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-white/[.24] text-[11px] font-extrabold not-italic text-white">
+              <i className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-brand-hover text-[11px] font-extrabold not-italic text-white">
                 {selected.initials}
               </i>
               <b className="whitespace-nowrap text-[13.5px] font-bold text-white">

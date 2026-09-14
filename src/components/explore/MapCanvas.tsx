@@ -131,7 +131,7 @@ export default function MapCanvas(props: Props) {
         <div
           key={m.id}
           style={at(m.at)}
-          className="absolute grid h-9 w-9 place-items-center rounded-xl border-[1.5px] border-dashed border-ink-30 bg-panel text-[11px] font-bold text-ink-30"
+          className="absolute grid h-9 w-9 place-items-center rounded-xl border-[1.5px] border-dashed border-ink-30 bg-panel text-[11px] font-bold text-ink-40"
         >
           {m.initials}
         </div>
@@ -159,7 +159,7 @@ export default function MapCanvas(props: Props) {
         <div style={at(selected.at)} className="absolute z-[3]">
           <span className="pulse-dot absolute -inset-4 block rounded-full bg-brand/[.16] text-brand/[.16]" />
           <span className="relative flex items-center gap-[9px] rounded-full border-[3px] border-white bg-brand py-1.5 pl-1.5 pr-[15px] shadow-[0_12px_26px_-6px_rgba(37,99,235,.6)]">
-            <i className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-white/[.24] text-[11px] font-extrabold not-italic text-white">
+            <i className="grid h-[30px] w-[30px] flex-none place-items-center rounded-full bg-brand-hover text-[11px] font-extrabold not-italic text-white">
               {selected.initials}
             </i>
             <b className="whitespace-nowrap text-[13.5px] font-bold text-white">

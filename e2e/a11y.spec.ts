@@ -41,6 +41,8 @@ async function audit(page: Page, path: string) {
 for (const path of PAGES) {
   test(`a11y ${path}: no serious or critical WCAG violations`, async ({ page }) => {
     await page.goto(path);
+    // Map markers mount once the tiles load; audit them every time, not by timing.
+    if (path === '/explore') await expect(page.locator('[data-marker]').first()).toBeAttached({ timeout: 25_000 });
     await audit(page, path);
   });
 }
