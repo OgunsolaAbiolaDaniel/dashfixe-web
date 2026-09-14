@@ -347,6 +347,36 @@ The owner said the "Plan it for later" calendar was the browser default:
 3. On a phone, both open as a sheet from the bottom.
 4. Late in the day, today is greyed out; earlier, today's passed windows are crossed out.
 
+### Revision 2.0 · The artisan app ✅ (branch `feat/artisan-app`)
+
+The owner agreed to build the artisan side next: Uber's driver app, for tradespeople.
+
+It started as an interactive walkthrough. The owner then asked for a reference page
+instead: preview screens and "download for iOS and Android", the way product sites
+present an app. It also asked for the customer app to be promoted.
+
+- ✅ **`/pro`** is the artisan app's showcase: the pitch, four still screens (Today,
+  offer, estimate, earnings), what's in the app, and "Get the app with the pilot". It's
+  not interactive.
+- ✅ **Store badges say "Coming soon"** and link nowhere. This follows the honesty rule
+  as the owner updated it on 2026-09-14 (`../Dashfixe.md`). They become real links when
+  the apps are published.
+- ✅ **"Do more with the app"** closes the visitor home, with customer-app stills.
+  Signed-in customers get the **"Do more on the Dashfixe app"** band on the home panel,
+  Activity and Account.
+- ✅ **The design's money is kept as real arithmetic** (`lib/pro.ts`): IVA 23%, and a 12%
+  example commission on finished jobs only. The stills show €61.01 → €53.69.
+- ✅ **Production checks** now cover `/account`, `/pro`, 30-day slot URLs and
+  `robots.txt`.
+
+**Owner test:**
+1. On `/` signed out, scroll to the end: **Do more with the app**, with three phone
+   screens and "Coming soon" badges.
+2. Tap **See the Dashfixe Pro app** to open `/pro`: four app screens, and what's in the
+   app.
+3. Sign in, then open **Activity** or **Account**: the **Do more on the Dashfixe app**
+   band is at the bottom.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
@@ -358,6 +388,46 @@ The owner said the "Plan it for later" calendar was the browser default:
   one waitlist row.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
+
+## Dashfixe Pro · the artisan world ⬜ (planned, owner-approved name)
+
+The owner wants artisans to have a world of their own, the way Uber keeps drivers apart:
+uber.com/drive (marketing), drivers.uber.com (the portal) and the Driver app, with their
+own navigation, look and sign-in, never mixed with the rider experience. Agreed on
+2026-09-14: the name is **Dashfixe Pro**, and it's planned only — the owner starts it.
+The `/pro` app showcase from #18 becomes the Pro app page (`/pro/app`).
+
+**The map (Uber → Dashfixe Pro):**
+
+| Uber | Dashfixe Pro | What it is |
+|---|---|---|
+| uber.com/drive | `/pro` | Artisan-only marketing: earnings, how it works, vetting, "no lead fees", FAQs. Own header and footer in the design's darker chrome. `/for-artisans` redirects here. |
+| Driver sign-up | `/pro/apply` | A multi-step application (trade, area, experience, documents, availability), then an application-status page. Replaces the short form. |
+| Driver login | `/pro/login` | Phone sign-in on the same auth, with the pilot bypass until SMS is funded. |
+| drivers.uber.com | `/pro/dashboard` | The artisan's web dashboard: jobs, schedule, earnings, profile and documents. The #18 walkthrough in git history (`1689211`) is a head start. |
+| Driver app page | `/pro/app` | The artisan app's download page. Today's `/pro` showcase moves here when the Pro landing takes `/pro`. |
+| Driver help | `/pro/help` | Payouts, commission, cancellations, documents. |
+
+**Decisions already made:**
+- **A path, not a subdomain, for now.** There's no domain yet. `/pro` works today and can
+  later be served at `pro.<domain>` with a Vercel rewrite, with no rebuild.
+- **Worlds don't share a menu.** The customer site's "Become an artisan" goes to `/pro`.
+  On `/pro`, a small "Need a repair? Go to Dashfixe" link goes back.
+- **One account, two roles.** One Dashfixe account can be a customer and an artisan,
+  like one Uber account can ride and drive. The artisan side adds an artisan profile
+  with an application status (applied → in review → approved).
+- **Still one `Header` component.** It gets a `pro` surface variant (darker chrome, Pro
+  nav), so the "one header" rule holds.
+
+**Delivery, one PR each:**
+1. ⬜ **Pro shell and landing.** The `pro` header and footer, and `/pro` with the
+   For artisans content reworked. `/for-artisans` → `/pro`. The app showcase moves
+   to `/pro/app`.
+2. ⬜ **Application.** `/pro/apply`, multi-step, extending `POST /api/artisans/apply`,
+   then the status page.
+3. ⬜ **Artisan login and dashboard.** `/pro/login` and `/pro/dashboard`. Sample data stays
+   labelled until Phase 6 supplies real jobs.
+4. ⬜ **Help for artisans,** plus SEO, production checks and docs.
 
 ## Phase 6 · Live operations ⬜
 

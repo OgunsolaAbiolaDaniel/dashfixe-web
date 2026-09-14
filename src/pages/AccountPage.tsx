@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import AppBar from '../components/chrome/AppBar';
 import Places from '../components/account/Places';
+import AppPromoBand from '../components/shared/AppPromoBand';
 import { ArrowRight, Card, Check, Euro, Shield, Sparkle, Star } from '../components/icons';
 import { AVAILABLE, getProfile } from '../components/explore/artisans';
 import { formatDate, formatEuro, getJob, useJobs } from '../lib/jobs';
@@ -51,6 +52,7 @@ export default function AccountPage() {
             <YourData />
           </div>
         </div>
+        <AppPromoBand className="mt-5" />
       </main>
     </div>
   );

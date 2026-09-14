@@ -153,6 +153,33 @@ describe('/activity', () => {
   });
 });
 
+describe('/pro (the artisan app showcase)', () => {
+  it('shows the app with honest "coming soon" store badges and the way into the pilot', () => {
+    renderAt('/pro');
+    expect(screen.getByRole('heading', { level: 1, name: 'Work comes to you. You keep the job.' })).toBeInTheDocument();
+    expect(screen.getAllByText('Coming soon on the').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Google Play').length).toBeGreaterThan(0);
+    // Nothing implies the app is out: the badges link nowhere.
+    expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Screens are previews with sample data.')).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Apply to the pilot' })[0]).toHaveAttribute('href', '/for-artisans#apply');
+  });
+});
+
+describe('the customer app promo', () => {
+  it('closes the visitor home with "Do more with the app", and points tradespeople to /pro', () => {
+    renderAt('/');
+    expect(screen.getByRole('heading', { name: 'Do more with the app' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /See the Dashfixe Pro app/ })).toHaveAttribute('href', '/pro');
+    expect(screen.queryByRole('link', { name: /App Store|Google Play/ })).not.toBeInTheDocument();
+  });
+
+  it('gives signed-in customers a "Do more on the Dashfixe app" band', async () => {
+    renderSignedIn('/activity');
+    expect(await screen.findByRole('complementary', { name: 'Do more on the Dashfixe app' })).toBeInTheDocument();
+  });
+});
+
 describe('/account (the customer dashboard)', () => {
   it('shows the profile, stats, credit, artisans and places; a promo code adds credit once', async () => {
     const user = userEvent.setup();

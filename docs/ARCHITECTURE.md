@@ -6,9 +6,13 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 1.9 — one designed slot picker
+**Last revised:** 2026-09-14 · Revision 2.0 — the apps, shown honestly. `/pro` showcases the
+artisan app: preview screens from designs/Dashfixe Artisan App.dc.html, "coming soon" store
+badges and the way into the pilot. Customers get "Do more with the app" on the home and a
+"do more on the app" band once signed in.
+(Revision 1.9 — one designed slot picker
 (`shared/SlotPicker`) replaces the browser's date and time controls on the home and in
-`/explore`, and the book-ahead horizon is a real 30 days. (Revision 1.8 — `/account`, the customer's own dashboard:
+`/explore`, and the book-ahead horizon is a real 30 days.) (Revision 1.8 — `/account`, the customer's own dashboard:
 profile, stats, Dashfixe credit (a walkthrough wallet that comes off the next job),
 invite code, their artisans, saved places, preferences and their data. Activity is now
 just the jobs.) (Revision 1.7 — smart search: the trade is recognised from
@@ -40,7 +44,9 @@ usual person can't*. The product moment is Uber's: describe the problem, see who
    screen is hand-typed.
 4. **Honesty is structural.** No live app exists and no artisans are recruited yet. Sample
    supply is always badged as sample. Nothing implies live availability, real prices, or a
-   shipped app. This is a hard product rule, not a style choice (see `../Dashfixe.md` §2).
+   shipped app: the apps are shown as coming soon, and their store badges link nowhere until
+   the apps are published (owner, 2026-09-14). This is a hard product rule, not a style
+   choice (see `../Dashfixe.md` §2).
 5. **Portugal first.** Every customer-facing string exists in EN and PT-PT, enforced by a
    test. Controls size to the longer string. Phone-first layouts; the pilot user is on a
    mid-range Android.
@@ -61,6 +67,12 @@ chrome.
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
 
+
+**A third world is planned: Dashfixe Pro** (BUILD_PLAN → "Dashfixe Pro"). Artisans get
+their own marketing, application, login and dashboard under `/pro/*`, with a `pro`
+variant of the one Header. It's the way Uber separates uber.com/drive and
+drivers.uber.com from the rider site. Until it's built, `/for-artisans` and the `/pro`
+app showcase (rev 2.0) are the artisan side.
 
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
@@ -103,6 +115,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
 | `/activity` | app | Signed-in: every job, live and past (redirects visitors home) | built (rev 1.1; rev 1.8 jobs only) |
 | `/account` | app | Signed-in dashboard: profile, stats, credit, invite, artisans, places, preferences, data (visitors → `/login?next=/account`) | built (rev 1.8) |
+| `/pro` | marketing | The artisan app's showcase: four preview screens (Today, offer, estimate, earnings), what's in the app, "coming soon" store badges, apply to the pilot. Not interactive. Noindex (sample previews); `link('artisanApp')` and `/artisan-app` land here | built (rev 2.0) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
@@ -217,6 +230,24 @@ product, so nav links point at routes.
   an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
   `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
   this for `/api/jobs`, keeping the same shapes.
+- **The apps, shown honestly** (rev 2.0):
+  - **`StoreBadges`** (`components/shared/`) is the only place store badges exist. They
+    read "Coming soon on the App Store / Google Play" and are not links. When the apps
+    are published, they become the store links.
+  - **`PhoneShot`** frames static, `inert`, aria-hidden stills: the artisan app in
+    `components/pro/Shots.tsx`, the customer app in `components/home/AppShots.tsx`.
+  - **Customer promo.** The visitor home closes with "Do more with the app"
+    (`home/Apps.tsx`). Signed-in customers see `AppPromoBand` at the end of the home
+    panel, Activity and Account, not on the map screens.
+- **Artisan money** (`src/lib/pro.ts`, rev 2.0):
+  - **Money.** `quote(lines)` gives the subtotal, IVA at 23% on top, and the total the
+    customer pays. `payout(total)` takes a 12% commission, the design's example pilot
+    rate, only on a finished job. Everything is rounded to the cent at each step, so
+    €49.60 → €61.01 → €53.69 as in the design.
+  - The showcase stills use it today, and the artisan app's estimate builder uses the
+    same rules. The interactive walkthrough that briefly lived at `/pro` was replaced by
+    the showcase at the owner's request; it is in git history (`1689211`) for the
+    future dashboard.
 - **Dashfixe credit** (`src/lib/wallet.ts`, rev 1.8): `{credit, history, redeemed}` in
   localStorage (`dfx.wallet`), read through `useWallet()`.
   - Pilot promo codes (`PILOT10` €10, `BEMVINDO5` €5), each once per browser.

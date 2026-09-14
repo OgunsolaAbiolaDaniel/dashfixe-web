@@ -14,7 +14,7 @@ describe('link', () => {
     expect(link('book')).toBe('/explore?when=later');
     expect(link('coverage')).toBe('/about#coverage');
     expect(link('artisanDetails')).toBe('/for-artisans');
-    expect(link('artisanApp')).toBe('/for-artisans#app');
+    expect(link('artisanApp')).toBe('/pro');
   });
 
   it('anchors the artisan depth into the one artisan page', () => {

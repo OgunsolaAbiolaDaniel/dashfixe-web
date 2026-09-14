@@ -32,6 +32,8 @@ export const ROUTES = {
   howItWorks: '/how-it-works',
   /** Supply landing + pilot application. */
   forArtisans: '/for-artisans',
+  /** The artisan app, as a walkthrough (sample job, nothing sent). */
+  pro: '/pro',
   about: '/about',
   help: '/help',
   privacy: '/privacy',
@@ -57,7 +59,9 @@ const DESTINATIONS = {
   artisanApply: `${ROUTES.forArtisans}#apply`,
   artisanPay: `${ROUTES.forArtisans}#pay`,
   artisanVetting: `${ROUTES.forArtisans}#vetting`,
-  artisanApp: `${ROUTES.forArtisans}#app`,
+  /** The artisan app itself: the /pro walkthrough (rev 2.0). */
+  artisanApp: ROUTES.pro,
+  pro: ROUTES.pro,
   /** Cut page: the long version folded into the one artisan page. */
   artisanDetails: ROUTES.forArtisans,
 

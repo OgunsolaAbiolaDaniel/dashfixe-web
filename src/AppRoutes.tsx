@@ -8,6 +8,7 @@ import AccountPage from './pages/AccountPage';
 import ArtisanProfilePage from './pages/ArtisanProfilePage';
 import JobPage from './pages/JobPage';
 import ForArtisansPage from './pages/ForArtisansPage';
+import ProPage from './pages/ProPage';
 import AboutPage from './pages/AboutPage';
 import HelpPage from './pages/HelpPage';
 import LegalPage from './pages/LegalPage';
@@ -78,6 +79,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.trade} element={<TradePage />} />
         <Route path={ROUTES.howItWorks} element={<HowItWorksPage />} />
         <Route path={ROUTES.forArtisans} element={<ForArtisansPage />} />
+        <Route path={ROUTES.pro} element={<ProPage />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path={ROUTES.privacy} element={<LegalPage kind="privacy" />} />
