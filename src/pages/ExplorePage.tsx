@@ -5,7 +5,7 @@ import { LiveMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
 import AppBar from '../components/chrome/AppBar';
 import { getSupply, type Artisan } from '../components/explore/artisans';
-import { WINDOWS, parseSearch, type When } from '../search';
+import { WINDOWS, normalizeSlot, parseSearch, type When } from '../search';
 import { clockIn, createJob } from '../lib/jobs';
 import type { Estimate } from '../lib/estimate';
 import { translate } from '../i18n/strings';
@@ -33,8 +33,12 @@ import { useAuth } from '../auth';
  */
 export default function ExplorePage() {
   const [params, setParams] = useSearchParams();
-  const search = parseSearch(params);
+  const parsed = parseSearch(params);
   const { signedIn, requireAuth } = useAuth();
+  // Later mode books exactly the slot the picker shows: never a day that's over
+  // or a window that has passed (search.normalizeSlot). Clocks read once per mount.
+  const [now] = useState(() => Date.now());
+  const search = parsed.when === 'later' ? { ...parsed, ...normalizeSlot(parsed.day ?? 0, parsed.win ?? 2, new Date(now)) } : parsed;
 
   // parseSearch builds a fresh tuple on every render, and the map refits whenever the
   // home reference changes — so key the memo on the numbers, not the array.

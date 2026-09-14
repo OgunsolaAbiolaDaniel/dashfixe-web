@@ -190,6 +190,18 @@ export const ChevronDown = (p: IconProps) => (
   </Svg>
 );
 
+export const ChevronLeft = (p: IconProps) => (
+  <Svg strokeWidth={2.2} {...p}>
+    <path d="m15 6-6 6 6 6" />
+  </Svg>
+);
+
+export const ChevronRight = (p: IconProps) => (
+  <Svg strokeWidth={2.2} {...p}>
+    <path d="m9 6 6 6-6 6" />
+  </Svg>
+);
+
 export const Calendar = (p: IconProps) => (
   <Svg {...p}>
     <rect x="3" y="5" width="18" height="16" rx="3" />

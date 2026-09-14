@@ -1,5 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { exploreUrl, parseSearch, tradeLabel } from './search';
+import { exploreUrl, normalizeSlot, parseSearch, tradeLabel, windowOpen } from './search';
+
+describe('slots', () => {
+  const nineAm = new Date(2026, 8, 14, 9, 0);
+  const ninePm = new Date(2026, 8, 14, 21, 0);
+
+  it('needs an hour of notice for a window today, none for later days', () => {
+    expect(windowOpen(0, 0, nineAm)).toBe(false); // 08–10 has started
+    expect(windowOpen(0, 1, nineAm)).toBe(true); // 10–12, an hour away
+    expect(windowOpen(3, 0, ninePm)).toBe(true);
+  });
+
+  it('books what the picker shows: no passed windows, no finished days, no clamping to a week', () => {
+    expect(normalizeSlot(0, 0, nineAm)).toEqual({ day: 0, win: 1 });
+    expect(normalizeSlot(0, 2, ninePm)).toEqual({ day: 1, win: 2 });
+    expect(normalizeSlot(20, 4, nineAm)).toEqual({ day: 20, win: 4 });
+    expect(normalizeSlot(90, 9, nineAm)).toEqual({ day: 29, win: 5 });
+  });
+
+  it('reads a day up to 30 days ahead from the URL', () => {
+    expect(parseSearch(new URLSearchParams('when=later&day=29')).day).toBe(29);
+    expect(parseSearch(new URLSearchParams('when=later&day=30')).day).toBeNull();
+  });
+});
 
 describe('exploreUrl', () => {
   it('is bare when nothing is set', () => {
@@ -52,7 +75,10 @@ describe('the later-mode slot in the URL', () => {
   });
 
   it('rejects out-of-range or junk values', () => {
-    expect(parseSearch(new URLSearchParams('day=9&win=abc')).day).toBeNull();
+    // The horizon is 30 days (0–29); day 9 is a real slot now.
+    expect(parseSearch(new URLSearchParams('day=30&win=abc')).day).toBeNull();
+    expect(parseSearch(new URLSearchParams('day=-1')).day).toBeNull();
+    expect(parseSearch(new URLSearchParams('day=9&win=abc')).day).toBe(9);
     expect(parseSearch(new URLSearchParams('day=9&win=abc')).win).toBeNull();
   });
 });

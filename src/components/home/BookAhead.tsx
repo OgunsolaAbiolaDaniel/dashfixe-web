@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, ChevronDown, Clock, Close, ReceiptSlim } from '../icons';
+import { Calendar, Close, ReceiptSlim } from '../icons';
+import SlotPicker from '../shared/SlotPicker';
 import { isTradeSlug, link } from '../../routes';
 import { usePlace } from '../../lib/place';
-import { WINDOWS, exploreUrl } from '../../search';
+import { exploreUrl, normalizeSlot } from '../../search';
 import { useLang } from '../../i18n';
 
 const BENEFITS = [
@@ -12,33 +13,18 @@ const BENEFITS = [
   { Icon: Close, key: 'later.benefit3' },
 ] as const;
 
-const FIELD = 'flex h-[54px] min-w-0 flex-[1_1_150px] items-center gap-[11px] rounded-well bg-panel px-[15px]';
-const INPUT =
-  'min-w-0 flex-1 border-0 bg-transparent text-[15.5px] font-semibold text-ink outline-offset-8 placeholder:text-ink-30';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-const iso = (d: Date) => d.toISOString().slice(0, 10);
-
 /**
- * The book-ahead explainer. The picker is real: date + window feed straight
- * into /explore?when=later with the slot in the URL (ARCHITECTURE §6: URL as
- * state). Booking beyond the 7-day sample horizon clamps to the last day.
+ * The book-ahead explainer. The picker is real (shared/SlotPicker): a day up to
+ * 30 days ahead and a two-hour window feed straight into /explore?when=later
+ * with the slot in the URL (ARCHITECTURE §6: URL as state).
  */
 export default function BookAhead({ need = '', trade = '' }: { need?: string; trade?: string }) {
   const { t } = useLang();
   // The saved place (lib/place) and whatever was typed in the hero ride along.
   const place = usePlace();
   const what = need.trim();
-  // Clocks are impure; read them once per mount.
-  const [todayIso] = useState(() => iso(new Date()));
-  const [maxIso] = useState(() => iso(new Date(Date.now() + 30 * DAY_MS)));
-  const [date, setDate] = useState(() => iso(new Date(Date.now() + DAY_MS)));
-  const [win, setWin] = useState(2);
-
-  const day = useMemo(() => {
-    const offset = Math.round((new Date(date).getTime() - new Date(todayIso).getTime()) / DAY_MS);
-    return Math.min(6, Math.max(0, offset));
-  }, [date, todayIso]);
+  // Tomorrow, midday, unless the customer picks otherwise (up to 30 days ahead).
+  const [slot, setSlot] = useState(() => normalizeSlot(1, 2));
 
   return (
     <section id="later" className="scroll-mt-[88px] bg-panel">
@@ -53,36 +39,15 @@ export default function BookAhead({ need = '', trade = '' }: { need?: string; tr
                 {t('later.hold')}
               </h3>
               <div className="mb-3 text-label text-ink-80">{t('later.chooseDateTime')}</div>
-              <div className="mb-5 flex flex-wrap gap-3">
-                <div className={FIELD}>
-                  <Calendar size={18} className="flex-none text-ink-60" />
-                  <input
-                    id="later-date"
-                    type="date"
-                    value={date}
-                    min={todayIso}
-                    max={maxIso}
-                    onChange={(e) => setDate(e.target.value)}
-                    aria-label={t('later.date')}
-                    className={INPUT}
-                  />
-                </div>
-                <div className={FIELD}>
-                  <Clock size={18} className="flex-none text-ink-60" />
-                  <select
-                    value={win}
-                    onChange={(e) => setWin(Number(e.target.value))}
-                    aria-label={t('later.time')}
-                    className={`${INPUT} appearance-none`}
-                  >
-                    {WINDOWS.map((w, i) => (
-                      <option key={w} value={i}>
-                        {w}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={15} className="flex-none text-ink-40" />
-                </div>
+              <div className="mb-5">
+                <SlotPicker
+                  variant="hero"
+                  dateId="later-date"
+                  labels={[t('later.date'), t('later.time')]}
+                  day={slot.day}
+                  win={slot.win}
+                  onChange={(day, win) => setSlot({ day, win })}
+                />
               </div>
               {what && (
                 <p className="mb-3 max-w-[340px] truncate text-[13.5px] font-semibold text-ink-80">
@@ -91,7 +56,7 @@ export default function BookAhead({ need = '', trade = '' }: { need?: string; tr
                 </p>
               )}
               <Link
-                to={exploreUrl({ when: 'later', day, win, need: what, trade, address: place.label, lngLat: place.lngLat })}
+                to={exploreUrl({ when: 'later', ...slot, need: what, trade, address: place.label, lngLat: place.lngLat })}
                 className="flex h-[52px] w-full max-w-[340px] items-center justify-center rounded-btn bg-ink text-[15px] font-bold text-white transition hover:bg-ink-80 hover:text-white"
               >
                 {t('later.next')}
