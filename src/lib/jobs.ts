@@ -214,7 +214,8 @@ export function useJobs(): Job[] {
 // ── Formatting ──────────────────────────────────────────────────────────────
 
 export function formatEuro(amount: number): string {
-  return `€${amount.toFixed(2)}`;
+  // A true minus sign for credit lines: "−€10.00", not "€-10.00".
+  return amount < 0 ? `−€${Math.abs(amount).toFixed(2)}` : `€${amount.toFixed(2)}`;
 }
 
 /** "2 Sep" / "2 set." — the visit date as people say it. */

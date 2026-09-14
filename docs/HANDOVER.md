@@ -5,8 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/smart-search` (PR to `main`;
-everything through #14 is merged and verified in production) ·
+**Last updated:** 2026-09-14 · **Branch:** `feat/account`, stacked on
+`feat/smart-search` (#15, merge that first; everything through #14 is merged and
+verified in production) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -29,7 +30,29 @@ Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is mer
   redirects under `cleanUrls`. The "production check" workflow ran by itself after the
   deploy and passed, and `node scripts/check-prod.mjs` gives 16/16 (11/16 before).
 
-**Revision 1.7**, on branch `feat/smart-search`, is the owner's smart-search requests:
+**Revision 1.8**, on branch `feat/account`, gives the customer their own page. The owner
+said the profile didn't belong at the bottom of Activity.
+
+- **`/account`** (`pages/AccountPage.tsx`) is a dashboard. It holds:
+  - the profile: avatar, first name edited in place, phone
+  - three stats: jobs, paid in the app, artisans used
+  - **Dashfixe credit**
+  - an invite code
+  - "Your artisans", with Rebook
+  - saved places (moved from Activity to `components/account/Places.tsx`)
+  - payment methods: an honest "arrives with the pilot"
+  - preferences: language, and SMS switches saved on the device
+  - "Your data": download it as JSON, or clear the device
+- **Credit** (`lib/wallet.ts`) is walkthrough money, labelled so. `PILOT10` adds €10. The
+  next approval spends it: the chat's confirm step says "Your €10.00 credit comes off:
+  you pay €53.00", and the job and receipt carry a "Dashfixe credit −€10.00" line.
+- **Activity** is just the jobs now, with a link to Account. The account menu and the
+  mobile sheet gain Account. `/account` is noindex and disallowed in robots, and it sends
+  visitors to log in and back.
+- **Tests:** 137 Vitest (wallet, the account page, credit on a booking) and 16 Playwright,
+  including axe on `/account` and `/activity` signed in.
+
+**Revision 1.7**, on branch `feat/smart-search` (#15), is the owner's smart-search requests:
 
 - **Trade recognition.** `lib/classify.ts` matches English and Portuguese keywords to a
   trade: tap and torneira go to plumbing, socket and disjuntor to electrical, and so on.

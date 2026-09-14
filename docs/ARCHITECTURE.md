@@ -6,9 +6,12 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 1.7 — smart search: the trade is recognised from
+**Last revised:** 2026-09-14 · Revision 1.8 — `/account`, the customer's own dashboard:
+profile, stats, Dashfixe credit (a walkthrough wallet that comes off the next job),
+invite code, their artisans, saved places, preferences and their data. Activity is now
+just the jobs. (Revision 1.7 — smart search: the trade is recognised from
 what people type, "Something else" is an assistant, location is asked for on arrival, and
-"Book for later" flows through the home's slot picker. (Revision 1.6 — production
+"Book for later" flows through the home's slot picker.) (Revision 1.6 — production
 readiness: a crash screen, a real 404, honest legal pages, the Dashfixe icons and
 manifest, and WCAG 2.1 AA enforced in CI.)
 (Revision 1.5 — product polish: one header, one-tap pilot login, one shared place, and
@@ -51,7 +54,7 @@ chrome.
 | | **Marketing surface** | **Product surface (the app)** |
 |---|---|---|
 | Job | Persuade and route | Get a repair done |
-| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/artisan/:id`, `/job/:id` |
+| Pages | `/`, `/for-artisans`, `/about`, `/help`, legal, `/waitlist` | signed-in home, `/explore`, `/activity`, `/account`, `/artisan/:id`, `/job/:id` |
 | Chrome | `SiteNav` + `SiteFooter` | `AppBar`, no footer (map fills the viewport) |
 | Ground | White/well sections, ink footer | `page` ground, panel cards, the map |
 | Scroll | Long pages, anchor sections | Viewport-pinned on desktop, panel scrolls |
@@ -60,7 +63,8 @@ chrome.
 The signed-in home is the app's home screen (Uber's m.uber.com home): same route,
 different world — the **map fills the screen** with the supply around the saved address,
 and the panel carries the composer, the active job and the rebook shortcuts. It is not a
-dashboard; the lists (recent requests, saved places) live on `/activity`, Uber's Activity.
+dashboard; the jobs live on `/activity` (Uber's Activity), and the person — profile,
+credit, saved places, preferences — on `/account` (Uber's Account).
 
 ## 3. The journeys
 
@@ -84,8 +88,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
    a human calls him on WhatsApp within 48 h. Supply acquisition is manual by design.
 4. **Returning Rita** — signed in. `/` is the map with her composer, her active job and
    her rebook shortcuts; tapping a pin opens `/explore` with that artisan selected. Her
-   history and saved places live under `/activity`. Everything lands on `/explore` or
-   `/job/:id`.
+   history lives under `/activity`; her credit, saved places and her artisans under
+   `/account`. Everything lands on `/explore` or `/job/:id`.
 
 ## 4. The route map
 
@@ -95,7 +99,8 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 |---|---|---|---|
 | `/` | marketing / app | Composer + map hero; signed-in → app home | built |
 | `/explore` | app | THE product surface: search, map, now/later modes | built |
-| `/activity` | app | Signed-in: past requests, saved places (redirects visitors home) | built (rev 1.1) |
+| `/activity` | app | Signed-in: every job, live and past (redirects visitors home) | built (rev 1.1; rev 1.8 jobs only) |
+| `/account` | app | Signed-in dashboard: profile, stats, credit, invite, artisans, places, preferences, data (visitors → `/login?next=/account`) | built (rev 1.8) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
 | `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
 | `/for-artisans` | marketing | Supply landing + pilot application (`#apply`) | built (rev 1) |
@@ -141,7 +146,8 @@ matters because link-preview crawlers (WhatsApp, LinkedIn, X) never run JavaScri
 
 - **Indexed:** the home, `/explore`, the five trade pages, `/how-it-works`,
   `/for-artisans`, `/about`, `/help` and legal.
-- **`noindex`:** `/login`, `/activity` and `/job/*`, because they are private.
+- **`noindex`:** `/login`, `/activity`, `/account` and `/job/*`, because they are private
+  (`robots.txt` also disallows `/activity` and `/account`).
   `/artisan/*` too, because those profiles are sample data. `/waitlist`, because it is
   parked.
 - **Absolute URLs:** from `SITE_URL`, falling back to Vercel's production hostname.
@@ -167,7 +173,7 @@ frame changes with the surface:
 - **Signed out:** *Find an artisan* · *Book ahead* · *How it works* · *Become an artisan*,
   then Help, Log in, and Sign up (ink pill).
 - **Signed in:** *Home* · *Find an artisan* · *Activity*, then the bell and an account
-  menu (name, phone, Activity, Help, Sign out).
+  menu (name, phone, Account, Activity, Help, Sign out). The mobile sheet adds Account.
 - **Active link:** a well background. It tells `/explore` apart from
   `/explore?when=later`.
 - **Under `md`:** everything collapses into the shared `MobileMenu` sheet.
@@ -201,6 +207,17 @@ product, so nav links point at routes.
   an estimate in chat (`lib/estimate.ts`). They're held in localStorage and read through
   `useJobs()`, so the home banner, Activity and `/job/:id` always agree. Phase 6 swaps
   this for `/api/jobs`, keeping the same shapes.
+- **Dashfixe credit** (`src/lib/wallet.ts`, rev 1.8): `{credit, history, redeemed}` in
+  localStorage (`dfx.wallet`), read through `useWallet()`.
+  - Pilot promo codes (`PILOT10` €10, `BEMVINDO5` €5), each once per browser.
+  - Approving an estimate spends it automatically: the chat's confirm step says how much
+    comes off, and the job gets a negative "Dashfixe credit" line, so its lines still sum
+    to its total.
+  - Walkthrough credit, labelled so; no real money moves. Phase 6 moves balances to the
+    payments backend.
+- **Preferences** (`dfx.prefs`, rev 1.8): SMS updates and offers switches, saved on this
+  device until accounts sync. `/account` can export every `dfx.*` key as JSON, or clear
+  them and sign out.
 - **Chat** (`components/explore/chatStore.ts`): one thread per artisan that follows the
   customer from `/explore` to the job. Replies are scripted and labelled as such, until
   the Phase 6 chat backend.

@@ -45,6 +45,7 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.cookies]: { title: 'footer.cookies', description: 'seo.legal.desc' },
   [ROUTES.login]: { title: 'seo.login.title', description: 'seo.home.desc', noindex: true },
   [ROUTES.activity]: { title: 'nav.activity', description: 'seo.home.desc', noindex: true },
+  [ROUTES.account]: { title: 'nav.account', description: 'seo.home.desc', noindex: true },
 };
 
 function normalise(pathname: string): string {
@@ -159,6 +160,7 @@ export function robotsTxt(siteUrl: string): string {
     'Disallow: /api/',
     'Disallow: /login',
     'Disallow: /activity',
+    'Disallow: /account',
     'Disallow: /job/',
     '',
     `Sitemap: ${siteUrl}/sitemap.xml`,

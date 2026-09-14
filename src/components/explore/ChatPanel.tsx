@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Check, Close, ImageIcon, Send } from '../icons';
 import { useLang } from '../../i18n';
 import { artisanUrl, jobUrl } from '../../routes';
-import { formatEuro } from '../../lib/jobs';
+import { formatEuro, getJob } from '../../lib/jobs';
+import { useWallet } from '../../lib/wallet';
 import { estimateFor, type Estimate } from '../../lib/estimate';
 import { getThread, saveThread, type Msg, type Thread } from './chatStore';
 import type { Artisan } from './artisans';
@@ -54,6 +55,9 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
   const { t, lang } = useLang();
   const first = artisan.name.split(' ')[0]!;
   const estimate = useMemo(() => estimateFor(artisan), [artisan]);
+  // Dashfixe credit (lib/wallet) that approving now would use — said before confirming.
+  const wallet = useWallet();
+  const credit = Math.min(wallet.credit, estimate.total);
 
   const [thread, setThread] = useState<Thread>(() => getThread(artisan.id, mode === 'job' ? estimate.total : null));
   const [draft, setDraft] = useState(() => (mode === 'quote' && thread.stage === 'new' ? need : ''));
@@ -241,6 +245,11 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
                       <p className="mb-2.5 text-[13px] font-semibold leading-[1.45] text-ink-80">
                         {t(later ? 'chat.confirmBodyLater' : 'chat.confirmBody', vars)}
                       </p>
+                      {credit > 0 && (
+                        <p className="mb-2.5 rounded-[10px] bg-success-tint px-2.5 py-1.5 text-[12.5px] font-bold text-success">
+                          {t('chat.credit', { credit: formatEuro(credit), pay: formatEuro(estimate.total - credit) })}
+                        </p>
+                      )}
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -278,7 +287,7 @@ export default function ChatPanel({ artisan, address, need = '', mode = 'quote',
                 <div key={i} className="w-[92%] self-center rounded-[16px] border border-success/30 bg-success-tint px-4 py-3 text-center">
                   <div className="mb-2 flex items-center justify-center gap-1.5 text-[13.5px] font-bold text-success">
                     <Check size={15} />
-                    {t('chat.bookedTitle', { total: formatEuro(estimate.total) })}
+                    {t('chat.bookedTitle', { total: formatEuro(getJob(m.jobId)?.total ?? estimate.total) })}
                   </div>
                   <Link
                     to={jobUrl(m.jobId)}

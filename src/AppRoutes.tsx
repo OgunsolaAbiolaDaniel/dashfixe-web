@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import WaitlistPage from './pages/WaitlistPage';
 import ExplorePage from './pages/ExplorePage';
 import ActivityPage from './pages/ActivityPage';
+import AccountPage from './pages/AccountPage';
 import ArtisanProfilePage from './pages/ArtisanProfilePage';
 import JobPage from './pages/JobPage';
 import ForArtisansPage from './pages/ForArtisansPage';
@@ -65,6 +66,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.explore} element={<ExplorePage />} />
         <Route path={ROUTES.activity} element={<ActivityPage />} />
+        <Route path={ROUTES.account} element={<AccountPage />} />
         <Route path={ROUTES.artisan} element={<ArtisanProfilePage />} />
         <Route path={ROUTES.job} element={<JobPage />} />
 

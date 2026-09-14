@@ -10,6 +10,7 @@ vi.mock('maplibre-gl', async () => (await import('./test/maplibre.mock')).mapLib
 vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
 
 import { installPilotApi } from './test/pilotApi.mock';
+import { redeemCode } from './lib/wallet';
 
 // Every fetch in these tests goes through the real handlers + a fresh store.
 const pilotApi = installPilotApi();
@@ -135,18 +136,61 @@ describe('the signed-in app home (map-first, ARCHITECTURE.md rev 1.1)', () => {
 });
 
 describe('/activity', () => {
-  it('holds the lists that left the home, reached from the app bar', async () => {
+  it('holds every job, reached from the app bar, and points to the account', async () => {
     const user = userEvent.setup();
     renderSignedIn('/');
     await user.click(await screen.findByRole('link', { name: 'Activity' }));
     expect(screen.getByRole('heading', { name: 'Activity' })).toBeInTheDocument();
     expect(screen.getByText('Recent requests')).toBeInTheDocument();
-    expect(screen.getByText('Your places')).toBeInTheDocument();
+    // The profile and places moved to /account.
+    expect(screen.queryByText('Your places')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Account, credit and saved places/ })).toHaveAttribute('href', '/account');
   });
 
   it('turns a signed-out visitor back to the home', async () => {
     renderAt('/activity');
     expect(await screen.findByRole('heading', { name: 'Somebody good, close by' })).toBeInTheDocument();
+  });
+});
+
+describe('/account (the customer dashboard)', () => {
+  it('shows the profile, stats, credit, artisans and places; a promo code adds credit once', async () => {
+    const user = userEvent.setup();
+    renderSignedIn('/account');
+    expect(screen.getByText('Alex', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByText('Jobs booked')).toBeInTheDocument();
+    expect(screen.getByText('Your artisans')).toBeInTheDocument();
+    expect(screen.getByText('Your places')).toBeInTheDocument();
+    expect(screen.getByText('€0.00')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Promo code'), 'pilot10');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Added €10.00 to your credit.');
+    expect(screen.getByText('€10.00', { selector: 'p' })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Promo code'), 'PILOT10');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByRole('status')).toHaveTextContent('already used');
+  });
+
+  it('sends a signed-out visitor to log in, and back', async () => {
+    renderAt('/account');
+    expect(await screen.findByRole('heading', { name: 'Log in or sign up' })).toBeInTheDocument();
+  });
+
+  it('spends the credit on the next booking, as its own line', async () => {
+    redeemCode('PILOT10');
+    const user = userEvent.setup();
+    renderSignedIn('/explore?artisan=tf&need=Leaking%20tap');
+    await user.click(screen.getByRole('button', { name: 'Chat with Tiago' }));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    await user.click(await screen.findByRole('button', { name: 'Approve €63.00' }, { timeout: 4000 }));
+    expect(screen.getByText('Your €10.00 credit comes off: you pay €53.00.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirm and book' }));
+    await user.click(await screen.findByRole('link', { name: 'Track Tiago' }));
+    expect(screen.getByText('Dashfixe credit')).toBeInTheDocument();
+    expect(screen.getByText('−€10.00')).toBeInTheDocument();
+    expect(screen.getByText('€53.00')).toBeInTheDocument();
   });
 });
 
