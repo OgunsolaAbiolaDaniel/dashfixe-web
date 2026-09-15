@@ -5,8 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/ops` (revision 2.8, stacked on #27,
-`feat/launch-ready`, revision 2.7). Everything through #26 is merged ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/job-help` (revision 2.9), stacked on #28
+(`feat/ops`, 2.8), which is stacked on #27 (`feat/launch-ready`, 2.7). Everything through
+#26 is merged ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -27,10 +28,11 @@ on the deploy.
 **In progress: the four owner-picked chunks, one PR each, in this order.**
 1. **Launch readiness** (revision 2.7, PR #27): security headers and CSP, lazy pages,
    sized photos, hreflang and JSON-LD. Notes below.
-2. **Founders' `/ops`** (revision 2.8, `feat/ops`): review the `/pro/apply` applications
-   and mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`,
-   plus `DATABASE_URL` so reviews survive restarts. Notes below.
-3. **Customer help and reschedule** on `/job/:id`.
+2. **Founders' `/ops`** (revision 2.8, PR #28): review the `/pro/apply` applications and
+   mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`, plus
+   `DATABASE_URL` so reviews survive restarts. Notes below.
+3. **Customer help and reschedule** on `/job/:id` (revision 2.9, `feat/job-help`). Notes
+   below.
 4. **A full customer journey in Playwright**: search → chat → book → track → receipt → rate.
 
 **What's left is the owner's (no code), in order:**
@@ -42,7 +44,28 @@ on the deploy.
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.8**, on branch `feat/ops`, gives the founders `/ops`: the review of Dashfixe
+**Revision 2.9**, on branch `feat/job-help`, puts "Need help with this job?" on `/job/:id`
+(`components/job/JobHelp.tsx`). It's an inline card, not a modal, because the slot
+picker's own popover and sheet (z-80/81) must sit on top.
+- **Booked ahead:** *Change the time* uses the booking SlotPicker (`lib/jobs`
+  `rescheduleJob`), and saying "same time" is caught. *Cancel the booking* is free before
+  travel (`cancelJob`) and gives back any Dashfixe credit the job used
+  (`lib/wallet` `refundCredit`, a `refund` history entry, once per job); the page then
+  lands on Activity.
+- **On the way:** the time can't change here. It says so and offers *Message Tiago*,
+  which opens the chat.
+- **Always:** *Report a problem*. You pick one of six reasons; details are required for
+  "Something else". Picking safety adds "call 112 first", and the form says which number
+  the team will call back. It's real: `POST /api/support/report` stores it, and `/ops` now
+  has a *Problem reports* section beside Applications. The job remembers the reference.
+  A dead session says to log in again.
+- The receipt has the same card (report, help centre, safety) in place of the old "Get
+  help" button.
+- **Tests:** `pages/JobPage.test.tsx` (reschedule, cancel with refund, message, report
+  and its validation, an ended session, the receipt), `server/support.test.ts`, and the
+  `lib/jobs` and `lib/wallet` unit tests. `/ops` shows the report end to end.
+
+**Revision 2.8**, on branch `feat/ops` (#28), gives the founders `/ops`: the review of Dashfixe
 Pro applications. It's stacked on #27 because it registers its page in `routePages.ts`.
 - **Access** (`server/handlers.ts` `opsGate`, `server/session.ts`) requires a signed-in
   phone in `OPS_PHONES` **and** the `OPS_PASSCODE`. The passcode buys an 8-hour

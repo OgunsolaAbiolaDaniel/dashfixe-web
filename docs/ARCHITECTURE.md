@@ -6,9 +6,11 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
+**Last revised:** 2026-09-15 · Revision 2.9 — help on `/job/:id`: change the time or cancel
+(free, with credit refunded) before the artisan sets off, and "Report a problem", which
+reaches the team on `/ops`. (Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
 applications: a team phone plus a passcode, then call, WhatsApp or email each applicant
-and record new → called → approved or declined with a private note. (Revision 2.7 —
+and record new → called → approved or declined with a private note.) (Revision 2.7 —
 launch readiness: security headers and a
 Content-Security-Policy (`vercel.json`, also sent by `vite preview`), every page but the
 home split into its own chunk (`lib/lazyPage.tsx`), Pexels photos sized per screen
@@ -148,7 +150,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/pro/dashboard` | pro | Signed-in (visitors → `/pro/login?next=`): the application's status and next step, a "get ready for your call" checklist built from what they applied with, their hours and radius (saved on this device), their profile and sign out, and a badged sample preview of the earnings view. Without an application: Start your application. Noindex, robots-disallowed | built (rev 2.5) |
 | `/pro/help` | pro | Help for artisans: pay (`#pay`), jobs (`#jobs`), estimates (`#estimates`), papers (`#documents`), safety (`#safety`), account (`#account`), then a person (`#contact`). The Pro header, mobile menu, footer and dashboard link here. Indexed | built (rev 2.6) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
-| `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
+| `/job/:id` | app | Signed-in: live tracking or the receipt + rating. "Need help with this job?" (`job/JobHelp`): booked ahead → change the time (SlotPicker) or cancel (free, credit refunded); on the way → message the artisan; always → report a problem (to the team, on `/ops`), help centre, safety | built (rev 1.2; help rev 2.9) |
 | `/pro` | pro | Dashfixe Pro landing: how it works (`#how`), pay (`#pay`), vetting (`#vetting`), the app (`#app`), pilot application (`#apply`). `/for-artisans` redirects here (a 308 in `vercel.json` and in the app, `#section` kept) | built (rev 2.2; was `/for-artisans`, rev 1) |
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
@@ -397,6 +399,8 @@ POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
 POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
 POST /api/auth/verify         { phone, code } → session cookie   → 200   live
 GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+POST /api/support/report      { jobId, category, details? } → ref → 200  live (rev 2.9, signed in)
+GET  /api/ops/reports         → { reports }                      → 200   live (rev 2.9)
 POST /api/ops/unlock          { passcode } → ops cookie          → 200   live (rev 2.8)
 GET  /api/ops/applications    → { applications, persistent }     → 200   live (rev 2.8)
 POST /api/ops/applications/status { id, status, note? }          → 200   live (rev 2.8)
@@ -418,6 +422,14 @@ The errors are, in order: `ops_disabled` 503 → `not_signed_in` 401 → `not_op
 `ops_locked` 403. A review sets the application's `status` (`received` → `called` →
 `approved`/`declined`), a private `note` and `reviewed_at`. Nothing reaches the
 applicant yet.
+
+**Problem reports (rev 2.9).** `POST /api/support/report` requires a session, because
+the phone is how the team calls back. It takes the job id, one of `late · price · quality
+· damage · safety · other`, and details, which are required for `other`. It stores a
+`job_reports` row and returns an `R-1234` reference; the job remembers it on this device
+(`Job.report`). The team reads reports on `/ops` → Problem reports. Jobs themselves are
+still per-browser samples (Phase 6 moves them server-side), so a report names the job by
+id.
 
 **Auth is stateless, so login needs no database.**
 

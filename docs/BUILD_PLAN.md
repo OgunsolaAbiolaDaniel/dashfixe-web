@@ -449,6 +449,22 @@ The second owner-picked chunk: review the Dashfixe Pro applications.
 **Owner test:** set `OPS_PHONES` and `OPS_PASSCODE` in Vercel (plus `DATABASE_URL` so it
 keeps), redeploy, apply once, then approve yourself on `/ops`.
 
+### Revision 2.9 · Help with a job ✅ (branch `feat/job-help`, stacked on #28)
+
+The third owner-picked chunk: "Get help with this job", "Report a problem", reschedule.
+
+- ✅ **Change the time** on a booked job, with the same slot picker as booking.
+- ✅ **Cancel before travel**, free, with any Dashfixe credit refunded; then Activity.
+- ✅ **On the way:** no time changes; message the artisan instead.
+- ✅ **Report a problem** (late, price, the work, damage, safety, other), sent to the
+  team with the customer's number, and listed on `/ops` → Problem reports. Safety says
+  "call 112 first".
+- ⬜ **Phase 6:** the artisan confirms a new time in the chat, and jobs live on the
+  server, so reports link to a real job.
+
+**Owner test:** book for later on `/explore`, open the job, change the time, then cancel.
+On the live job, report a problem, then see it on `/ops`.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
