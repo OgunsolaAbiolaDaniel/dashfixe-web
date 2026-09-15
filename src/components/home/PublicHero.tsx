@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Clock, MapPin, Wrench } from '../icons';
 import PhotoPick from '../shared/PhotoPick';
@@ -64,11 +64,17 @@ export default function PublicHero({ need, trade, onNeed, onTrade }: Props) {
     setPlace(p);
   };
 
+  // The calendar's focus waits for the scroll. If the page goes away first, the timer
+  // must go with it: left running, it once stole focus from whatever page came next.
+  const focusTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(focusTimer.current), []);
+
   /** Book for later lives in its own section: scroll there and hand over the calendar. */
   const goLater = () => {
     setWhen('later');
     document.getElementById('later')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    window.setTimeout(() => document.getElementById('later-date')?.focus({ preventScroll: true }), 400);
+    window.clearTimeout(focusTimer.current);
+    focusTimer.current = window.setTimeout(() => document.getElementById('later-date')?.focus({ preventScroll: true }), 400);
   };
 
   const changeArea = () => {

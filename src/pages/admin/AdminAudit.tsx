@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { AdminRole } from '../../shared/adminRoles';
 import { useAdminSession, type ConsoleAdmin } from '../../lib/adminSession';
 import { api } from '../../lib/api';
 import { stamp } from '../../lib/console';
+import { ACTION_LABELS, type AuditEvent } from '../../lib/consoleData';
 import { PageHead, Panel, RoleBadge, TableWrap, td, th } from '../../components/admin/ui';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
@@ -12,35 +12,16 @@ import type { StringKey } from '../../i18n/strings';
  * team (everyone but the Super admin), an Admin their own actions. The server
  * decides the scope; this page just says which one it got.
  */
-export type AuditEvent = {
-  id: number;
-  at: string;
-  adminId: number | null;
-  adminName: string | null;
-  role: AdminRole | null;
-  action: string;
-  record: string | null;
-  detail: string | null;
-};
 export type AuditScope = 'all' | 'team' | 'own';
-
-const ACTIONS: Record<string, StringKey> = {
-  setup: 'admin.action.setup',
-  signin: 'admin.action.signin',
-  'signin.locked': 'admin.action.signin.locked',
-  'password.change': 'admin.action.password.change',
-  'team.add': 'admin.action.team.add',
-  'team.role': 'admin.action.team.role',
-  'team.disable': 'admin.action.team.disable',
-  'team.enable': 'admin.action.team.enable',
-  'team.password': 'admin.action.team.password',
-};
+const ACTIONS = ACTION_LABELS;
 
 const FILTERS: Array<[string, StringKey, (action: string) => boolean]> = [
   ['all', 'admin.audit.filter.all', () => true],
+  ['work', 'admin.audit.filter.work', (a) => a.startsWith('application.') || a.startsWith('report.')],
   ['signins', 'admin.audit.filter.signins', (a) => a === 'setup' || a.startsWith('signin')],
   ['team', 'admin.audit.filter.team', (a) => a.startsWith('team.')],
   ['passwords', 'admin.audit.filter.passwords', (a) => a === 'password.change' || a === 'team.password'],
+  ['exports', 'admin.audit.filter.exports', (a) => a === 'data.export'],
 ];
 
 export function AuditRows({ events, compact = false }: { events: AuditEvent[]; compact?: boolean }) {

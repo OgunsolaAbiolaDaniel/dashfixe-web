@@ -5,8 +5,18 @@
  */
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 
-const N = 16384;
+const N_PRODUCTION = 16384;
 const R = 8;
+
+/**
+ * scrypt's cost. Tests may lower it (DFX_SCRYPT_N, only under NODE_ENV=test): the
+ * console's suites hash dozens of passwords, and at full cost they starve parallel
+ * test workers of CPU. Every hash stores its own N, so nothing mixes.
+ */
+function cost(): number {
+  const override = process.env.NODE_ENV === 'test' ? Number(process.env.DFX_SCRYPT_N) : NaN;
+  return Number.isInteger(override) && override >= 1024 ? override : N_PRODUCTION;
+}
 const P = 1;
 const KEYLEN = 64;
 export const MIN_PASSWORD = 12;
@@ -22,8 +32,9 @@ function scrypt(password: string, salt: Buffer, n: number, r: number, p: number)
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
-  const key = await scrypt(password, salt, N, R, P);
-  return `scrypt$${N}$${R}$${P}$${salt.toString('base64url')}$${key.toString('base64url')}`;
+  const n = cost();
+  const key = await scrypt(password, salt, n, R, P);
+  return `scrypt$${n}$${R}$${P}$${salt.toString('base64url')}$${key.toString('base64url')}`;
 }
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {

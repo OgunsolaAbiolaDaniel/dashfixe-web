@@ -15,6 +15,7 @@ import type { StringKey } from '../../i18n/strings';
 const KNOWN: ReadonlySet<string> = new Set([
   'invalid_credentials', 'locked', 'disabled', 'temp_expired', 'wrong_key', 'weak_password', 'invalid_email', 'invalid_name',
   'already_set_up', 'setup_unavailable', 'wrong_password', 'same_password', 'email_taken', 'not_yourself', 'last_super', 'forbidden',
+  'needs_supervisor', 'invalid_owner', 'resolution_required',
 ]);
 
 // eslint-disable-next-line react-refresh/only-export-components -- shared by every console form

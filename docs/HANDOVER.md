@@ -5,9 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/admin-foundation` (revision 2.12, the admin
-console's first PR). Everything through #32 is merged, including 2.11 (`GET /api/health`), and
-production runs on Postgres ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/admin-work` (revision 2.13, the admin console's
+second PR), stacked on #33 (`feat/admin-foundation`, 2.12). Everything through #32 is merged,
+including 2.11 (`GET /api/health`), and production runs on Postgres ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -33,10 +33,11 @@ Notes on each are below.
 
 **In progress: the admin console, in three PRs** (owner request, 2026-09-15: "my admin
 route… layers of access… a supervisor… I as the super admin can also see the flow").
-1. **Foundation** (2.12, this branch): accounts, sign-in, setup, roles, team, audit log,
-   and the black console frame. Notes below.
-2. **Work screens:** applications, problem reports, waitlist and coverage move from
-   `/ops` into `/admin`, with the permissions enforced, owners, filters and SLA timers.
+1. **Foundation** (2.12, #33): accounts, sign-in, setup, roles, team, audit log, and the
+   black console frame. Notes below.
+2. **Work screens** (2.13, this branch): the overview's figures, applications, problem
+   reports and the waitlist in `/admin`, with owners, targets, history and logged exports.
+   `/ops` redirects here. Notes below.
 3. **Supervisor sign-off and chat:** Admins send requests on a record, Supervisors sign
    off, and the Super admin sees every thread.
 
@@ -50,7 +51,35 @@ route… layers of access… a supervisor… I as the super admin can also see t
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.12**, on branch `feat/admin-foundation`, is the admin console's foundation.
+**Revision 2.13**, on branch `feat/admin-work`, gives the console its work.
+- **Server** (`server/adminApi.ts`, `adminStats.ts`, the store):
+  - the routes: `applications` (+ `/update`), `reports` (+ `/update`), `waitlist`,
+    `export`, `history`, `stats` and `people` (names only)
+  - Postgres columns: applications gain `owner_id` and `called_at`; reports gain
+    `status`, `owner_id`, `resolution`, `called_at` and `resolved_at`; the audit log gets
+    an index on `record`
+- **Rules, all on the server:**
+  - Deciding, or undoing a decision, needs `applications.decide`; an Admin gets
+    `needs_supervisor`.
+  - An Admin can only take unowned work or let go of their own; `work.assign` gives it
+    to anyone.
+  - Resolving a report needs a written resolution. Safety reports and reopening need a
+    Supervisor.
+  - Exports need `data.export` and are always written to the audit log.
+- **Screens** (`pages/admin/AdminOverview`, `AdminApplications`, `AdminReports`,
+  `AdminWaitlist`, `components/admin/work.tsx`, `Sparkline.tsx`, `lib/consoleData.ts`):
+  the overview's figures, attention list, pipeline, coverage and system panels; the
+  work tables with tabs, filters, search and bulk actions; detail panels with history;
+  CSV export that escapes formula-like cells.
+- **`shared/pilot.ts`** holds the pilot's areas (also used by `/pro/apply`) and the
+  response targets (applicants 48 h, safety 1 h, other reports 24 h).
+- **`/ops`** now redirects to `/admin`. The page, its test and its strings are gone;
+  `/api/ops/*` stays for now.
+- **Tests:** `server/adminWork.test.ts` (the rules and the stats maths) and
+  `pages/admin/AdminWork.test.tsx` (an Admin's limits, a Supervisor's decision and
+  export, and safety-first reports).
+
+**Revision 2.12**, on branch `feat/admin-foundation` (#33), is the admin console's foundation.
 ARCHITECTURE §4 "The admin console" has the full model.
 - **Server** (`server/adminApi.ts`, `passwords.ts`, `session.ts`, `http.ts`, and the
   store's `admins` + `admin_audit`):
@@ -625,6 +654,17 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Serverless has no shared memory.** An in-memory OTP store fails when `verify` lands
   on a different instance from `request-code`. The pending code now rides in a signed
   cookie (`server/session.ts`).
+- **A delayed `setTimeout` must die with its component.** The home's "Choose when"
+  focused the calendar 400 ms after scrolling, on a timer nothing cancelled. In the tests
+  it outlived its page and stole focus from the next test's address field after one
+  keystroke ("s"), so the suggestion test failed now and then, only under full-suite load.
+  A visitor who left within 400 ms could have hit the same thing. `PublicHero` now keeps
+  the timer in a ref and clears it on unmount, and a regression test covers it. Put any
+  deferred focus or scroll in a ref with an unmount cleanup.
+- **scrypt is deliberately CPU-heavy.** The console's suites hash dozens of passwords, so
+  `src/test/setup.ts` sets `DFX_SCRYPT_N=1024` to keep them fast. `server/passwords.ts`
+  honours it only under `NODE_ENV=test`, and every hash stores its own N, so production
+  is untouched.
 - **`sr-only` inputs escape a non-positioned scroller.** `sr-only` is `position:
   absolute`. Inside a scrolling column that isn't `relative`, the inputs sit against
   the page at their static position far down the column, which stretches the document

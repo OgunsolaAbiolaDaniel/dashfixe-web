@@ -158,4 +158,19 @@ describe('HomePage', () => {
     // …and it is remembered for the next page.
     expect(JSON.parse(localStorage.getItem('dfx.place')!).label).toBe('Praça 1.º de Maio, Seixal');
   });
+
+  it('cancels the calendar focus if the page goes away first', async () => {
+    // Regression: the 400 ms focus timer outlived the page and stole focus from the next one.
+    const user = userEvent.setup();
+    const first = renderHome();
+    await user.type(screen.getByLabelText('What needs fixing'), 'leaking tap');
+    await user.click(screen.getByRole('button', { name: 'Choose when' }));
+    first.unmount();
+
+    renderHome();
+    const box = screen.getByRole('combobox', { name: 'Your address' });
+    box.focus();
+    await new Promise((r) => setTimeout(r, 500));
+    expect(box).toHaveFocus();
+  });
 });
