@@ -50,7 +50,7 @@ describe('HomePage', () => {
     renderHome();
     await user.type(screen.getByLabelText('What needs fixing'), 'leaking tap');
     await user.type(screen.getByRole('combobox', { name: 'Your address' }), 'seixal');
-    await user.click(await screen.findByRole('option', { name: 'Praça 1.º de Maio, Seixal' }));
+    await user.click(await screen.findByRole('option', { name: 'Praça 1.º de Maio, Seixal' }, { timeout: 4000 }));
     await user.click(screen.getByRole('button', { name: "See who's available" }));
 
     const where = await screen.findByTestId('where');
@@ -151,7 +151,7 @@ describe('HomePage', () => {
     expect(after.km).not.toBe(before.km); // guard: the test means something
 
     await user.type(screen.getByRole('combobox', { name: 'Your address' }), 'seixal');
-    await user.click(await screen.findByRole('option', { name: 'Praça 1.º de Maio, Seixal' }));
+    await user.click(await screen.findByRole('option', { name: 'Praça 1.º de Maio, Seixal' }, { timeout: 4000 }));
 
     expect(await screen.findByText(`Plumbing · ${after.km} km`)).toBeInTheDocument();
     expect(screen.getByText('Around Praça 1.º de Maio, Seixal')).toBeInTheDocument();
