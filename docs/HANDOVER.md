@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `main`. Everything through #24 is merged,
-Dashfixe Pro included. #25 (the chat profile card's focus fix) is open ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/launch-ready` (revision 2.7). Everything
+through #26 is merged, Dashfixe Pro and the chat profile card's focus fix included ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -24,11 +24,13 @@ on the deploy.
 - `robots.txt` keeps the private pages out.
 - The pilot log in works, and a forged session is rejected.
 
-**One open PR: #25.** `main`'s check job is red: the chat profile card's test that checks
-focus comes back to the chat after closing is flaky on CI's slower runner.
-#25 makes the card own its focus (set once on open, handed back on close). It's green,
-and merging it turns `main` green. Production is unaffected; the flaky part was only
-the test's timing.
+**In progress: the four owner-picked chunks, one PR each, in this order.**
+1. **Launch readiness** (revision 2.7, this branch): security headers and CSP, lazy pages,
+   sized photos, hreflang and JSON-LD. Notes below.
+2. **Founders' `/ops`**: review the `/pro/apply` applications and mark each called,
+   approved or declined. Restricted to the owner's phone, and needs `DATABASE_URL`.
+3. **Customer help and reschedule** on `/job/:id`.
+4. **A full customer journey in Playwright**: search → chat → book → track → receipt → rate.
 
 **What's left is the owner's (no code), in order:**
 1. `DATABASE_URL`, free on Neon, so applications and the waitlist survive restarts.
@@ -38,6 +40,36 @@ the test's timing.
 
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
+
+**Revision 2.7**, on branch `feat/launch-ready`, is the launch-readiness pass.
+- **Security headers** (`vercel.json`): a CSP naming every outside host, HSTS, no
+  framing, nosniff, referrer and permissions policies, and immutable caching for
+  `/assets/*`. `vite preview` sends the same headers (`productionHeaders()` in
+  `vite.config.ts`), and a smoke test fails if the CSP blocks anything on `/` or
+  `/explore`.
+- **Lazy pages** (`lib/lazyPage.tsx`, `routePages.ts`, `main.tsx`), with each
+  pre-rendered page modulepreloading its chunk. See the gotchas.
+- **Photos** (`shared/Photo`): Pexels photos with srcset/sizes, dimensions and async
+  decode, so a phone gets a 640–960px image instead of the 1600px one.
+- **Search** (`seo.ts`, `lib/faq.ts`): hreflang (`?lang=pt`, which `i18n` now reads and
+  remembers) in the heads, at runtime and in the sitemap, and JSON-LD: `Organization` +
+  `WebSite`, a `Service` per trade, and `FAQPage` on both help pages. No ratings claimed.
+- **`check-prod.mjs`** gains checks for the headers, asset caching, hreflang and JSON-LD.
+
+Measured cold loads of the built app, served over HTTP/2 with gzip. The phone profile is
+412px wide, with 4× CPU throttling and 1.6 Mbps at 150 ms. Each figure is the median of 5
+runs of first/largest paint (`scripts/measure.mjs`; rerun it before and after any change
+that touches loading):
+
+| Page | Before (main) | After |
+|---|---|---|
+| `/` | 1,896 ms | 1,732 ms |
+| `/trade/plumbing` | 1,716 ms | 1,580 ms |
+| `/pro` | 1,792 ms | 1,680 ms |
+| `/help` | 1,648 ms | 1,528 ms |
+| `/explore` | 1,736 ms | 1,940 ms (the baseline itself ranged 1,736–1,968 across runs) |
+
+JS before `load`: 165 → 138–146 kB gzip. Entry chunk: 589 → 288 kB raw.
 
 **Revision 2.4** (#22, merged; its focus fix is #25) was an owner request, made mid-way
 through the Pro work. It adds the artisan's profile card to the chat. In the chat header, the avatar
@@ -440,7 +472,7 @@ docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 | `DATABASE_URL` | persistence | Neon connection string; tables auto-create on first use |
 | `AUTH_SECRET` | sessions | any long random string; rotating it logs everyone out |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | real SMS codes | without them login shows labelled pilot codes on screen |
-| `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes |
+| `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes; add its hosts to the CSP in `vercel.json` |
 | `SITE_URL` | canonical/OG/sitemap URLs | e.g. `https://dashfixe.pt`; absent → Vercel's production hostname |
 | `VITE_LAUNCHED` | launch day | `true` retires `/waitlist` to `/` and drops it from the sitemap |
 
@@ -517,6 +549,22 @@ link into WhatsApp — the card should show that page's title and the map image.
 - `window.__dfxMap` is exposed in dev only, for the screenshot probes.
 - **`scripts/shot.mjs` can fail to spawn Playwright's Chromium** (`spawn UNKNOWN`) in some
   sandboxed sessions. Point it at Edge: `CHROME_PATH="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"`.
+- **The Content-Security-Policy lists every outside host** (`vercel.json` → `headers`):
+  Google Fonts, Pexels photos, OpenFreeMap tiles/sprites/glyphs and Nominatim. A new one
+  (analytics, a new tile provider via `VITE_MAP_STYLE`, a payments script) is **blocked
+  silently** in production until it is added there. `vite preview` sends the same headers,
+  so the smoke test "the production Content-Security-Policy blocks nothing" catches a
+  missing host before it ships. Vercel's preview-comments toolbar is deliberately not
+  allowed.
+- **Pages are lazy (`lib/lazyPage.tsx`, `routePages.ts`).** Only the home is in the entry
+  chunk. A new page goes in `routePages.ts`: add its `lazyPage(() => import(...))` and its
+  `BY_ROUTE` entry, so `main.tsx` loads it before the first render. If it's indexable,
+  add it to `PAGE_MODULES` in `vite.config.ts` too; the build fails without it. Tests
+  that mount the whole tree call `preloadPages()` in `beforeAll`, or the first `getBy…`
+  sees the Suspense fallback.
+- **Don't let the first page render into a Suspense fallback.** React 19 holds back the
+  reveal (about 300 ms), and it made every lazy page paint later than the old single
+  bundle, even with fewer bytes. `preloadRoute()` before `createRoot` fixed it.
 - **Nominatim's usage policy** allows light, debounced, attributed use only. Fine for the
   pilot; swap `ENDPOINT` in `lib/geocode.ts` for a paid geocoder before real traffic.
 - **React lint is strict** (`react-hooks/set-state-in-effect`): clear state in event handlers,

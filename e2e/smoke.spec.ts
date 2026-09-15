@@ -18,6 +18,20 @@ test('marketing pages load without the map bundle or console errors', async ({ p
   expect(errors).toEqual([]);
 });
 
+test('the production Content-Security-Policy blocks nothing the site uses', async ({ page }) => {
+  // vite preview sends vercel.json's headers (vite.config.ts), so this is the live CSP.
+  const blocked: string[] = [];
+  page.on('console', (m) => m.type() === 'error' && /Content Security Policy/i.test(m.text()) && blocked.push(m.text()));
+  const response = await page.goto('/');
+  expect(response?.headers()['content-security-policy']).toContain("frame-ancestors 'none'");
+  // The home (photos, fonts, the live map and its tiles), then the map-first explore page.
+  await page.getByRole('contentinfo').scrollIntoViewIfNeeded();
+  await page.goto('/explore');
+  await expect(page.locator('.maplibregl-canvas')).toBeVisible();
+  await page.waitForTimeout(1500);
+  expect(blocked).toEqual([]);
+});
+
 test('the explore map loads on demand and draws its markers', async ({ page }) => {
   await page.goto('/explore');
   await expect(page.getByRole('heading', { name: 'Who is free right now' })).toBeVisible();

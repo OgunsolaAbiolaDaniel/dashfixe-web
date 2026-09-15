@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Close, ReceiptSlim } from '../icons';
+import Photo from '../shared/Photo';
 import SlotPicker from '../shared/SlotPicker';
 import { isTradeSlug, link } from '../../routes';
 import { usePlace } from '../../lib/place';
@@ -63,12 +64,7 @@ export default function BookAhead({ need = '', trade = '' }: { need?: string; tr
               </Link>
             </div>
             <div className="min-h-[220px] self-stretch bg-[#c7d7f2]">
-              <img
-                src="https://images.pexels.com/photos/5484718/pexels-photo-5484718.jpeg?auto=compress&cs=tinysrgb&w=1600"
-                alt=""
-                loading="lazy"
-                className="block h-full min-h-[220px] w-full object-cover"
-              />
+              <Photo id={5484718} alt="" className="block h-full min-h-[220px] w-full object-cover" />
             </div>
           </div>
 

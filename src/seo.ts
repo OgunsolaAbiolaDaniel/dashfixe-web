@@ -8,6 +8,11 @@
  *    public route with the same tags baked in, plus sitemap.xml and robots.txt —
  *    link-preview crawlers (WhatsApp, LinkedIn, X) never run JavaScript.
  *
+ * Every indexable page also carries its language variants (hreflang: English at
+ * the plain URL, Portuguese at `?lang=pt`, which i18n reads) and schema.org
+ * structured data: the organisation on the home, a Service per trade page, and
+ * FAQPage on the two help pages, built from the same list the pages render.
+ *
  * Keep this module free of React and of `import.meta.env`: Node imports it at
  * build time.
  */
@@ -15,6 +20,7 @@ import { translate, type StringKey } from './i18n/strings';
 import type { Lang } from './types';
 import { ROUTES, TRADE_SLUGS, isTradeSlug, tradeUrl } from './routes';
 import { AVAILABLE } from './components/explore/artisans';
+import { HELP_QA, PRO_HELP_TOPICS } from './lib/faq';
 
 export const SITE_NAME = 'Dashfixe';
 /** 1200×630 JPEG — link previews (WhatsApp especially) want it well under 300 kB. */
@@ -27,6 +33,7 @@ export type PageMeta = {
   path: string;
   /** Private or sample-only pages stay out of search results. */
   noindex: boolean;
+  lang: Lang;
 };
 
 type Entry = { title: StringKey; description: StringKey; noindex?: boolean };
@@ -75,6 +82,7 @@ export function pageMeta(pathname: string, lang: Lang): PageMeta {
       description: t(`trade.${trade}.intro`),
       path,
       noindex: false,
+      lang,
     };
   }
 
@@ -82,20 +90,21 @@ export function pageMeta(pathname: string, lang: Lang): PageMeta {
   const artisan = /^\/artisan\/([\w-]+)$/.exec(path)?.[1];
   if (artisan) {
     const name = AVAILABLE.find((a) => a.id === artisan)?.name;
-    return { title: withSite(name ?? t('seo.explore.title')), description: t('seo.home.desc'), path, noindex: true };
+    return { title: withSite(name ?? t('seo.explore.title')), description: t('seo.home.desc'), path, noindex: true, lang };
   }
   if (/^\/job\//.test(path)) {
-    return { title: withSite(t('seo.job.title')), description: t('seo.home.desc'), path, noindex: true };
+    return { title: withSite(t('seo.job.title')), description: t('seo.home.desc'), path, noindex: true, lang };
   }
 
   const entry = PAGES[path];
   // Unknown paths render the 404 page: titled for the tab, never indexed.
-  if (!entry) return { title: withSite(t('seo.notFound.title')), description: t('seo.home.desc'), path, noindex: true };
+  if (!entry) return { title: withSite(t('seo.notFound.title')), description: t('seo.home.desc'), path, noindex: true, lang };
   return {
     title: path === ROUTES.home ? t(entry.title) : withSite(t(entry.title)),
     description: t(entry.description),
     path,
     noindex: entry.noindex ?? false,
+    lang,
   };
 }
 
@@ -122,6 +131,93 @@ export function indexablePaths(_launched: boolean): string[] {
   ];
 }
 
+// ─── Language variants and structured data (both sides) ────────────────────
+
+const pageUrl = (siteUrl: string, path: string) => siteUrl + (path === '/' ? '/' : path);
+
+/** A page's URL in one language: English is the plain URL, Portuguese adds `?lang=pt`. */
+export const langUrl = (url: string, lang: Lang) => (lang === 'PT' ? `${url}?lang=pt` : url);
+
+/** hreflang alternates for an indexable page: [hreflang, href]. */
+export function alternates(url: string): Array<[string, string]> {
+  return [
+    ['en', langUrl(url, 'EN')],
+    ['pt-PT', langUrl(url, 'PT')],
+    ['x-default', url],
+  ];
+}
+
+/** The pilot's service area. No street address: there is no shopfront to send anyone to. */
+const AREA = [
+  { '@type': 'City', name: 'Amora' },
+  { '@type': 'City', name: 'Seixal' },
+];
+
+const FAQS: Record<string, Array<[StringKey, StringKey]>> = {
+  [ROUTES.help]: HELP_QA.map(({ q, a }) => [q, a]),
+  [ROUTES.proHelp]: PRO_HELP_TOPICS.flatMap((topic) => topic.qa),
+};
+
+/**
+ * schema.org JSON-LD for a page — only for indexable pages, and only facts the
+ * page itself states. No ratings or reviews: the pilot has none to show yet.
+ */
+export function structuredData(meta: PageMeta, siteUrl: string): Array<Record<string, unknown>> {
+  if (meta.noindex) return [];
+  const t = (key: StringKey, vars?: Record<string, string>) => translate(meta.lang, key, vars);
+  const url = langUrl(pageUrl(siteUrl, meta.path), meta.lang);
+  const inLanguage = meta.lang === 'PT' ? 'pt-PT' : 'en';
+  const context = 'https://schema.org';
+  const org = {
+    '@type': 'Organization',
+    '@id': `${siteUrl}/#organization`,
+    name: SITE_NAME,
+    url: `${siteUrl}/`,
+    logo: `${siteUrl}/apple-touch-icon.png`,
+    areaServed: AREA,
+  };
+
+  if (meta.path === ROUTES.home) {
+    return [
+      { '@context': context, ...org },
+      { '@context': context, '@type': 'WebSite', name: SITE_NAME, url: `${siteUrl}/`, inLanguage: ['en', 'pt-PT'], publisher: { '@id': org['@id'] } },
+    ];
+  }
+
+  const trade = /^\/trade\/([a-z]+)$/.exec(meta.path)?.[1];
+  if (isTradeSlug(trade)) {
+    return [
+      {
+        '@context': context,
+        '@type': 'Service',
+        name: t('trade.h1', { pros: t(`trade.${trade}.pros`) }),
+        serviceType: t(`trade.${trade}.pros`),
+        description: meta.description,
+        url,
+        areaServed: AREA,
+        provider: { '@id': org['@id'], '@type': 'Organization', name: SITE_NAME, url: `${siteUrl}/` },
+      },
+    ];
+  }
+
+  const faq = FAQS[meta.path];
+  if (faq) {
+    return [
+      {
+        '@context': context,
+        '@type': 'FAQPage',
+        url,
+        inLanguage,
+        mainEntity: faq.map(([q, a]) => ({ '@type': 'Question', name: t(q), acceptedAnswer: { '@type': 'Answer', text: t(a) } })),
+      },
+    ];
+  }
+  return [];
+}
+
+/** JSON inside <script>: never let a string close the tag early. */
+const jsonForScript = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
+
 // ─── Build side (Node) ──────────────────────────────────────────────────────
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -132,7 +228,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').repl
  * silently shipping pages that all share the home page's preview.
  */
 export function renderHead(html: string, meta: PageMeta, siteUrl: string): string {
-  const url = siteUrl + (meta.path === '/' ? '/' : meta.path);
+  const url = langUrl(pageUrl(siteUrl, meta.path), meta.lang);
   const image = siteUrl + OG_IMAGE;
   const swaps: Array<[RegExp, string]> = [
     [/<title>[^<]*<\/title>/, `<title>${esc(meta.title)}</title>`],
@@ -153,15 +249,37 @@ export function renderHead(html: string, meta: PageMeta, siteUrl: string): strin
     if (!re.test(out)) missing.push(re.source);
     out = out.replace(re, to);
   }
+  if (!out.includes('</head>')) missing.push('</head>');
+  // A function, not a string: answers may contain `$`, which replace() would read as a pattern.
+  out = out.replace('</head>', () => `${headExtras(meta, siteUrl)}</head>`);
   if (missing.length) throw new Error(`index.html is missing SEO tags: ${missing.join(', ')}`);
   return out;
 }
 
+/** hreflang links and JSON-LD for an indexable page; nothing for the rest. */
+function headExtras(meta: PageMeta, siteUrl: string): string {
+  if (meta.noindex) return '';
+  const links = alternates(pageUrl(siteUrl, meta.path)).map(
+    ([hreflang, href]) => `<link rel="alternate" hreflang="${hreflang}" href="${esc(href)}" />`,
+  );
+  const scripts = structuredData(meta, siteUrl).map((data) => `<script type="application/ld+json">${jsonForScript(data)}</script>`);
+  return [...links, ...scripts].map((tag) => `    ${tag}\n`).join('') + '  ';
+}
+
+/** One <url> per language variant, each listing all of them (Google's sitemap hreflang format). */
 export function sitemapXml(siteUrl: string, paths: string[], lastmod: string): string {
   const urls = paths
-    .map((p) => `  <url><loc>${esc(siteUrl + (p === '/' ? '/' : p))}</loc><lastmod>${lastmod}</lastmod></url>`)
+    .flatMap((p) => {
+      const url = pageUrl(siteUrl, p);
+      const links = alternates(url)
+        .map(([hreflang, href]) => `<xhtml:link rel="alternate" hreflang="${hreflang}" href="${esc(href)}"/>`)
+        .join('');
+      return (['EN', 'PT'] as const).map(
+        (lang) => `  <url><loc>${esc(langUrl(url, lang))}</loc><lastmod>${lastmod}</lastmod>${links}</url>`,
+      );
+    })
     .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
 }
 
 export function robotsTxt(siteUrl: string): string {
@@ -201,13 +319,15 @@ const meta = (attr: 'name' | 'property', key: string) => () => {
 
 /** Update the live document to match a page — the runtime half of the table. */
 export function applyMeta(m: PageMeta, origin: string) {
-  const url = origin + (m.path === '/' ? '/' : m.path);
+  const plain = pageUrl(origin, m.path);
+  const url = langUrl(plain, m.lang);
   document.title = m.title;
   setTag('meta[name="description"]', meta('name', 'description'), 'content', m.description);
   setTag('meta[name="robots"]', meta('name', 'robots'), 'content', m.noindex ? 'noindex, nofollow' : 'index, follow');
   setTag('meta[property="og:title"]', meta('property', 'og:title'), 'content', m.title);
   setTag('meta[property="og:description"]', meta('property', 'og:description'), 'content', m.description);
   setTag('meta[property="og:url"]', meta('property', 'og:url'), 'content', url);
+  setTag('meta[property="og:locale"]', meta('property', 'og:locale'), 'content', m.lang === 'PT' ? 'pt_PT' : 'en_GB');
   setTag('meta[name="twitter:title"]', meta('name', 'twitter:title'), 'content', m.title);
   setTag('meta[name="twitter:description"]', meta('name', 'twitter:description'), 'content', m.description);
   setTag(
@@ -220,4 +340,21 @@ export function applyMeta(m: PageMeta, origin: string) {
     'href',
     url,
   );
+
+  // Language variants and structured data follow the page (none on private pages).
+  document.head.querySelectorAll('link[rel="alternate"][hreflang], script[type="application/ld+json"]').forEach((el) => el.remove());
+  if (m.noindex) return;
+  for (const [hreflang, href] of alternates(plain)) {
+    const el = document.createElement('link');
+    el.rel = 'alternate';
+    el.hreflang = hreflang;
+    el.href = href;
+    document.head.appendChild(el);
+  }
+  for (const data of structuredData(m, origin)) {
+    const el = document.createElement('script');
+    el.type = 'application/ld+json';
+    el.textContent = JSON.stringify(data);
+    document.head.appendChild(el);
+  }
 }

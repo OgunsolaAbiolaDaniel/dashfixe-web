@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import Photo from '../shared/Photo';
 import { link } from '../../routes';
 import { useLang } from '../../i18n';
 
@@ -9,12 +10,7 @@ export default function ArtisanBlock() {
       <div className="mx-auto max-w-[1280px] px-[clamp(18px,4vw,40px)] pb-[clamp(48px,6vw,80px)]">
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))] items-center gap-[clamp(28px,4vw,56px)]">
           <div className="overflow-hidden rounded-card bg-well">
-            <img
-              src="https://images.pexels.com/photos/8486972/pexels-photo-8486972.jpeg?auto=compress&cs=tinysrgb&w=1600"
-              alt=""
-              loading="lazy"
-              className="block h-[clamp(280px,30vw,420px)] w-full object-cover"
-            />
+            <Photo id={8486972} alt="" className="block h-[clamp(280px,30vw,420px)] w-full object-cover" />
           </div>
           <div>
             <h2 className="mb-[18px] text-h2 text-ink [text-wrap:balance]">{t('artisan.title')}</h2>

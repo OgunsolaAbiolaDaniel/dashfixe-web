@@ -1,3 +1,5 @@
+import Photo from '../shared/Photo';
+
 export default function About() {
   return (
     <section id="about" className="scroll-mt-20 border-t border-line-soft bg-page">
@@ -17,12 +19,7 @@ export default function About() {
             <p className="text-[14.5px] font-bold text-ink-40">A project by Noxa Softwares.</p>
           </div>
           <div className="overflow-hidden rounded-card border border-line bg-canvas">
-            <img
-              src="https://images.pexels.com/photos/5691503/pexels-photo-5691503.jpeg?auto=compress&cs=tinysrgb&w=1600"
-              alt="A tradesperson at work"
-              loading="lazy"
-              className="block h-[clamp(240px,26vw,340px)] w-full object-cover"
-            />
+            <Photo id={5691503} alt="A tradesperson at work" className="block h-[clamp(240px,26vw,340px)] w-full object-cover" />
           </div>
         </div>
       </div>

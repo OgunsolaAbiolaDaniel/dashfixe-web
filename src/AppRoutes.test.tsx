@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -12,10 +12,13 @@ vi.mock('maplibre-gl/dist/maplibre-gl.css', () => ({}));
 import { installPilotApi } from './test/pilotApi.mock';
 import { redeemCode } from './lib/wallet';
 import { saveApplication } from './lib/proApplication';
+import { preloadPages } from './lib/lazyPage';
 
 // Every fetch in these tests goes through the real handlers + a fresh store.
 const pilotApi = installPilotApi();
 beforeEach(() => pilotApi.reset());
+// Pages are split into chunks (lib/lazyPage); load them all so each renders at once.
+beforeAll(() => preloadPages(), 30_000);
 
 function renderSignedIn(url: string) {
   return render(

@@ -408,6 +408,30 @@ The owner asked for a way, with the chat open, to see the artisan's profile as a
 2. Tap his name at the top of the chat: his profile card opens over the conversation.
 3. Tap **Back to chat**: the conversation is exactly where it was.
 
+### Revision 2.7 · Launch readiness ✅ (branch `feat/launch-ready`)
+
+The first of four owner-picked chunks ("so what else" → all four, one PR each).
+
+- ✅ **Security headers** in `vercel.json`: a Content-Security-Policy that names every
+  outside host (Google Fonts, Pexels, OpenFreeMap, Nominatim), HSTS, no framing, nosniff,
+  referrer and permissions policies, and year-long caching for hashed assets. `vite
+  preview` sends the same headers, and a smoke test fails if the CSP blocks anything.
+- ✅ **Speed:** every page but the home is its own chunk (`lib/lazyPage.tsx`,
+  `routePages.ts`). The entry went from 589 to 288 kB, and a first visit loads 138–146 kB
+  of gzipped JS instead of 165. The first page's chunk is modulepreloaded and loaded
+  before the first render; the others are warmed once the first page is idle.
+  First paint on a throttled phone: `/` 1.90 → 1.73 s, `/trade/plumbing` 1.72 → 1.58 s,
+  `/help` 1.65 → 1.53 s, `/explore` within noise (HANDOVER has the table). Pexels photos
+  are sized per screen (`shared/Photo`: srcset, dimensions, async decode).
+- ✅ **Search:** hreflang (English at the plain URL, Portuguese at `?lang=pt`) in every
+  indexable head, at runtime and in the sitemap; schema.org JSON-LD (`Organization` +
+  `WebSite`, a `Service` per trade, `FAQPage` on both help pages).
+- ✅ **`check-prod.mjs`** checks the headers, the asset caching, hreflang and JSON-LD.
+
+**Owner test:** after the deploy, run `node scripts/check-prod.mjs`; paste a
+`/trade/plumbing` URL into Google's Rich Results Test and see the Service; open
+`/help?lang=pt` and the page is in Portuguese.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

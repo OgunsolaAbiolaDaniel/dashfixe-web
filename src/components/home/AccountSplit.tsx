@@ -1,3 +1,4 @@
+import Photo from '../shared/Photo';
 import { useLang } from '../../i18n';
 
 export default function AccountSplit({ onAuth }: { onAuth: () => void }) {
@@ -27,12 +28,7 @@ export default function AccountSplit({ onAuth }: { onAuth: () => void }) {
             </div>
           </div>
           <div className="overflow-hidden rounded-card bg-well">
-            <img
-              src="https://images.pexels.com/photos/5691503/pexels-photo-5691503.jpeg?auto=compress&cs=tinysrgb&w=1600"
-              alt=""
-              loading="lazy"
-              className="block h-[clamp(260px,28vw,380px)] w-full object-cover"
-            />
+            <Photo id={5691503} alt="" className="block h-[clamp(260px,28vw,380px)] w-full object-cover" />
           </div>
         </div>
       </div>

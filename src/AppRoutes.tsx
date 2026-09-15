@@ -1,28 +1,31 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import HomePage from './pages/HomePage';
-import WaitlistPage from './pages/WaitlistPage';
-import ExplorePage from './pages/ExplorePage';
-import ActivityPage from './pages/ActivityPage';
-import AccountPage from './pages/AccountPage';
-import ArtisanProfilePage from './pages/ArtisanProfilePage';
-import JobPage from './pages/JobPage';
-import ProLandingPage from './pages/ProLandingPage';
-import ProAppPage from './pages/ProAppPage';
-import ProApplyPage from './pages/ProApplyPage';
-import ProApplicationPage from './pages/ProApplicationPage';
-import ProDashboardPage from './pages/ProDashboardPage';
-import ProHelpPage from './pages/ProHelpPage';
-import AboutPage from './pages/AboutPage';
-import HelpPage from './pages/HelpPage';
-import LegalPage from './pages/LegalPage';
-import LoginPage from './pages/LoginPage';
-import TradePage from './pages/TradePage';
-import HowItWorksPage from './pages/HowItWorksPage';
-import NotFoundPage from './pages/NotFoundPage';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { AssistantProvider } from './components/assistant/AssistantProvider';
 import LocationPrompt from './components/shared/LocationPrompt';
+import { preloadPagesWhenIdle } from './lib/lazyPage';
+import {
+  AboutPage,
+  AccountPage,
+  ActivityPage,
+  ArtisanProfilePage,
+  ExplorePage,
+  HelpPage,
+  HowItWorksPage,
+  JobPage,
+  LegalPage,
+  LoginPage,
+  NotFoundPage,
+  ProAppPage,
+  ProApplicationPage,
+  ProApplyPage,
+  ProDashboardPage,
+  ProHelpPage,
+  ProLandingPage,
+  TradePage,
+  WaitlistPage,
+} from './routePages';
 import { ROUTES, link } from './routes';
 import { launched } from './config';
 import { applyMeta, pageMeta } from './seo';
@@ -32,6 +35,10 @@ import { useLang } from './i18n';
  * The route tree — docs/ARCHITECTURE.md §4. Kept apart from the BrowserRouter and
  * providers in App.tsx so tests can mount it inside a MemoryRouter and assert on
  * real navigation, including the redirects.
+ *
+ * The home ships in the entry chunk; every other page is its own chunk
+ * (routePages.ts): the first page's is fetched before the first render (main.tsx),
+ * the rest on first visit or once the first page is idle.
  */
 
 /** Hash links must still work after a client-side navigation. */
@@ -62,6 +69,7 @@ function RouteMeta() {
 
 export default function AppRoutes() {
   const { pathname } = useLocation();
+  useEffect(() => preloadPagesWhenIdle(), []);
   return (
     <>
       <HashScroll />
@@ -72,6 +80,8 @@ export default function AppRoutes() {
       <AssistantProvider>
       {/* On map pages: ask once for the customer's position (lib/place). */}
       <LocationPrompt />
+      {/* A page's first visit waits for its chunk; a blank screen-height keeps the footer from flashing up. */}
+      <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
       <Routes>
         {/* Product surface (ARCHITECTURE.md §2) */}
         <Route path={ROUTES.home} element={<HomePage />} />
@@ -114,6 +124,7 @@ export default function AppRoutes() {
         {/* Anything else is an honest 404 (noindex), not a silent trip home. */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       </AssistantProvider>
       </ErrorBoundary>
     </>

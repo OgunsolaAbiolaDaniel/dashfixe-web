@@ -2,6 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import react from '@vitejs/plugin-react'
+import type { Rollup } from 'vite'
 import { defineConfig, loadEnv, type Connect, type Plugin } from 'vite'
 import { handleApi } from './src/server/handlers'
 import { indexablePaths, pageMeta, renderHead, robotsTxt, sitemapXml } from './src/seo'
@@ -53,6 +54,65 @@ function pilotApi(): Plugin {
 }
 
 /**
+ * The production response headers (vercel.json → `headers`: the CSP, HSTS, no
+ * framing…) on `vite preview` too, so the smoke suite runs the built app under the
+ * same Content-Security-Policy as production: a new outside host the CSP forgot
+ * fails a test instead of silently breaking the live site. Not on the dev server —
+ * Vite's HMR client needs inline scripts and a websocket.
+ */
+function productionHeaders(): Plugin {
+  type Rule = { source: string; headers: Array<{ key: string; value: string }> }
+  const rules = (JSON.parse(readFileSync('vercel.json', 'utf8')).headers as Rule[]).map((r) => ({
+    // Only the `/(.*)`-style sources vercel.json uses; path-to-regexp's full syntax isn't needed.
+    match: new RegExp(`^${r.source.replace(/\(\.\*\)/g, '.*')}$`),
+    headers: r.headers,
+  }))
+  return {
+    name: 'dashfixe-production-headers',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '/').split('?')[0]!
+        for (const rule of rules) if (rule.match.test(path)) for (const h of rule.headers) res.setHeader(h.key, h.value)
+        next()
+      })
+    },
+  }
+}
+
+/**
+ * Which page module each indexable path renders. Pages are lazy chunks
+ * (lib/lazyPage.tsx), so a cold load would fetch the entry, run it, and only then
+ * ask for the page's chunk — a second round trip before anything paints. Each
+ * pre-rendered file therefore modulepreloads its own page chunk alongside the entry.
+ */
+const PAGE_MODULES: Record<string, string> = {
+  '/explore': 'ExplorePage',
+  '/how-it-works': 'HowItWorksPage',
+  '/pro': 'ProLandingPage',
+  '/pro/apply': 'ProApplyPage',
+  '/pro/help': 'ProHelpPage',
+  '/about': 'AboutPage',
+  '/help': 'HelpPage',
+  '/privacy': 'LegalPage',
+  '/terms': 'LegalPage',
+  '/cookies': 'LegalPage',
+}
+
+function pagePreloads(path: string, bundle: Rollup.OutputBundle, shell: string): string {
+  if (path === '/') return '' // the home is in the entry chunk
+  const page = path.startsWith('/trade/') ? 'TradePage' : PAGE_MODULES[path]
+  const chunk = Object.values(bundle).find(
+    (c): c is Rollup.OutputChunk => c.type === 'chunk' && !!c.facadeModuleId?.replace(/\\/g, '/').endsWith(`/src/pages/${page}.tsx`),
+  )
+  // Strict, like renderHead: a new indexable page without a mapping fails the build.
+  if (!page || !chunk) throw new Error(`seoPages: no page chunk for ${path} — add it to PAGE_MODULES`)
+  return [chunk.fileName, ...chunk.imports]
+    .filter((f) => !shell.includes(`/${f}"`)) // the entry and what it already preloads
+    .map((f) => `    <link rel="modulepreload" crossorigin href="/${f}">\n`)
+    .join('')
+}
+
+/**
  * SEO at build time (src/seo.ts): a static index.html per public route with its
  * own title/description/canonical/Open Graph tags, plus sitemap.xml and robots.txt.
  * Vercel serves a real file before the SPA rewrite, so /trade/plumbing ships its
@@ -80,7 +140,8 @@ function seoPages(siteUrl: string, launched: boolean): Plugin {
         // a directory index would only match `/trade/plumbing/`.
         const file = path === '/' ? join(outDir, 'index.html') : join(outDir, `${path.slice(1)}.html`)
         mkdirSync(dirname(file), { recursive: true })
-        writeFileSync(file, renderHead(shell, pageMeta(path, 'EN'), siteUrl))
+        const html = renderHead(shell, pageMeta(path, 'EN'), siteUrl)
+        writeFileSync(file, html.replace('</head>', () => `${pagePreloads(path, bundle, shell)}</head>`))
       }
       writeFileSync(join(outDir, 'sitemap.xml'), sitemapXml(siteUrl, paths, new Date().toISOString().slice(0, 10)))
       writeFileSync(join(outDir, 'robots.txt'), robotsTxt(siteUrl))
@@ -99,7 +160,7 @@ export default defineConfig(({ mode }) => {
   ).replace(/\/+$/, '')
 
   return {
-    plugins: [react(), pilotApi(), seoPages(siteUrl, env.VITE_LAUNCHED === 'true')],
+    plugins: [react(), pilotApi(), productionHeaders(), seoPages(siteUrl, env.VITE_LAUNCHED === 'true')],
     // Listen on IPv4 and IPv6: Node 24 binds `localhost` to ::1 only, which Chrome
     // then refuses when it tries 127.0.0.1.
     server: { host: true },

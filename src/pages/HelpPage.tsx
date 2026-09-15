@@ -1,17 +1,11 @@
 import MarketingShell from '../components/chrome/MarketingShell';
 import { useLang } from '../i18n';
-import type { StringKey } from '../i18n/strings';
+import { HELP_QA as QA } from '../lib/faq';
 
 /**
- * Honest pre-launch help — ARCHITECTURE.md §4. Four straight answers and a human
- * contact. Anchors (#cancellations, #safety, #contact) are footer destinations.
+ * Honest pre-launch help — ARCHITECTURE.md §4. Four straight answers (lib/faq) and
+ * a human contact. Anchors (#cancellations, #safety, #contact) are footer destinations.
  */
-const QA: Array<{ id?: string; q: StringKey; a: StringKey }> = [
-  { q: 'help.q1', a: 'help.a1' },
-  { q: 'help.q2', a: 'help.a2' },
-  { id: 'cancellations', q: 'help.q3', a: 'help.a3' },
-  { id: 'safety', q: 'help.q4', a: 'help.a4' },
-];
 
 export default function HelpPage() {
   const { t } = useLang();
