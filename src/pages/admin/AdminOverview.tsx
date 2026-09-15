@@ -1,12 +1,12 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { GRANTS, type Permission } from '../../shared/adminRoles';
+import { GRANTS, can, type Permission } from '../../shared/adminRoles';
 import { PILOT_AREAS, TARGETS, reportTargetMs } from '../../shared/pilot';
 import { TRADE_SLUGS, isTradeSlug } from '../../routes';
 import { useAdminSession, type ConsoleAdmin } from '../../lib/adminSession';
 import { api } from '../../lib/api';
 import { clock, environment } from '../../lib/console';
-import { duration, recordOf, targetTone, type AuditEvent, type ConsoleApplication, type ConsoleReport, type ConsoleStats } from '../../lib/consoleData';
+import { duration, recordLink, recordOf, targetTone, type AuditEvent, type ConsoleApplication, type ConsoleReport, type ConsoleStats, type Person, type SignOffRequest } from '../../lib/consoleData';
 import Sparkline from '../../components/admin/Sparkline';
 import { PageHead, Panel, Pill, RoleBadge, TableWrap, td, th } from '../../components/admin/ui';
 import { useLang } from '../../i18n';
@@ -34,7 +34,10 @@ const ALL: Permission[] = [
   'team.manage',
 ];
 
-type Attention = { key: string; kind: 'safety' | 'report' | 'application'; title: string; sub: string; age: number; target: number; to: string; mine: boolean };
+type Attention = { key: string; kind: 'safety' | 'request' | 'report' | 'application'; title: string; sub: string; age: number; target: number; to: string; mine: boolean };
+
+/** Safety first, then sign-offs waiting on a reviewer, then the rest by urgency. */
+const weight = (kind: Attention['kind']) => (kind === 'safety' ? 2 : kind === 'request' ? 1 : 0);
 
 function Kpi({ label, value, sub, subTone, children }: { label: string; value: string; sub: string; subTone?: 'ok' | 'warn' | 'crit' | 'muted'; children?: ReactNode }) {
   const tone = { ok: 'text-k-ok', warn: 'text-k-warn', crit: 'text-k-crit', muted: 'text-k-muted' }[subTone ?? 'muted'];
@@ -55,6 +58,9 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
   const [apps, setApps] = useState<ConsoleApplication[]>([]);
   const [reports, setReports] = useState<ConsoleReport[]>([]);
   const [audit, setAudit] = useState<{ scope: AuditScope; events: AuditEvent[] } | null>(null);
+  const [requests, setRequests] = useState<SignOffRequest[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
+  const reviewer = can(admin.role, 'requests.review');
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
@@ -67,6 +73,8 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
     void api<{ applications: ConsoleApplication[] }>('/api/admin/applications').then((r) => live && r.ok && setApps(r.data.applications));
     void api<{ reports: ConsoleReport[] }>('/api/admin/reports').then((r) => live && r.ok && setReports(r.data.reports));
     void api<{ scope: AuditScope; events: AuditEvent[] }>('/api/admin/audit').then((r) => live && r.ok && setAudit(r.data));
+    void api<{ requests: SignOffRequest[] }>('/api/admin/requests').then((r) => live && r.ok && setRequests(r.data.requests));
+    void api<{ people: Person[] }>('/api/admin/people').then((r) => live && r.ok && setPeople(r.data.people));
     return () => {
       live = false;
     };
@@ -76,6 +84,21 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
 
   // Safety first, then the most overdue, then your own; eight at most.
   const attention: Attention[] = [
+    // Sign-offs waiting on a reviewer (rev 2.14).
+    ...(reviewer
+      ? requests
+          .filter((r) => r.status === 'pending')
+          .map((r) => ({
+            key: `q${r.id}`,
+            kind: 'request' as const,
+            title: `${r.recordRef} · ${t(`admin.req.action.${r.action}`)}`,
+            sub: t('admin.attn.from', { name: r.createdByName }),
+            age: now - Date.parse(r.createdAt),
+            target: TARGETS.reportCallbackMs,
+            to: recordLink(r),
+            mine: false,
+          }))
+      : []),
     ...reports
       .filter((r) => r.status !== 'resolved')
       .map((r) => ({
@@ -101,7 +124,7 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
         mine: a.ownerId === admin.id,
       })),
   ]
-    .sort((a, b) => Number(b.kind === 'safety') - Number(a.kind === 'safety') || b.age / b.target - a.age / a.target || Number(b.mine) - Number(a.mine))
+    .sort((a, b) => weight(b.kind) - weight(a.kind) || b.age / b.target - a.age / a.target || Number(b.mine) - Number(a.mine))
     .slice(0, 8);
 
   const s = stats;
@@ -188,8 +211,8 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
                           <span className="block text-[11.5px] text-k-muted">{item.sub}</span>
                         </td>
                         <td className={td}>
-                          <Pill tone={item.kind === 'safety' ? 'crit' : item.kind === 'report' ? 'warn' : 'acc'}>
-                            {t(item.kind === 'safety' ? 'admin.attn.safety' : item.kind === 'report' ? 'admin.attn.report' : 'admin.attn.toCall')}
+                          <Pill tone={item.kind === 'safety' ? 'crit' : item.kind === 'report' ? 'warn' : item.kind === 'request' ? 'ok' : 'acc'}>
+                            {t(item.kind === 'safety' ? 'admin.attn.safety' : item.kind === 'report' ? 'admin.attn.report' : item.kind === 'request' ? 'admin.attn.signoff' : 'admin.attn.toCall')}
                           </Pill>
                         </td>
                         <td className={`${td} text-right font-plexmono text-[12px] ${tone === 'crit' ? 'text-k-crit' : tone === 'warn' ? 'text-k-warn' : 'text-k-muted'}`}>
@@ -289,6 +312,49 @@ export default function AdminOverview({ admin }: { admin: ConsoleAdmin }) {
           </dl>
         </Panel>
       </div>
+
+      {reviewer && (
+        <Panel title={t('admin.flow.title')} meta={t('admin.flow.sub')}>
+          <TableWrap>
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className={th}>{t('admin.flow.col.person')}</th>
+                  <th className={`${th} text-right`}>{t('admin.flow.col.apps')}</th>
+                  <th className={`${th} text-right`}>{t('admin.flow.col.reports')}</th>
+                  <th className={`${th} text-right`}>{t('admin.flow.col.waiting')}</th>
+                  <th className={`${th} text-right`}>{t('admin.flow.col.asked')}</th>
+                  <th className={`${th} text-right`}>{t('admin.flow.col.reviewed')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {people.map((p) => {
+                  const apps7 = apps.filter((a) => a.ownerId === p.id && (a.status === 'received' || a.status === 'called')).length;
+                  const reports7 = reports.filter((r) => r.ownerId === p.id && r.status !== 'resolved').length;
+                  const asked = requests.filter((r) => r.createdBy === p.id);
+                  const waiting = asked.filter((r) => r.status === 'pending').length;
+                  const reviewed = requests.filter((r) => r.reviewedBy === p.id && now - Date.parse(r.reviewedAt ?? r.createdAt) < 7 * 86_400_000).length;
+                  return (
+                    <tr key={p.id} className="hover:bg-k-hover">
+                      <td className={td}>
+                        <span className="inline-flex items-center gap-2">
+                          {p.name}
+                          <RoleBadge role={p.role} />
+                        </span>
+                      </td>
+                      <td className={`${td} text-right font-plexmono`}>{apps7}</td>
+                      <td className={`${td} text-right font-plexmono`}>{reports7}</td>
+                      <td className={`${td} text-right font-plexmono ${waiting ? 'text-k-warn' : 'text-k-muted'}`}>{waiting}</td>
+                      <td className={`${td} text-right font-plexmono text-k-muted`}>{asked.length}</td>
+                      <td className={`${td} text-right font-plexmono text-k-muted`}>{reviewed}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </TableWrap>
+        </Panel>
+      )}
 
       <Panel title={t('admin.access.title')} actions={<RoleBadge role={admin.role} />}>
         <div className="grid gap-4 p-3 sm:grid-cols-2">

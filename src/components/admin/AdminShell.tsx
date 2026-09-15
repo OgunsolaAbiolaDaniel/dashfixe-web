@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { can } from '../../shared/adminRoles';
 import { useAdminSession, type ConsoleAdmin } from '../../lib/adminSession';
+import { api } from '../../lib/api';
 import { clock, environment, roleVars } from '../../lib/console';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
@@ -28,10 +29,11 @@ const ICONS = {
   waitlist: svg('M5 4h9M5 8h9M5 12h9M2 4h.01M2 8h.01M2 12h.01'),
   team: svg('M6 7a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.5 14c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4M11 7.5a2 2 0 000-4M12 10c1.4.4 2.3 1.8 2.5 4'),
   audit: svg('M3 2h10v12H3zM6 5h4M6 8h4M6 11h2'),
+  requests: svg('M2.5 8.5l3.5 3.5 7.5-8M2.5 3.5h6M2.5 6h3'),
   account: svg('M8 8a3 3 0 100-6 3 3 0 000 6zM2.5 14.5c.6-2.8 2.8-4.5 5.5-4.5s4.9 1.7 5.5 4.5'),
 };
 
-type Item = { to: string; label: StringKey; icon: ReactNode };
+type Item = { to: string; label: StringKey; icon: ReactNode; count?: number };
 
 const ENV_TONE = {
   production: 'bg-k-crit/15 text-k-crit',
@@ -44,6 +46,17 @@ export default function AdminShell({ admin, sessionEndsAt, children }: { admin: 
   const { signOut } = useAdminSession();
   const { pathname } = useLocation();
   const env = environment();
+  // Sign-offs waiting: on everyone's plate for reviewers, your own for Admins. Refreshed per page.
+  const [waiting, setWaiting] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void api<{ requests: Array<{ status: string }> }>('/api/admin/requests').then(
+      (r) => live && r.ok && setWaiting(r.data.requests.filter((x) => x.status === 'pending').length),
+    );
+    return () => {
+      live = false;
+    };
+  }, [pathname]);
 
   const groups: Array<{ label?: StringKey; items: Item[] }> = [
     { items: [{ to: '/admin', label: 'admin.nav.overview', icon: ICONS.overview }] },
@@ -52,6 +65,7 @@ export default function AdminShell({ admin, sessionEndsAt, children }: { admin: 
       items: [
         { to: '/admin/applications', label: 'admin.nav.applications', icon: ICONS.applications },
         { to: '/admin/reports', label: 'admin.nav.reports', icon: ICONS.reports },
+        { to: '/admin/requests', label: 'admin.nav.requests', icon: ICONS.requests, count: waiting },
         ...(can(admin.role, 'waitlist.view') ? [{ to: '/admin/waitlist', label: 'admin.nav.waitlist' as StringKey, icon: ICONS.waitlist }] : []),
       ],
     },
@@ -132,6 +146,9 @@ export default function AdminShell({ admin, sessionEndsAt, children }: { admin: 
                   >
                     {item.icon}
                     {t(item.label)}
+                    {item.count ? (
+                      <em className="ml-auto rounded-full bg-[var(--acc)] px-1.5 font-plexmono text-[10.5px] not-italic text-white">{item.count}</em>
+                    ) : null}
                   </Link>
                 ),
               )}

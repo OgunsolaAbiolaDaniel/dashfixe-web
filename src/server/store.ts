@@ -84,6 +84,49 @@ export type ReportPatch = Partial<Pick<StoredReport, 'status' | 'ownerId' | 'res
 
 export type StoredWaitlistEntry = WaitlistEntry & { id: number };
 
+/**
+ * Supervisor sign-off (rev 2.14, maker-checker): an Admin asks, a Supervisor
+ * approves (which applies it) or sends it back. At most one pending per record.
+ */
+export const REQUEST_ACTIONS = ['approve', 'decline', 'resolve'] as const;
+export type RequestAction = (typeof REQUEST_ACTIONS)[number];
+export const REQUEST_STATUSES = ['pending', 'approved', 'returned', 'withdrawn'] as const;
+export type RequestStatus = (typeof REQUEST_STATUSES)[number];
+
+export type SignOffRequest = {
+  id: number;
+  recordType: 'application' | 'report';
+  recordId: number;
+  /** A-7304, #12 or R-4821 — also the discussion thread's name. */
+  recordRef: string;
+  action: RequestAction;
+  /** For `resolve`: the resolution the Admin proposes. */
+  payload: string | null;
+  note: string | null;
+  status: RequestStatus;
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  reviewedBy: number | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+};
+export type NewRequest = Pick<SignOffRequest, 'recordType' | 'recordId' | 'recordRef' | 'action' | 'payload' | 'note' | 'createdBy' | 'createdByName'>;
+export type RequestPatch = Partial<Pick<SignOffRequest, 'status' | 'reviewedBy' | 'reviewedByName' | 'reviewedAt' | 'reviewNote'>>;
+
+/** One line in a record's discussion (rev 2.14). */
+export type ConsoleMessage = {
+  id: number;
+  thread: string;
+  authorId: number;
+  authorName: string;
+  authorRole: AdminRole;
+  body: string;
+  requestId: number | null;
+  createdAt: string;
+};
+
 /** A console account (rev 2.12). The hash never leaves the server. */
 export type AdminRecord = {
   id: number;
@@ -163,6 +206,17 @@ export interface Store {
   addAudit(event: Omit<AuditEvent, 'id' | 'at'>): Promise<void>;
   /** Newest first. */
   listAudit(query?: AuditQuery): Promise<AuditEvent[]>;
+
+  // Supervisor sign-off and discussion (rev 2.14)
+  /** Throws Error('already_requested') while another request on the record is pending. */
+  createRequest(request: NewRequest): Promise<SignOffRequest>;
+  getRequest(id: number): Promise<SignOffRequest | null>;
+  updateRequest(id: number, patch: RequestPatch): Promise<SignOffRequest | null>;
+  /** Newest first; `createdBy` narrows to one person's. */
+  listRequests(query?: { createdBy?: number; limit?: number }): Promise<SignOffRequest[]>;
+  addMessage(message: Omit<ConsoleMessage, 'id' | 'createdAt'>): Promise<ConsoleMessage>;
+  /** Oldest first — a conversation reads top to bottom. */
+  listMessages(thread: string, limit?: number): Promise<ConsoleMessage[]>;
 }
 
 // ── In-memory driver (dev + tests) ──────────────────────────────────────────
@@ -174,6 +228,8 @@ export function memoryStore(): Store {
   const users = new Set<string>();
   const admins: AdminRecord[] = [];
   const audit: AuditEvent[] = [];
+  const requests: SignOffRequest[] = [];
+  const messages: ConsoleMessage[] = [];
   const createAdmin = async (a: NewAdmin): Promise<AdminRecord> => {
     if (admins.some((x) => x.email === a.email)) throw new Error('email_taken');
     const record: AdminRecord = {
@@ -239,6 +295,48 @@ export function memoryStore(): Store {
       users.add(phone);
     },
     async ping() {},
+    async createRequest(r) {
+      if (requests.some((x) => x.status === 'pending' && x.recordType === r.recordType && x.recordId === r.recordId)) {
+        throw new Error('already_requested');
+      }
+      const request: SignOffRequest = {
+        ...r,
+        id: requests.length + 1,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        reviewedBy: null,
+        reviewedByName: null,
+        reviewedAt: null,
+        reviewNote: null,
+      };
+      requests.push(request);
+      return { ...request };
+    },
+    async getRequest(id) {
+      const r = requests.find((x) => x.id === id);
+      return r ? { ...r } : null;
+    },
+    async updateRequest(id, patch) {
+      const r = requests.find((x) => x.id === id);
+      if (!r) return null;
+      Object.assign(r, patch);
+      return { ...r };
+    },
+    async listRequests({ createdBy, limit = 500 } = {}) {
+      return [...requests]
+        .reverse()
+        .filter((r) => createdBy === undefined || r.createdBy === createdBy)
+        .slice(0, limit)
+        .map((r) => ({ ...r }));
+    },
+    async addMessage(m) {
+      const message: ConsoleMessage = { ...m, id: messages.length + 1, createdAt: new Date().toISOString() };
+      messages.push(message);
+      return { ...message };
+    },
+    async listMessages(thread, limit = 500) {
+      return messages.filter((m) => m.thread === thread).slice(-limit).map((m) => ({ ...m }));
+    },
     async countAdmins() {
       return admins.length;
     },
@@ -350,6 +448,36 @@ CREATE TABLE IF NOT EXISTS admin_audit (
 );
 CREATE INDEX IF NOT EXISTS admin_audit_at ON admin_audit (at DESC, id DESC);
 CREATE INDEX IF NOT EXISTS admin_audit_record ON admin_audit (record);
+CREATE TABLE IF NOT EXISTS admin_requests (
+  id SERIAL PRIMARY KEY,
+  record_type TEXT NOT NULL,
+  record_id INTEGER NOT NULL,
+  record_ref TEXT NOT NULL,
+  action TEXT NOT NULL,
+  payload TEXT,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_by INTEGER NOT NULL,
+  created_by_name TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_by INTEGER,
+  reviewed_by_name TEXT,
+  reviewed_at TIMESTAMPTZ,
+  review_note TEXT
+);
+CREATE UNIQUE INDEX IF NOT EXISTS admin_requests_one_pending ON admin_requests (record_type, record_id) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS admin_requests_created ON admin_requests (created_at DESC, id DESC);
+CREATE TABLE IF NOT EXISTS admin_messages (
+  id SERIAL PRIMARY KEY,
+  thread TEXT NOT NULL,
+  author_id INTEGER NOT NULL,
+  author_name TEXT NOT NULL,
+  author_role TEXT NOT NULL,
+  body TEXT NOT NULL,
+  request_id INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS admin_messages_thread ON admin_messages (thread, created_at, id);
 `;
 
 type AdminRow = {
@@ -381,6 +509,76 @@ type AuditRow = {
 };
 
 const isoOrNull = (d: Date | null) => (d ? d.toISOString() : null);
+
+type RequestRow = {
+  id: number;
+  record_type: string;
+  record_id: number;
+  record_ref: string;
+  action: string;
+  payload: string | null;
+  note: string | null;
+  status: string;
+  created_by: number;
+  created_by_name: string;
+  created_at: Date;
+  reviewed_by: number | null;
+  reviewed_by_name: string | null;
+  reviewed_at: Date | null;
+  review_note: string | null;
+};
+
+function requestFromRow(r: RequestRow): SignOffRequest {
+  return {
+    id: r.id,
+    recordType: r.record_type === 'report' ? 'report' : 'application',
+    recordId: r.record_id,
+    recordRef: r.record_ref,
+    action: (REQUEST_ACTIONS as readonly string[]).includes(r.action) ? (r.action as RequestAction) : 'approve',
+    payload: r.payload,
+    note: r.note,
+    status: (REQUEST_STATUSES as readonly string[]).includes(r.status) ? (r.status as RequestStatus) : 'pending',
+    createdBy: r.created_by,
+    createdByName: r.created_by_name,
+    createdAt: r.created_at.toISOString(),
+    reviewedBy: r.reviewed_by,
+    reviewedByName: r.reviewed_by_name,
+    reviewedAt: isoOrNull(r.reviewed_at),
+    reviewNote: r.review_note,
+  };
+}
+
+const REQUEST_PATCH: Record<keyof RequestPatch, string> = {
+  status: 'status',
+  reviewedBy: 'reviewed_by',
+  reviewedByName: 'reviewed_by_name',
+  reviewedAt: 'reviewed_at',
+  reviewNote: 'review_note',
+};
+
+type MessageRow = {
+  id: number;
+  thread: string;
+  author_id: number;
+  author_name: string;
+  author_role: string;
+  body: string;
+  request_id: number | null;
+  created_at: Date;
+};
+
+function messageFromRow(r: MessageRow): ConsoleMessage {
+  return {
+    id: r.id,
+    thread: r.thread,
+    authorId: r.author_id,
+    authorName: r.author_name,
+    authorRole: isAdminRole(r.author_role) ? r.author_role : 'admin',
+    body: r.body,
+    requestId: r.request_id,
+    createdAt: r.created_at.toISOString(),
+  };
+}
 
 function adminFromRow(r: AdminRow): AdminRecord {
   return {
@@ -602,6 +800,51 @@ async function pgStore(databaseUrl: string): Promise<Store> {
     },
     async ping() {
       await pool.query('SELECT 1');
+    },
+    async createRequest(r) {
+      try {
+        const { rows } = await pool.query<RequestRow>(
+          'INSERT INTO admin_requests (record_type, record_id, record_ref, action, payload, note, created_by, created_by_name) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+          [r.recordType, r.recordId, r.recordRef, r.action, r.payload, r.note, r.createdBy, r.createdByName],
+        );
+        return requestFromRow(rows[0]!);
+      } catch (e) {
+        // The partial unique index: one pending request per record.
+        if ((e as { code?: string }).code === '23505') throw Object.assign(new Error('already_requested'), { cause: e });
+        throw e;
+      }
+    },
+    async getRequest(id) {
+      const { rows } = await pool.query<RequestRow>('SELECT * FROM admin_requests WHERE id = $1', [id]);
+      return rows[0] ? requestFromRow(rows[0]) : null;
+    },
+    async updateRequest(id, patch) {
+      const { sql, values } = setClause(patch, REQUEST_PATCH);
+      const { rows } = sql
+        ? await pool.query<RequestRow>(`UPDATE admin_requests SET ${sql} WHERE id = $1 RETURNING *`, [id, ...values])
+        : await pool.query<RequestRow>('SELECT * FROM admin_requests WHERE id = $1', [id]);
+      return rows[0] ? requestFromRow(rows[0]) : null;
+    },
+    async listRequests({ createdBy, limit = 500 } = {}) {
+      const { rows } =
+        createdBy === undefined
+          ? await pool.query<RequestRow>('SELECT * FROM admin_requests ORDER BY created_at DESC, id DESC LIMIT $1', [limit])
+          : await pool.query<RequestRow>('SELECT * FROM admin_requests WHERE created_by = $1 ORDER BY created_at DESC, id DESC LIMIT $2', [createdBy, limit]);
+      return rows.map(requestFromRow);
+    },
+    async addMessage(m) {
+      const { rows } = await pool.query<MessageRow>(
+        'INSERT INTO admin_messages (thread, author_id, author_name, author_role, body, request_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+        [m.thread, m.authorId, m.authorName, m.authorRole, m.body, m.requestId],
+      );
+      return messageFromRow(rows[0]!);
+    },
+    async listMessages(thread, limit = 500) {
+      const { rows } = await pool.query<MessageRow>(
+        'SELECT * FROM (SELECT * FROM admin_messages WHERE thread = $1 ORDER BY created_at DESC, id DESC LIMIT $2) recent ORDER BY created_at, id',
+        [thread, limit],
+      );
+      return rows.map(messageFromRow);
     },
     async countAdmins() {
       const { rows } = await pool.query<{ n: string }>('SELECT count(*) AS n FROM admins');

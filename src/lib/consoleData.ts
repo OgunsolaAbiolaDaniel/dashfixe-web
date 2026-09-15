@@ -86,6 +86,42 @@ export type AuditEvent = {
   detail: string | null;
 };
 
+/** Supervisor sign-off (rev 2.14). */
+export type RequestAction = 'approve' | 'decline' | 'resolve';
+export type RequestStatus = 'pending' | 'approved' | 'returned' | 'withdrawn';
+export const REQUEST_STATUSES: RequestStatus[] = ['pending', 'returned', 'approved', 'withdrawn'];
+export type SignOffRequest = {
+  id: number;
+  recordType: 'application' | 'report';
+  recordId: number;
+  recordRef: string;
+  action: RequestAction;
+  payload: string | null;
+  note: string | null;
+  status: RequestStatus;
+  createdBy: number;
+  createdByName: string;
+  createdAt: string;
+  reviewedBy: number | null;
+  reviewedByName: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+};
+export type ConsoleMessage = {
+  id: number;
+  thread: string;
+  authorId: number;
+  authorName: string;
+  authorRole: AdminRole;
+  body: string;
+  requestId: number | null;
+  createdAt: string;
+};
+
+/** Where a request's record lives in the console. */
+export const recordLink = (r: Pick<SignOffRequest, 'recordType' | 'recordId'>) =>
+  r.recordType === 'report' ? `/admin/reports?open=${r.recordId}` : `/admin/applications?open=${r.recordId}`;
+
 /** How an application is named in the audit log and its history. */
 export const recordOf = (a: Pick<ConsoleApplication, 'id' | 'reference'>) => a.reference ?? `#${a.id}`;
 
@@ -144,4 +180,8 @@ export const ACTION_LABELS: Record<string, StringKey> = {
   'report.status': 'admin.action.report.status',
   'report.assign': 'admin.action.report.assign',
   'data.export': 'admin.action.data.export',
+  'request.create': 'admin.action.request.create',
+  'request.approve': 'admin.action.request.approve',
+  'request.return': 'admin.action.request.return',
+  'request.withdraw': 'admin.action.request.withdraw',
 };
