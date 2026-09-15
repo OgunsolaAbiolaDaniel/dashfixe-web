@@ -3,6 +3,10 @@ import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import { resetChatStore } from '../components/explore/chatStore';
 
+// Cheap password hashing for the console's suites (server/passwords.ts honours this
+// only under NODE_ENV=test), so they don't starve parallel workers of CPU.
+process.env.DFX_SCRYPT_N = '1024';
+
 // The location card (LocationPrompt) would float over every map page in every
 // test; mark it answered. The tests about it clear this first.
 beforeEach(() => localStorage.setItem('dfx.loc', 'asked'));
