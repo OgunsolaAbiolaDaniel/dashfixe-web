@@ -10,6 +10,7 @@
  *
  * This file is server-only. Nothing under src/server may be imported by client code.
  */
+import { isAdminRole, type AdminRole } from '../shared/adminRoles.js';
 
 export type WaitlistEntry = { email: string; userType: 'HOMEOWNER' | 'ARTISAN'; createdAt: string };
 /** The Dashfixe Pro application's extra answers (/pro/apply, rev 2.3). */
@@ -63,6 +64,44 @@ export type JobReport = {
 };
 export type StoredReport = JobReport & { id: number };
 
+/** A console account (rev 2.12). The hash never leaves the server. */
+export type AdminRecord = {
+  id: number;
+  email: string;
+  name: string;
+  role: AdminRole;
+  passwordHash: string;
+  /** Set by a Super admin's starting password or reset: the next sign-in must choose a new one. */
+  mustChange: boolean;
+  disabled: boolean;
+  /** Bumped to sign every session of this admin out. */
+  sessionVersion: number;
+  failedAttempts: number;
+  lockedUntil: string | null;
+  /** A starting password stops working after this. */
+  tempExpiresAt: string | null;
+  lastActiveAt: string | null;
+  createdBy: number | null;
+  createdAt: string;
+};
+export type NewAdmin = Pick<AdminRecord, 'email' | 'name' | 'role' | 'passwordHash' | 'mustChange' | 'tempExpiresAt' | 'createdBy'>;
+export type AdminPatch = Partial<
+  Pick<AdminRecord, 'name' | 'role' | 'passwordHash' | 'mustChange' | 'disabled' | 'sessionVersion' | 'failedAttempts' | 'lockedUntil' | 'tempExpiresAt' | 'lastActiveAt'>
+>;
+
+/** One line of the console's audit log. `role` is the actor's role at the time. */
+export type AuditEvent = {
+  id: number;
+  at: string;
+  adminId: number | null;
+  adminName: string | null;
+  role: AdminRole | null;
+  action: string;
+  record: string | null;
+  detail: string | null;
+};
+export type AuditQuery = { limit?: number; adminId?: number; excludeRole?: AdminRole };
+
 /**
  * Login codes are NOT stored here: they ride in a signed cookie (session.ts), so
  * auth works on serverless with no database. Only data worth keeping lives here.
@@ -83,6 +122,20 @@ export interface Store {
   ensureUser(phone: string): Promise<void>;
   /** Throws when the storage can't be reached — GET /api/health. */
   ping(): Promise<void>;
+
+  // The admin console (rev 2.12)
+  countAdmins(): Promise<number>;
+  /** Throws Error('email_taken') for a duplicate email. */
+  createAdmin(admin: NewAdmin): Promise<AdminRecord>;
+  /** First-time setup: creates the admin only while there are none (race-safe). */
+  createFirstAdmin(admin: NewAdmin): Promise<AdminRecord | null>;
+  getAdmin(id: number): Promise<AdminRecord | null>;
+  getAdminByEmail(email: string): Promise<AdminRecord | null>;
+  updateAdmin(id: number, patch: AdminPatch): Promise<AdminRecord | null>;
+  listAdmins(): Promise<AdminRecord[]>;
+  addAudit(event: Omit<AuditEvent, 'id' | 'at'>): Promise<void>;
+  /** Newest first. */
+  listAudit(query?: AuditQuery): Promise<AuditEvent[]>;
 }
 
 // ── In-memory driver (dev + tests) ──────────────────────────────────────────
@@ -92,6 +145,23 @@ export function memoryStore(): Store {
   const applications: StoredApplication[] = [];
   const reports: StoredReport[] = [];
   const users = new Set<string>();
+  const admins: AdminRecord[] = [];
+  const audit: AuditEvent[] = [];
+  const createAdmin = async (a: NewAdmin): Promise<AdminRecord> => {
+    if (admins.some((x) => x.email === a.email)) throw new Error('email_taken');
+    const record: AdminRecord = {
+      ...a,
+      id: admins.length + 1,
+      disabled: false,
+      sessionVersion: 1,
+      failedAttempts: 0,
+      lockedUntil: null,
+      lastActiveAt: null,
+      createdAt: new Date().toISOString(),
+    };
+    admins.push(record);
+    return { ...record };
+  };
   return {
     persistent: false,
     async addWaitlist(entry) {
@@ -119,6 +189,39 @@ export function memoryStore(): Store {
       users.add(phone);
     },
     async ping() {},
+    async countAdmins() {
+      return admins.length;
+    },
+    createAdmin,
+    async createFirstAdmin(a) {
+      return admins.length ? null : createAdmin(a);
+    },
+    async getAdmin(id) {
+      const a = admins.find((x) => x.id === id);
+      return a ? { ...a } : null;
+    },
+    async getAdminByEmail(email) {
+      const a = admins.find((x) => x.email === email);
+      return a ? { ...a } : null;
+    },
+    async updateAdmin(id, patch) {
+      const a = admins.find((x) => x.id === id);
+      if (!a) return null;
+      Object.assign(a, patch);
+      return { ...a };
+    },
+    async listAdmins() {
+      return admins.map((a) => ({ ...a }));
+    },
+    async addAudit(event) {
+      audit.push({ ...event, id: audit.length + 1, at: new Date().toISOString() });
+    },
+    async listAudit({ limit = 200, adminId, excludeRole } = {}) {
+      return [...audit]
+        .reverse()
+        .filter((e) => (adminId === undefined || e.adminId === adminId) && (!excludeRole || (e.role !== null && e.role !== excludeRole)))
+        .slice(0, limit);
+    },
   };
 }
 
@@ -157,7 +260,101 @@ CREATE TABLE IF NOT EXISTS job_reports (
   reference TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS admins (
+  id SERIAL PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  password_hash TEXT NOT NULL,
+  must_change BOOLEAN NOT NULL DEFAULT true,
+  disabled BOOLEAN NOT NULL DEFAULT false,
+  session_version INTEGER NOT NULL DEFAULT 1,
+  failed_attempts INTEGER NOT NULL DEFAULT 0,
+  locked_until TIMESTAMPTZ,
+  temp_expires_at TIMESTAMPTZ,
+  last_active_at TIMESTAMPTZ,
+  created_by INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS admin_audit (
+  id SERIAL PRIMARY KEY,
+  at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  admin_id INTEGER,
+  admin_name TEXT,
+  role TEXT,
+  action TEXT NOT NULL,
+  record TEXT,
+  detail TEXT
+);
+CREATE INDEX IF NOT EXISTS admin_audit_at ON admin_audit (at DESC, id DESC);
 `;
+
+type AdminRow = {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  password_hash: string;
+  must_change: boolean;
+  disabled: boolean;
+  session_version: number;
+  failed_attempts: number;
+  locked_until: Date | null;
+  temp_expires_at: Date | null;
+  last_active_at: Date | null;
+  created_by: number | null;
+  created_at: Date;
+};
+
+type AuditRow = {
+  id: number;
+  at: Date;
+  admin_id: number | null;
+  admin_name: string | null;
+  role: string | null;
+  action: string;
+  record: string | null;
+  detail: string | null;
+};
+
+const isoOrNull = (d: Date | null) => (d ? d.toISOString() : null);
+
+function adminFromRow(r: AdminRow): AdminRecord {
+  return {
+    id: r.id,
+    email: r.email,
+    name: r.name,
+    role: isAdminRole(r.role) ? r.role : 'admin',
+    passwordHash: r.password_hash,
+    mustChange: r.must_change,
+    disabled: r.disabled,
+    sessionVersion: r.session_version,
+    failedAttempts: r.failed_attempts,
+    lockedUntil: isoOrNull(r.locked_until),
+    tempExpiresAt: isoOrNull(r.temp_expires_at),
+    lastActiveAt: isoOrNull(r.last_active_at),
+    createdBy: r.created_by,
+    createdAt: r.created_at.toISOString(),
+  };
+}
+
+/** AdminPatch key → column. Only these can be updated. */
+const ADMIN_COLUMNS: Record<keyof AdminPatch, string> = {
+  name: 'name',
+  role: 'role',
+  passwordHash: 'password_hash',
+  mustChange: 'must_change',
+  disabled: 'disabled',
+  sessionVersion: 'session_version',
+  failedAttempts: 'failed_attempts',
+  lockedUntil: 'locked_until',
+  tempExpiresAt: 'temp_expires_at',
+  lastActiveAt: 'last_active_at',
+};
+
+const INSERT_ADMIN =
+  'INSERT INTO admins (email, name, role, password_hash, must_change, temp_expires_at, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *';
+const adminValues = (a: NewAdmin) => [a.email, a.name, a.role, a.passwordHash, a.mustChange, a.tempExpiresAt, a.createdBy];
 
 type ReportRow = {
   id: number;
@@ -262,6 +459,104 @@ async function pgStore(databaseUrl: string): Promise<Store> {
     },
     async ping() {
       await pool.query('SELECT 1');
+    },
+    async countAdmins() {
+      const { rows } = await pool.query<{ n: string }>('SELECT count(*) AS n FROM admins');
+      return Number(rows[0]?.n ?? 0);
+    },
+    async createAdmin(a) {
+      try {
+        const { rows } = await pool.query<AdminRow>(INSERT_ADMIN, adminValues(a));
+        return adminFromRow(rows[0]!);
+      } catch (e) {
+        // The lib target predates Error's `cause` option; attach it by hand so the original stays inspectable.
+        if ((e as { code?: string }).code === '23505') throw Object.assign(new Error('email_taken'), { cause: e });
+        throw e;
+      }
+    },
+    async createFirstAdmin(a) {
+      // An advisory lock serialises concurrent setups: exactly one can see zero admins.
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(7361)');
+        const { rows: count } = await client.query<{ n: string }>('SELECT count(*) AS n FROM admins');
+        if (Number(count[0]?.n ?? 0) > 0) {
+          await client.query('ROLLBACK');
+          return null;
+        }
+        const { rows } = await client.query<AdminRow>(INSERT_ADMIN, adminValues(a));
+        await client.query('COMMIT');
+        return adminFromRow(rows[0]!);
+      } catch (e) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw e;
+      } finally {
+        client.release();
+      }
+    },
+    async getAdmin(id) {
+      const { rows } = await pool.query<AdminRow>('SELECT * FROM admins WHERE id = $1', [id]);
+      return rows[0] ? adminFromRow(rows[0]) : null;
+    },
+    async getAdminByEmail(email) {
+      const { rows } = await pool.query<AdminRow>('SELECT * FROM admins WHERE email = $1', [email]);
+      return rows[0] ? adminFromRow(rows[0]) : null;
+    },
+    async updateAdmin(id, patch) {
+      const values: unknown[] = [id];
+      const sets: string[] = [];
+      for (const [key, value] of Object.entries(patch)) {
+        const column = ADMIN_COLUMNS[key as keyof AdminPatch];
+        if (!column || value === undefined) continue;
+        values.push(value);
+        sets.push(`${column} = $${values.length}`);
+      }
+      const { rows } = sets.length
+        ? await pool.query<AdminRow>(`UPDATE admins SET ${sets.join(', ')} WHERE id = $1 RETURNING *`, values)
+        : await pool.query<AdminRow>('SELECT * FROM admins WHERE id = $1', [id]);
+      return rows[0] ? adminFromRow(rows[0]) : null;
+    },
+    async listAdmins() {
+      const { rows } = await pool.query<AdminRow>('SELECT * FROM admins ORDER BY created_at, id');
+      return rows.map(adminFromRow);
+    },
+    async addAudit(e) {
+      await pool.query('INSERT INTO admin_audit (admin_id, admin_name, role, action, record, detail) VALUES ($1, $2, $3, $4, $5, $6)', [
+        e.adminId,
+        e.adminName,
+        e.role,
+        e.action,
+        e.record,
+        e.detail,
+      ]);
+    },
+    async listAudit({ limit = 200, adminId, excludeRole } = {}) {
+      const values: unknown[] = [];
+      const where: string[] = [];
+      if (adminId !== undefined) {
+        values.push(adminId);
+        where.push(`admin_id = $${values.length}`);
+      }
+      if (excludeRole) {
+        values.push(excludeRole);
+        where.push(`role IS NOT NULL AND role <> $${values.length}`);
+      }
+      values.push(limit);
+      const { rows } = await pool.query<AuditRow>(
+        `SELECT id, at, admin_id, admin_name, role, action, record, detail FROM admin_audit ${where.length ? `WHERE ${where.join(' AND ')}` : ''} ORDER BY at DESC, id DESC LIMIT $${values.length}`,
+        values,
+      );
+      return rows.map((r) => ({
+        id: r.id,
+        at: r.at.toISOString(),
+        adminId: r.admin_id,
+        adminName: r.admin_name,
+        role: isAdminRole(r.role) ? r.role : null,
+        action: r.action,
+        record: r.record,
+        detail: r.detail,
+      }));
     },
   };
 }

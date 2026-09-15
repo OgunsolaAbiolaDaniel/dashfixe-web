@@ -8,6 +8,7 @@ import { preloadPagesWhenIdle } from './lib/lazyPage';
 import {
   AboutPage,
   AccountPage,
+  AdminApp,
   ActivityPage,
   ArtisanProfilePage,
   ExplorePage,
@@ -110,6 +111,8 @@ export default function AppRoutes() {
         <Route path={ROUTES.forArtisans} element={<Moved to={ROUTES.pro} />} />
         {/* The founders' review of Pro applications (rev 2.8): its own minimal chrome, linked from nowhere. */}
         <Route path={ROUTES.ops} element={<OpsPage />} />
+        {/* The admin console (rev 2.12): its own sign-in, roles and frame (pages/admin). */}
+        <Route path={`${ROUTES.admin}/*`} element={<AdminApp />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path={ROUTES.privacy} element={<LegalPage kind="privacy" />} />

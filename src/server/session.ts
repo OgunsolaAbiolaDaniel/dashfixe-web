@@ -93,6 +93,34 @@ export function tokenFromCookieHeader(cookieHeader: string | undefined): string 
   return cookieFromHeader(cookieHeader, SESSION_COOKIE);
 }
 
+// ── Admin console sessions (rev 2.12) ───────────────────────────────────────
+//
+// Separate from the customer session: its own accounts, its own cookie. The token
+// carries the admin's session version; bumping it (password change, reset,
+// disable) signs every copy of that admin out at once.
+
+const ADMIN_COOKIE = 'dfx_admin';
+export const ADMIN_SESSION_S = 12 * 60 * 60;
+
+export function issueAdminToken(id: number, version: number, now = Date.now()): string {
+  return seal({ aid: id, v: version, exp: Math.floor(now / 1000) + ADMIN_SESSION_S });
+}
+
+export function readAdminToken(cookieHeader: string | undefined, now = Date.now()): { id: number; version: number; exp: number } | null {
+  const data = unseal(cookieFromHeader(cookieHeader, ADMIN_COOKIE), now);
+  if (!data || typeof data.aid !== 'number' || typeof data.v !== 'number' || typeof data.exp !== 'number') return null;
+  return { id: data.aid, version: data.v, exp: data.exp };
+}
+
+/** Scoped to the console API, never sent cross-site, unreadable by scripts. */
+export function adminCookie(token: string): string {
+  return `${ADMIN_COOKIE}=${token}; Path=/api/admin; HttpOnly;${secure()} SameSite=Strict; Max-Age=${ADMIN_SESSION_S}`;
+}
+
+export function clearedAdminCookie(): string {
+  return `${ADMIN_COOKIE}=; Path=/api/admin; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
+
 // ── Founders' ops unlock (/ops, rev 2.8) ────────────────────────────────────
 //
 // Pilot login signs anyone in as any phone (no SMS yet), so a phone allow-list

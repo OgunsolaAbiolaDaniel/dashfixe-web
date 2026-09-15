@@ -38,40 +38,13 @@ import {
   verifyToken,
 } from './session.js';
 import { sendLoginCode } from './sms.js';
+import { EMAIL, bad, field, ok, str, type ApiRequest, type ApiResponse } from './http.js';
+import { handleAdmin } from './adminApi.js';
 
-export type ApiRequest = {
-  method: string;
-  path: string;
-  body: unknown;
-  cookieHeader?: string;
-};
-
-export type ApiResponse = {
-  status: number;
-  body: Record<string, unknown>;
-  /** Zero or more Set-Cookie header values. */
-  setCookie?: string[];
-};
+export type { ApiRequest, ApiResponse } from './http.js';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const MAX_VERIFY_ATTEMPTS = 5;
-
-const bad = (status: number, error: string, setCookie?: string[]): ApiResponse => ({
-  status,
-  body: { error },
-  ...(setCookie ? { setCookie } : {}),
-});
-const ok = (body: Record<string, unknown> = { ok: true }): ApiResponse => ({ status: 200, body });
-
-function str(body: unknown, key: string, max = 200): string | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const v = (body as Record<string, unknown>)[key];
-  if (typeof v !== 'string') return null;
-  const trimmed = v.trim();
-  return trimmed.length > 0 && trimmed.length <= max ? trimmed : null;
-}
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** A first name: letters (any script), spaces, apostrophes and hyphens. */
 const NAME = /^\p{L}[\p{L}\p{M} '’-]{0,39}$/u;
 /** Digits, spaces and a leading +; 9–16 digits once normalised. */
@@ -143,10 +116,9 @@ function opsGate(req: ApiRequest, needUnlock = true): { phone: string } | { deni
   return { phone: session.phone };
 }
 
-const field = (body: unknown, key: string): unknown =>
-  typeof body === 'object' && body !== null ? (body as Record<string, unknown>)[key] : undefined;
-
 export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
+  // The admin console (rev 2.12) has its own accounts and its own module.
+  if (req.path.startsWith('/api/admin/')) return handleAdmin(req);
   const route = `${req.method.toUpperCase()} ${req.path.replace(/\/+$/, '')}`;
 
   switch (route) {

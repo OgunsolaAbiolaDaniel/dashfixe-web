@@ -48,6 +48,8 @@ export const ROUTES = {
   proHelp: '/pro/help',
   /** The founders' application review — team phones + passcode only (rev 2.8). Linked from nowhere. */
   ops: '/ops',
+  /** The admin console (rev 2.12): its own accounts, roles and frame. Linked from nowhere. */
+  admin: '/admin',
   about: '/about',
   help: '/help',
   privacy: '/privacy',

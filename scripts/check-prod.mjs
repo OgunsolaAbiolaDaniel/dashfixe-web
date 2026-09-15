@@ -29,7 +29,7 @@ const expect = (cond, msg) => {
 const get = (path, init) => fetch(BASE + path, { redirect: 'manual', ...init });
 
 // ── Pages load cold (a refresh or a shared link, not a click inside the app) ──
-for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/pro/apply', '/pro/application', '/pro/login', '/pro/dashboard', '/pro/help', '/ops', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
+for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/pro/apply', '/pro/application', '/pro/login', '/pro/dashboard', '/pro/help', '/ops', '/admin', '/admin/team', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
   await check(`GET ${path} serves the app`, async () => {
     const r = await get(path);
     const type = r.headers.get('content-type') ?? '';
@@ -141,6 +141,16 @@ await check('ops API refuses a visitor', async () => {
   // 401 when the team variables are set, 503 until they are; never the list.
   expect([401, 503].includes(r.status), `status ${r.status}`);
   return (await r.json()).error;
+});
+
+// ── Security: the admin console answers nobody without its own session ──
+await check('admin console refuses a visitor', async () => {
+  for (const path of ['/api/admin/me', '/api/admin/team', '/api/admin/audit']) {
+    const r = await get(path);
+    expect(r.status === 401, `${path} → ${r.status}`);
+  }
+  const setup = await (await get('/api/admin/setup')).json();
+  return setup.needed ? 'setup still open — claim it at /admin/setup' : 'set up';
 });
 
 // ── Security: AUTH_SECRET must be set — a token signed with the public fallback key must fail ──

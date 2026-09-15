@@ -20,6 +20,7 @@ const PAGES = [
   '/pro/apply',
   '/pro/login',
   '/pro/help',
+  '/admin',
   '/no-such-page',
 ];
 
