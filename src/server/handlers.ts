@@ -11,15 +11,27 @@
  * `.js` back to the `.ts` source).
  */
 import { randomInt } from 'node:crypto';
-import { getStore, type ArtisanProfile } from './store.js';
+import {
+  APPLICATION_STATUSES,
+  REPORT_CATEGORIES,
+  getStore,
+  type ApplicationStatus,
+  type ArtisanProfile,
+  type ReportCategory,
+} from './store.js';
 import {
   challengeCookie,
   clearedChallengeCookie,
+  clearedOpsCookie,
   clearedSessionCookie,
   codeMatches,
   codeHash,
   issueChallenge,
+  issueOpsToken,
   issueToken,
+  opsCookie,
+  opsUnlocked,
+  passcodeMatches,
   readChallenge,
   sessionCookie,
   tokenFromCookieHeader,
@@ -100,6 +112,39 @@ function parseProfile(v: unknown): ArtisanProfile | null {
   if (typeof p.transport !== 'boolean' || typeof p.insurance !== 'boolean') return null;
   return { trades, experience, areas, availability, transport: p.transport, licences, insurance: p.insurance };
 }
+
+// ── Founders' ops (/ops, rev 2.8) ───────────────────────────────────────────
+
+/** The team's phones (OPS_PHONES, comma-separated, any format the login accepts). */
+function opsPhones(): string[] {
+  return (process.env.OPS_PHONES ?? '')
+    .split(',')
+    .map((p) => normalisePhone(p.trim()))
+    .filter((p): p is string => !!p);
+}
+
+/** OPS_PASSCODE, or null when it is missing or too short to resist guessing. */
+function opsPasscode(): string | null {
+  const p = process.env.OPS_PASSCODE ?? '';
+  return p.length >= 12 ? p : null;
+}
+
+/**
+ * Who may use the ops API: a signed-in team phone that has also entered the
+ * passcode (session.ts explains why the phone alone is not enough in pilot mode).
+ */
+function opsGate(req: ApiRequest, needUnlock = true): { phone: string } | { denied: ApiResponse } {
+  const phones = opsPhones();
+  if (!phones.length || !opsPasscode()) return { denied: bad(503, 'ops_disabled') };
+  const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));
+  if (!session) return { denied: bad(401, 'not_signed_in') };
+  if (!phones.includes(session.phone)) return { denied: bad(403, 'not_ops') };
+  if (needUnlock && !opsUnlocked(req.cookieHeader, session.phone)) return { denied: bad(403, 'ops_locked') };
+  return { phone: session.phone };
+}
+
+const field = (body: unknown, key: string): unknown =>
+  typeof body === 'object' && body !== null ? (body as Record<string, unknown>)[key] : undefined;
 
 export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
   const route = `${req.method.toUpperCase()} ${req.path.replace(/\/+$/, '')}`;
@@ -208,7 +253,73 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
     }
 
     case 'POST /api/auth/logout':
-      return { status: 200, body: { ok: true }, setCookie: [clearedSessionCookie()] };
+      return { status: 200, body: { ok: true }, setCookie: [clearedSessionCookie(), clearedOpsCookie()] };
+
+    // "Report a problem" on a job (rev 2.9). Signed-in only: the phone is how the team calls back.
+    case 'POST /api/support/report': {
+      const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));
+      if (!session) return bad(401, 'not_signed_in');
+      const jobId = str(req.body, 'jobId', 40);
+      const category = field(req.body, 'category');
+      const rawDetails = field(req.body, 'details');
+      if (!jobId || !/^[\w-]+$/.test(jobId)) return bad(400, 'invalid_job');
+      if (typeof category !== 'string' || !(REPORT_CATEGORIES as readonly string[]).includes(category)) return bad(400, 'invalid_category');
+      if (rawDetails !== undefined && rawDetails !== null && (typeof rawDetails !== 'string' || rawDetails.length > 1000)) {
+        return bad(400, 'invalid_details');
+      }
+      const details = typeof rawDetails === 'string' && rawDetails.trim() ? rawDetails.trim() : null;
+      if (category === 'other' && !details) return bad(400, 'details_required');
+      const reference = `R-${randomInt(1000, 10_000)}`;
+      await (await getStore()).addReport({
+        phone: session.phone,
+        jobId,
+        category: category as ReportCategory,
+        details,
+        reference,
+        createdAt: new Date().toISOString(),
+      });
+      return ok({ ok: true, reference });
+    }
+
+    case 'GET /api/ops/reports': {
+      const gate = opsGate(req);
+      if ('denied' in gate) return gate.denied;
+      return ok({ reports: await (await getStore()).listReports() });
+    }
+
+    case 'POST /api/ops/unlock': {
+      const gate = opsGate(req, false);
+      if ('denied' in gate) return gate.denied;
+      const given = field(req.body, 'passcode');
+      if (typeof given !== 'string' || given.length > 200 || !passcodeMatches(given, opsPasscode()!)) {
+        return bad(403, 'wrong_passcode');
+      }
+      return { status: 200, body: { ok: true }, setCookie: [opsCookie(issueOpsToken(gate.phone))] };
+    }
+
+    case 'POST /api/ops/lock':
+      return { status: 200, body: { ok: true }, setCookie: [clearedOpsCookie()] };
+
+    case 'GET /api/ops/applications': {
+      const gate = opsGate(req);
+      if ('denied' in gate) return gate.denied;
+      const store = await getStore();
+      return ok({ applications: await store.listApplications(), persistent: store.persistent });
+    }
+
+    case 'POST /api/ops/applications/status': {
+      const gate = opsGate(req);
+      if ('denied' in gate) return gate.denied;
+      const id = field(req.body, 'id');
+      const status = field(req.body, 'status');
+      const rawNote = field(req.body, 'note');
+      if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) return bad(400, 'invalid_id');
+      if (typeof status !== 'string' || !(APPLICATION_STATUSES as readonly string[]).includes(status)) return bad(400, 'invalid_status');
+      if (rawNote !== undefined && rawNote !== null && (typeof rawNote !== 'string' || rawNote.length > 1000)) return bad(400, 'invalid_note');
+      const note = typeof rawNote === 'string' && rawNote.trim() ? rawNote.trim() : null;
+      const application = await (await getStore()).setApplicationStatus(id, status as ApplicationStatus, note);
+      return application ? ok({ ok: true, application }) : bad(404, 'not_found');
+    }
 
     default:
       return bad(404, 'not_found');

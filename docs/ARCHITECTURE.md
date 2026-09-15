@@ -6,10 +6,16 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.7 — launch readiness: security headers and a
+**Last revised:** 2026-09-15 · Revision 2.10 — the whole customer journey runs in Playwright on
+every PR (`e2e/journey.spec.ts`, §8), and axe checks `/job/:id`. (Revision 2.9 — help on
+`/job/:id`: change the time or cancel (free, with credit refunded) before the artisan sets
+off, and "Report a problem", which reaches the team on `/ops`.) (Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
+applications: a team phone plus a passcode, then call, WhatsApp or email each applicant
+and record new → called → approved or declined with a private note.) (Revision 2.7 —
+launch readiness: security headers and a
 Content-Security-Policy (`vercel.json`, also sent by `vite preview`), every page but the
 home split into its own chunk (`lib/lazyPage.tsx`), Pexels photos sized per screen
-(`shared/Photo`), and per-page hreflang (`?lang=pt`) and schema.org JSON-LD (`seo.ts`).
+(`shared/Photo`), and per-page hreflang (`?lang=pt`) and schema.org JSON-LD (`seo.ts`).)
 (Revision 2.6 — `/pro/help`, straight answers for artisans.
 Dashfixe Pro is complete: landing, app showcase, application and status, log in,
 dashboard, help.) (Revision 2.5 — artisans can log in: `/pro/login` (the same
@@ -145,7 +151,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/pro/dashboard` | pro | Signed-in (visitors → `/pro/login?next=`): the application's status and next step, a "get ready for your call" checklist built from what they applied with, their hours and radius (saved on this device), their profile and sign out, and a badged sample preview of the earnings view. Without an application: Start your application. Noindex, robots-disallowed | built (rev 2.5) |
 | `/pro/help` | pro | Help for artisans: pay (`#pay`), jobs (`#jobs`), estimates (`#estimates`), papers (`#documents`), safety (`#safety`), account (`#account`), then a person (`#contact`). The Pro header, mobile menu, footer and dashboard link here. Indexed | built (rev 2.6) |
 | `/artisan/:id` | app | Public profile: trust before the commit point | built (rev 1.2) |
-| `/job/:id` | app | Signed-in: live tracking or the receipt + rating | built (rev 1.2) |
+| `/job/:id` | app | Signed-in: live tracking or the receipt + rating. "Need help with this job?" (`job/JobHelp`): booked ahead → change the time (SlotPicker) or cancel (free, credit refunded); on the way → message the artisan; always → report a problem (to the team, on `/ops`), help centre, safety | built (rev 1.2; help rev 2.9) |
 | `/pro` | pro | Dashfixe Pro landing: how it works (`#how`), pay (`#pay`), vetting (`#vetting`), the app (`#app`), pilot application (`#apply`). `/for-artisans` redirects here (a 308 in `vercel.json` and in the app, `#section` kept) | built (rev 2.2; was `/for-artisans`, rev 1) |
 | `/about` | marketing | Story, philosophy, coverage (`#coverage`) | built (rev 1) |
 | `/help` | marketing | Honest pre-launch FAQ + contact | built (rev 1) |
@@ -154,6 +160,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/how-it-works` | marketing | The customer journey in five steps + the three trust rules (`#estimate`, `#safety`, `#cancellations`) | built (rev 1.5) |
 | `/waitlist` | own chrome | **Parked** (rev 1.5): reachable, linked from nowhere, `noindex`, out of the sitemap; `VITE_LAUNCHED=true` redirects it to `/` | built |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
+| `/ops` | own chrome (minimal Pro header) | The founders' review of Pro applications: team phone + passcode (§6), then each application with Call / WhatsApp / Email, what they sent, a private note, and new → called → approved/declined, filterable by status. Linked from nowhere; noindex and robots-disallowed. Visitors → `/login?next=/ops` | built (rev 2.8) |
 
 **Loading (rev 2.7).** Only `/` ships in the entry chunk. Every other page is
 `lazyPage(() => import(...))` in `routePages.ts`, which also maps routes to pages.
@@ -393,9 +400,37 @@ POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
 POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
 POST /api/auth/verify         { phone, code } → session cookie   → 200   live
 GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+POST /api/support/report      { jobId, category, details? } → ref → 200  live (rev 2.9, signed in)
+GET  /api/ops/reports         → { reports }                      → 200   live (rev 2.9)
+POST /api/ops/unlock          { passcode } → ops cookie          → 200   live (rev 2.8)
+GET  /api/ops/applications    → { applications, persistent }     → 200   live (rev 2.8)
+POST /api/ops/applications/status { id, status, note? }          → 200   live (rev 2.8)
+POST /api/ops/lock                                               → 200   live (rev 2.8)
 GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)         Phase 6
 POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat               Phase 6
 ```
+
+**The founders' ops API (rev 2.8)** needs three things.
+1. A session for a phone in `OPS_PHONES`.
+2. The `OPS_PASSCODE`, which must be at least 12 characters or ops stays off with a 503.
+   Pilot login signs anyone in as any number, so the phone alone proves nothing until
+   SMS is live.
+3. The unlock, which is a signed cookie (`dfx_ops`): httpOnly, `SameSite=Strict`, scoped
+   to `/api/ops`, 8 hours, and bound to the phone that entered the passcode. Logging out
+   clears it.
+
+The errors are, in order: `ops_disabled` 503 → `not_signed_in` 401 → `not_ops` 403 →
+`ops_locked` 403. A review sets the application's `status` (`received` → `called` →
+`approved`/`declined`), a private `note` and `reviewed_at`. Nothing reaches the
+applicant yet.
+
+**Problem reports (rev 2.9).** `POST /api/support/report` requires a session, because
+the phone is how the team calls back. It takes the job id, one of `late · price · quality
+· damage · safety · other`, and details, which are required for `other`. It stores a
+`job_reports` row and returns an `R-1234` reference; the job remembers it on this device
+(`Job.report`). The team reads reports on `/ops` → Problem reports. Jobs themselves are
+still per-browser samples (Phase 6 moves them server-side), so a report names the job by
+id.
 
 **Auth is stateless, so login needs no database.**
 
@@ -484,6 +519,16 @@ that pipeline with sample data. Geocoding: Nominatim within its fair-use policy 
   - the waitlist form POSTs
   - the production CSP blocks nothing the home and `/explore` load (rev 2.7: `vite preview`
     sends `vercel.json`'s headers, so this is the live policy)
+  - the job page stays one screen on desktop (rev 2.9)
+- **The customer journey (rev 2.10):** `e2e/journey.spec.ts` drives two customers end to
+  end on the built app.
+  - **now:** search on the home → Tiago's card → log in at the chat (the commit point) →
+    estimate → approve → book → track → finish (walkthrough) → receipt → rate → Activity
+    links the receipt, still rated after a reload.
+  - **later:** book three days ahead → change the time → cancel → a plain "Cancelled
+    before travel" row in Activity.
+  - The chat is scripted on timers, so the test waits on what appears and never sleeps;
+    repeat runs pass.
 - **Production (rev 1.6, headers rev 2.7):** `scripts/check-prod.mjs` runs after every
   production deploy: cold loads, redirects, SEO files, hreflang and JSON-LD, the security
   headers, year-long caching of hashed assets, the pilot login and a forged-session check.

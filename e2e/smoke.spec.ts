@@ -82,6 +82,19 @@ test('pilot login: Send code signs in, a name once, land on next, stay signed in
   await expect(page.getByRole('status')).toContainText('Added €10.00');
 });
 
+test('the job page stays one screen on desktop, even with the report form open', async ({ page }) => {
+  // The pilot login, then the live job. Its column scrolls; the document must not
+  // (hidden form inputs once stretched it and scrolled the app bar away).
+  await page.setViewportSize({ width: 1280, height: 900 });
+  const { devCode } = await (await page.request.post('/api/auth/request-code', { data: { phone: '912 345 678' } })).json();
+  await page.request.post('/api/auth/verify', { data: { phone: '912 345 678', code: devCode } });
+  await page.goto('/job/dfx-1042');
+  await page.getByRole('button', { name: /Report a problem/ }).click();
+  await page.getByRole('radio', { name: 'A safety concern' }).check({ force: true });
+  const { scroll, height } = await page.evaluate(() => ({ scroll: document.documentElement.scrollHeight, height: innerHeight }));
+  expect(scroll).toBeLessThanOrEqual(height);
+});
+
 test('the waitlist form reaches the API', async ({ page }) => {
   await page.goto('/waitlist');
   await page.getByLabel('Email address').first().fill(`smoke+${Date.now()}@example.com`);

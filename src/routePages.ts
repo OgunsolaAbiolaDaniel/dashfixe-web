@@ -28,6 +28,7 @@ export const LoginPage = lazyPage(() => import('./pages/LoginPage'));
 export const TradePage = lazyPage(() => import('./pages/TradePage'));
 export const HowItWorksPage = lazyPage(() => import('./pages/HowItWorksPage'));
 export const NotFoundPage = lazyPage(() => import('./pages/NotFoundPage'));
+export const OpsPage = lazyPage(() => import('./pages/OpsPage'));
 
 const BY_ROUTE: Array<[string, { preload: () => Promise<unknown> }]> = [
   [ROUTES.explore, ExplorePage],
@@ -51,6 +52,7 @@ const BY_ROUTE: Array<[string, { preload: () => Promise<unknown> }]> = [
   [ROUTES.privacy, LegalPage],
   [ROUTES.terms, LegalPage],
   [ROUTES.cookies, LegalPage],
+  [ROUTES.ops, OpsPage],
 ];
 
 /** Fetch the chunk of the page `pathname` renders (nothing for the home, which is in the entry). */

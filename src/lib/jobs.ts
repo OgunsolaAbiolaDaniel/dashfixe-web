@@ -18,6 +18,9 @@ export type Bilingual = Record<Lang, string>;
 
 export type ReceiptLine = { label: Bilingual; amount: number };
 
+/** A problem the customer reported on the job (rev 2.9); the report itself lives on the server. */
+export type JobReport = { reference: string; category: string; at: string };
+
 export type Job = {
   id: string;
   /** Matches an id in the sample supply when the artisan has a profile. */
@@ -44,6 +47,8 @@ export type Job = {
   rating?: number;
   /** Booked in this browser's walkthrough (vs the seeded history). */
   mine?: boolean;
+  /** The last problem reported on it, so the page can say it was sent. */
+  report?: JobReport;
 };
 
 const SEED: Job[] = [
@@ -194,6 +199,38 @@ export function finishJob(id: string) {
 
 export function rateJob(id: string, stars: number) {
   updateJob(id, { rating: stars });
+}
+
+/**
+ * Move a booked job to another day and two-hour window (rev 2.9). Only before the
+ * artisan sets off; returns the updated job, or null when it can't move.
+ */
+export function rescheduleJob(id: string, dayOffset: number, window: string, now = new Date()): Job | null {
+  const job = getJob(id);
+  if (!job || job.status !== 'agreed') return null;
+  const date = new Date(now);
+  date.setDate(date.getDate() + dayOffset);
+  updateJob(id, { date: iso(date), slot: { window } });
+  return getJob(id);
+}
+
+/** Cancel before travel, which is free (the price rule). Refunding credit is the wallet's job. */
+export function cancelJob(id: string): boolean {
+  const job = getJob(id);
+  if (!job || job.status !== 'agreed') return false;
+  updateJob(id, { status: 'cancelled' });
+  return true;
+}
+
+export function reportOnJob(id: string, report: JobReport) {
+  updateJob(id, { report });
+}
+
+/** Whole days from today to the visit (negative once it has passed). */
+export function daysUntil(isoDate: string, now = new Date()): number {
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(`${isoDate}T00:00:00`).getTime() - today.getTime()) / 86_400_000);
 }
 
 function subscribe(listener: () => void) {

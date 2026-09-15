@@ -93,6 +93,40 @@ export function tokenFromCookieHeader(cookieHeader: string | undefined): string 
   return cookieFromHeader(cookieHeader, SESSION_COOKIE);
 }
 
+// ── Founders' ops unlock (/ops, rev 2.8) ────────────────────────────────────
+//
+// Pilot login signs anyone in as any phone (no SMS yet), so a phone allow-list
+// alone would hand applicants' details to whoever types the owner's number. /ops
+// also needs OPS_PASSCODE, which buys a short-lived cookie bound to that phone.
+
+const OPS_COOKIE = 'dfx_ops';
+const OPS_TTL_S = 8 * 60 * 60;
+
+export function issueOpsToken(phone: string, now = Date.now()): string {
+  return seal({ ops: phone, exp: Math.floor(now / 1000) + OPS_TTL_S });
+}
+
+/** True only for an unlock issued to this very phone (a session token never passes: it has no `ops`). */
+export function opsUnlocked(cookieHeader: string | undefined, phone: string, now = Date.now()): boolean {
+  const data = unseal(cookieFromHeader(cookieHeader, OPS_COOKIE), now);
+  return !!data && data.ops === phone;
+}
+
+/** Scoped to the ops API, never sent cross-site. */
+export function opsCookie(token: string): string {
+  return `${OPS_COOKIE}=${token}; Path=/api/ops; HttpOnly;${secure()} SameSite=Strict; Max-Age=${OPS_TTL_S}`;
+}
+
+export function clearedOpsCookie(): string {
+  return `${OPS_COOKIE}=; Path=/api/ops; HttpOnly; SameSite=Strict; Max-Age=0`;
+}
+
+/** Constant-time compare of two secrets of any length (hash first, then timingSafeEqual). */
+export function passcodeMatches(given: string, expected: string): boolean {
+  const h = (s: string) => createHmac('sha256', 'dfx-ops').update(s).digest();
+  return timingSafeEqual(h(given), h(expected));
+}
+
 // ── Login-code challenges ───────────────────────────────────────────────────
 //
 // The code itself never goes in the cookie — only a keyed hash of it, so the

@@ -432,6 +432,51 @@ The first of four owner-picked chunks ("so what else" → all four, one PR each)
 `/trade/plumbing` URL into Google's Rich Results Test and see the Service; open
 `/help?lang=pt` and the page is in Portuguese.
 
+### Revision 2.8 · The founders' `/ops` ✅ (branch `feat/ops`, stacked on #27)
+
+The second owner-picked chunk: review the Dashfixe Pro applications.
+
+- ✅ **`/ops`**, for a team phone (`OPS_PHONES`) plus a passcode (`OPS_PASSCODE`),
+  because pilot login trusts any number. Visitors are sent to log in; other phones are
+  turned away; without the variables it says how to set it up.
+- ✅ **Each application:** Call / WhatsApp / Email, what the applicant sent, a private
+  note, and new → called → approved or declined. Filters by status, newest first.
+- ✅ **API and storage:** `/api/ops/unlock`, `/api/ops/applications`,
+  `/api/ops/applications/status` and `/api/ops/lock`; `note` and `reviewed_at` columns.
+- ⬜ **Next, once real:** tell the applicant (SMS or email) when approved, and show the
+  status on their `/pro/application` page from the server, not just this device.
+
+**Owner test:** set `OPS_PHONES` and `OPS_PASSCODE` in Vercel (plus `DATABASE_URL` so it
+keeps), redeploy, apply once, then approve yourself on `/ops`.
+
+### Revision 2.9 · Help with a job ✅ (branch `feat/job-help`, stacked on #28)
+
+The third owner-picked chunk: "Get help with this job", "Report a problem", reschedule.
+
+- ✅ **Change the time** on a booked job, with the same slot picker as booking.
+- ✅ **Cancel before travel**, free, with any Dashfixe credit refunded; then Activity.
+- ✅ **On the way:** no time changes; message the artisan instead.
+- ✅ **Report a problem** (late, price, the work, damage, safety, other), sent to the
+  team with the customer's number, and listed on `/ops` → Problem reports. Safety says
+  "call 112 first".
+- ⬜ **Phase 6:** the artisan confirms a new time in the chat, and jobs live on the
+  server, so reports link to a real job.
+
+**Owner test:** book for later on `/explore`, open the job, change the time, then cancel.
+On the live job, report a problem, then see it on `/ops`.
+
+### Revision 2.10 · The customer journey in Playwright ✅ (branch `feat/journey`, stacked on #29)
+
+The fourth owner-picked chunk, and the last of the four.
+
+- ✅ **now:** search → chat (log in at the commit point) → approve → book → track →
+  receipt → rate → Activity (`e2e/journey.spec.ts`).
+- ✅ **later:** book a slot → change the time → cancel → Activity.
+- ✅ axe on `/job/:id` (signed in).
+
+**Owner test:** none needed. CI's smoke job runs it on every PR; locally, run
+`npx vite build && npx playwright test e2e/journey.spec.ts`.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

@@ -5,8 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/launch-ready` (revision 2.7). Everything
-through #26 is merged, Dashfixe Pro and the chat profile card's focus fix included ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/journey` (revision 2.10). It's the last
+of a stack of four PRs, each on top of the one before: #27 (2.7) → #28 (2.8) → #29 (2.9) →
+this one. Merge them in that order. Everything through #26 is merged ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -25,12 +26,17 @@ on the deploy.
 - The pilot log in works, and a forged session is rejected.
 
 **In progress: the four owner-picked chunks, one PR each, in this order.**
-1. **Launch readiness** (revision 2.7, this branch): security headers and CSP, lazy pages,
+1. **Launch readiness** (revision 2.7, PR #27): security headers and CSP, lazy pages,
    sized photos, hreflang and JSON-LD. Notes below.
-2. **Founders' `/ops`**: review the `/pro/apply` applications and mark each called,
-   approved or declined. Restricted to the owner's phone, and needs `DATABASE_URL`.
-3. **Customer help and reschedule** on `/job/:id`.
-4. **A full customer journey in Playwright**: search → chat → book → track → receipt → rate.
+2. **Founders' `/ops`** (revision 2.8, PR #28): review the `/pro/apply` applications and
+   mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`, plus
+   `DATABASE_URL` so reviews survive restarts. Notes below.
+3. **Customer help and reschedule** on `/job/:id` (revision 2.9, PR #29). Notes below.
+4. **A full customer journey in Playwright** (revision 2.10, `feat/journey`): search →
+   chat → book → track → receipt → rate, and book ahead → change the time → cancel.
+
+All four are built. What's left is merging them in order, then the owner's variables
+below, now with `OPS_PHONES` and `OPS_PASSCODE` for `/ops`.
 
 **What's left is the owner's (no code), in order:**
 1. `DATABASE_URL`, free on Neon, so applications and the waitlist survive restarts.
@@ -41,7 +47,63 @@ on the deploy.
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.7**, on branch `feat/launch-ready`, is the launch-readiness pass.
+**Revision 2.10**, on branch `feat/journey`, adds `e2e/journey.spec.ts`: two whole customer
+journeys on the built app, run in CI's smoke job on every PR.
+- **now:** search on the home as a visitor → Tiago's card → Chat asks for a log in →
+  back to `/explore` → the chat's estimate → approve → book → Track → the walkthrough
+  finishes it → receipt → 5★ → Activity links the receipt, and it's still rated after a
+  reload.
+- **later:** `/explore?when=later&day=3&win=2` (three days ahead, so no window has
+  passed whatever the clock) → book → View booking → change 12–14 to 16–18 → cancel →
+  Activity shows a plain "Cancelled before travel" row.
+- axe now also audits `/job/dfx-1042` signed in.
+- Written to wait on what appears, never on time: the chat replies on timers. It passed
+  three repeat runs locally.
+
+**Revision 2.9**, on branch `feat/job-help` (#29), puts "Need help with this job?" on `/job/:id`
+(`components/job/JobHelp.tsx`). It's an inline card, not a modal, because the slot
+picker's own popover and sheet (z-80/81) must sit on top.
+- **Booked ahead:** *Change the time* uses the booking SlotPicker (`lib/jobs`
+  `rescheduleJob`), and saying "same time" is caught. *Cancel the booking* is free before
+  travel (`cancelJob`) and gives back any Dashfixe credit the job used
+  (`lib/wallet` `refundCredit`, a `refund` history entry, once per job); the page then
+  lands on Activity.
+- **On the way:** the time can't change here. It says so and offers *Message Tiago*,
+  which opens the chat.
+- **Always:** *Report a problem*. You pick one of six reasons; details are required for
+  "Something else". Picking safety adds "call 112 first", and the form says which number
+  the team will call back. It's real: `POST /api/support/report` stores it, and `/ops` now
+  has a *Problem reports* section beside Applications. The job remembers the reference.
+  A dead session says to log in again.
+- The receipt has the same card (report, help centre, safety) in place of the old "Get
+  help" button.
+- **Tests:** `pages/JobPage.test.tsx` (reschedule, cancel with refund, message, report
+  and its validation, an ended session, the receipt), `server/support.test.ts`, and the
+  `lib/jobs` and `lib/wallet` unit tests. `/ops` shows the report end to end.
+
+**Revision 2.8**, on branch `feat/ops` (#28), gives the founders `/ops`: the review of Dashfixe
+Pro applications. It's stacked on #27 because it registers its page in `routePages.ts`.
+- **Access** (`server/handlers.ts` `opsGate`, `server/session.ts`) requires a signed-in
+  phone in `OPS_PHONES` **and** the `OPS_PASSCODE`. The passcode buys an 8-hour
+  httpOnly `dfx_ops` cookie, scoped to `/api/ops` and bound to that phone. The passcode is
+  needed because pilot login signs anyone in as any number, so the owner's phone alone
+  would expose applicants' contact details. When SMS is live, the phone check becomes
+  real on its own; the passcode stays as a second factor.
+- **The page** (`pages/OpsPage.tsx`, minimal Pro header, linked from nowhere) lists
+  applications newest first, with counts per status as filters. Each shows Call / WhatsApp
+  / Email, what the applicant sent, a private note, and buttons for the other statuses.
+  It warns when `DATABASE_URL` is missing ("Not saved…").
+- **Storage** (`server/store.ts`): `listApplications` and `setApplicationStatus` on both
+  drivers. Postgres gains `note` and `reviewed_at` (`ADD COLUMN IF NOT EXISTS`, as before).
+- **Tests:** `server/ops.test.ts` covers every refusal, the phone-bound unlock, the
+  review, lock and sign-out. `pages/OpsPage.test.tsx` runs the page end to end, the other
+  phone, and the set-up notice. axe runs on `/ops`, and `check-prod` checks a visitor gets
+  401/503.
+- **Owner test:** set `OPS_PHONES` to your number and `OPS_PASSCODE` in Vercel, then
+  redeploy. Apply once on `/pro/apply`, then open `/ops`, log in, enter the passcode, and
+  approve the application with a note.
+
+**Revision 2.7**, on branch `feat/launch-ready` (#27), is the launch-readiness pass.
 - **Security headers** (`vercel.json`): a CSP naming every outside host, HSTS, no
   framing, nosniff, referrer and permissions policies, and immutable caching for
   `/assets/*`. `vite preview` sends the same headers (`productionHeaders()` in
@@ -475,6 +537,8 @@ docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 | `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes; add its hosts to the CSP in `vercel.json` |
 | `SITE_URL` | canonical/OG/sitemap URLs | e.g. `https://dashfixe.pt`; absent → Vercel's production hostname |
 | `VITE_LAUNCHED` | launch day | `true` retires `/waitlist` to `/` and drops it from the sitemap |
+| `OPS_PHONES` | `/ops` | the team's phones, comma-separated (`912 345 678, +351 913 …`) |
+| `OPS_PASSCODE` | `/ops` | a long random phrase, 12+ characters; without it `/ops` says it isn't set up. Share it only with the team; changing it locks everyone out of `/ops` (not out of the site) |
 
 After setting the first two: deploy, join the waitlist in production, log in once, and
 check the rows in Neon. That is the go-live smoke test. Then paste a `/trade/plumbing`
@@ -523,6 +587,12 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Serverless has no shared memory.** An in-memory OTP store fails when `verify` lands
   on a different instance from `request-code`. The pending code now rides in a signed
   cookie (`server/session.ts`).
+- **`sr-only` inputs escape a non-positioned scroller.** `sr-only` is `position:
+  absolute`. Inside a scrolling column that isn't `relative`, the inputs sit against
+  the page at their static position far down the column, which stretches the document
+  under a one-screen (`h-dvh overflow-hidden`) layout. On `/job/:id` the report form's
+  radios made the page 184px taller, so the app bar could scroll away. Give such
+  scrollers `relative`; the smoke test "the job page stays one screen" guards it.
 - **A scrolling flex column shrinks its children.** Cards with `overflow-hidden` get
   clipped (the chat's approved estimate lost its footer). Add `[&>*]:shrink-0` to the
   scroller.

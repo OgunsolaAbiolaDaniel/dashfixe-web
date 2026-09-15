@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { ACTIVE_JOB_ID, activeJob, createJob, finishJob, formatEuro, getJob, listJobs, rateJob } from './jobs';
+import {
+  ACTIVE_JOB_ID,
+  activeJob,
+  cancelJob,
+  createJob,
+  daysUntil,
+  finishJob,
+  formatEuro,
+  getJob,
+  listJobs,
+  rateJob,
+  reportOnJob,
+  rescheduleJob,
+} from './jobs';
 import { estimateFor } from './estimate';
 
 const SEEDED = ['dfx-1042', 'dfx-1031', 'dfx-1027', 'dfx-1019'];
@@ -70,5 +83,43 @@ describe('the job loop', () => {
 
     rateJob(job.id, 4);
     expect(getJob(job.id)!.rating).toBe(4);
+  });
+});
+
+describe('changing a booking (rev 2.9)', () => {
+  const book = () =>
+    createJob({
+      artisanId: 'tf',
+      artisanName: 'Tiago Ferreira',
+      initials: 'TF',
+      trade: 'plumbing',
+      title: { EN: 'Boiler service', PT: 'Boiler service' },
+      status: 'agreed',
+      dayOffset: 2,
+      slot: { window: '10–12' },
+      lines: [{ label: { EN: 'Service', PT: 'Serviço' }, amount: 60 }],
+      total: 60,
+    });
+
+  it('moves a booked job to another day and window', () => {
+    const now = new Date(2026, 8, 15, 9, 0);
+    const job = book();
+    const moved = rescheduleJob(job.id, 5, '16–18', now)!;
+    expect(moved).toMatchObject({ date: '2026-09-20', slot: { window: '16–18' }, status: 'agreed' });
+    expect(daysUntil(moved.date, now)).toBe(5);
+  });
+
+  it('cancels a booking before travel, and never a job already on the way', () => {
+    const job = book();
+    expect(cancelJob(ACTIVE_JOB_ID)).toBe(false); // travelling
+    expect(rescheduleJob(ACTIVE_JOB_ID, 1, '10–12')).toBeNull();
+    expect(cancelJob(job.id)).toBe(true);
+    expect(getJob(job.id)!.status).toBe('cancelled');
+    expect(activeJob()!.id).toBe(ACTIVE_JOB_ID);
+  });
+
+  it('remembers a reported problem with the job', () => {
+    reportOnJob(ACTIVE_JOB_ID, { reference: 'R-1234', category: 'late', at: '2026-09-15T10:00:00Z' });
+    expect(getJob(ACTIVE_JOB_ID)!.report).toEqual({ reference: 'R-1234', category: 'late', at: '2026-09-15T10:00:00Z' });
   });
 });

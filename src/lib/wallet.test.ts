@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { creditFor, getWallet, redeemCode, referralCode, spendCredit } from './wallet';
+import { creditFor, getWallet, redeemCode, referralCode, refundCredit, spendCredit } from './wallet';
 
 describe('wallet', () => {
   it('starts empty, and a pilot code adds credit once', () => {
@@ -18,6 +18,17 @@ describe('wallet', () => {
     spendCredit(10, 'dfx-2001');
     expect(getWallet().credit).toBe(0);
     expect(getWallet().history[0]).toMatchObject({ kind: 'job', jobId: 'dfx-2001', amount: -10 });
+  });
+
+  it('gives back what a cancelled job used, once', () => {
+    redeemCode('PILOT10');
+    spendCredit(10, 'dfx-2001');
+    expect(refundCredit('dfx-2001')).toBe(10);
+    expect(getWallet().credit).toBe(10);
+    expect(getWallet().history[0]).toMatchObject({ kind: 'refund', jobId: 'dfx-2001', amount: 10 });
+    expect(refundCredit('dfx-2001')).toBe(0);
+    expect(refundCredit('dfx-9999')).toBe(0);
+    expect(getWallet().credit).toBe(10);
   });
 
   it('makes a readable invite code', () => {
