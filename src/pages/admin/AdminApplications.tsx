@@ -6,9 +6,9 @@ import { TRADE_SLUGS, isTradeSlug } from '../../routes';
 import { useAdminSession, type ConsoleAdmin } from '../../lib/adminSession';
 import { api } from '../../lib/api';
 import { ago, stamp } from '../../lib/console';
-import { APPLICATION_STATUSES, downloadCsv, duration, recordOf, targetTone, toCsv, type ApplicationStatus, type ConsoleApplication, type Person } from '../../lib/consoleData';
+import { APPLICATION_STATUSES, downloadCsv, duration, recordOf, targetTone, toCsv, type ApplicationStatus, type ConsoleApplication, type Person, type SignOffRequest } from '../../lib/consoleData';
 import { Btn, Initials, PageHead, Panel, Pill, TableWrap, inputClass, td, th } from '../../components/admin/ui';
-import { ContactButtons, FilterSelect, History, OwnerControl, Tabs } from '../../components/admin/work';
+import { ContactButtons, Discussion, FilterSelect, History, OwnerControl, RequestPanel, Tabs } from '../../components/admin/work';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 import { errorKey } from './AdminAuth';
@@ -34,22 +34,28 @@ function Drawer({
   admin,
   people,
   version,
+  requests,
   onUpdate,
+  onRequestsChanged,
   onClose,
 }: {
   app: ConsoleApplication;
   admin: ConsoleAdmin;
   people: Person[];
   version: number;
+  requests: SignOffRequest[];
   onUpdate: (patch: Record<string, unknown>) => Promise<boolean>;
+  onRequestsChanged: () => void;
   onClose: () => void;
 }) {
   const { t, lang } = useLang();
   const trade = useTradeLabel();
-  const [view, setView] = useState<'answers' | 'history'>('answers');
+  const [view, setView] = useState<'answers' | 'discussion' | 'history'>('answers');
   const [note, setNote] = useState(app.note ?? '');
   const decides = can(admin.role, 'applications.decide');
   const isDecided = app.status === 'approved' || app.status === 'declined';
+  // A pending request is answered through the request, not around it.
+  const pending = requests.some((r) => r.recordRef === recordOf(app) && r.status === 'pending');
   const p = app.profile;
   const facts: Array<[StringKey, string]> = p
     ? [
@@ -88,7 +94,7 @@ function Drawer({
       </div>
 
       <div className="flex gap-1 border-b border-k-line px-2">
-        {(['answers', 'history'] as const).map((v) => (
+        {(['answers', 'discussion', 'history'] as const).map((v) => (
           <button
             key={v}
             type="button"
@@ -96,7 +102,7 @@ function Drawer({
             onClick={() => setView(v)}
             className={'-mb-px border-b-2 px-2 py-2 text-[12px] ' + (view === v ? 'border-[var(--acc)] text-k-text' : 'border-transparent text-k-muted hover:text-k-text')}
           >
-            {t(v === 'answers' ? 'admin.drawer.answers' : 'admin.drawer.history')}
+            {t(v === 'answers' ? 'admin.drawer.answers' : v === 'discussion' ? 'admin.drawer.discussion' : 'admin.drawer.history')}
           </button>
         ))}
       </div>
@@ -113,6 +119,8 @@ function Drawer({
           <dd className="break-all font-plexmono text-[11.5px]">{app.email}</dd>
           {!p && <dd className="col-span-2 text-[12px] text-k-muted">{t('admin.shortForm')}</dd>}
         </dl>
+      ) : view === 'discussion' ? (
+        <Discussion record={recordOf(app)} admin={admin} version={version} />
       ) : (
         <History record={recordOf(app)} version={version} />
       )}
@@ -142,7 +150,7 @@ function Drawer({
             {t('admin.act.called')}
           </Btn>
         )}
-        {decides && !isDecided && (
+        {decides && !isDecided && !pending && (
           <>
             <Btn variant="primary" onClick={() => void onUpdate({ status: 'approved' })}>
               {t('admin.act.approve')}
@@ -155,7 +163,18 @@ function Drawer({
         {decides && isDecided && (
           <Btn onClick={() => void onUpdate({ status: 'called' })}>{t('admin.act.reopen')}</Btn>
         )}
-        {!decides && <p className="basis-full text-[11.5px] text-k-warn">{t('admin.act.needsSupervisor')}</p>}
+        <div className="basis-full empty:hidden">
+          <RequestPanel
+            admin={admin}
+            recordType="application"
+            recordId={app.id}
+            recordRef={recordOf(app)}
+            requests={requests}
+            canAsk={!isDecided}
+            actions={['approve', 'decline']}
+            onChanged={onRequestsChanged}
+          />
+        </div>
       </div>
     </section>
   );
@@ -174,6 +193,8 @@ export default function AdminApplications({ admin }: { admin: ConsoleAdmin }) {
   const [error, setError] = useState<StringKey | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [requests, setRequests] = useState<SignOffRequest[]>([]);
   const [now] = useState(() => Date.now());
   const openId = Number(params.get('open')) || null;
 
@@ -189,9 +210,19 @@ export default function AdminApplications({ admin }: { admin: ConsoleAdmin }) {
     return () => {
       live = false;
     };
-  }, [refresh]);
+  }, [refresh, reloadKey]);
+
+  // Sign-off requests (rev 2.14): the viewer's scope — all for reviewers, their own otherwise.
+  useEffect(() => {
+    let live = true;
+    void api<{ requests: SignOffRequest[] }>('/api/admin/requests').then((r) => live && r.ok && setRequests(r.data.requests));
+    return () => {
+      live = false;
+    };
+  }, [reloadKey, version]);
 
   const list = useMemo(() => apps ?? [], [apps]);
+  const pendingRefs = new Set(requests.filter((r) => r.status === 'pending').map((r) => r.recordRef));
   const q = filters.q.trim().toLowerCase();
   const shown = list.filter(
     (a) =>
@@ -394,6 +425,11 @@ export default function AdminApplications({ admin }: { admin: ConsoleAdmin }) {
                       </td>
                       <td className={td}>
                         <Pill tone={STATUS_TONE[a.status]}>{t(`admin.status.${a.status}`)}</Pill>
+                        {pendingRefs.has(recordOf(a)) && (
+                          <span className="ml-1.5">
+                            <Pill tone="warn">{t('admin.req.pendingPill')}</Pill>
+                          </span>
+                        )}
                       </td>
                       <td className={td}>
                         {owner ? (
@@ -422,6 +458,11 @@ export default function AdminApplications({ admin }: { admin: ConsoleAdmin }) {
             people={people}
             version={version}
             onUpdate={(patch) => update(open.id, patch)}
+            requests={requests}
+            onRequestsChanged={() => {
+              setReloadKey((k) => k + 1);
+              setVersion((v) => v + 1);
+            }}
             onClose={() => select(null)}
           />
         )}

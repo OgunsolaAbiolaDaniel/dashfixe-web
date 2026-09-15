@@ -80,7 +80,8 @@ describe('applications in the console', () => {
     await user.click(within(drawer).getByRole('button', { name: 'Mark called' }));
     expect(await within(drawer).findByText('Called')).toBeInTheDocument();
     expect(within(drawer).queryByRole('button', { name: 'Approve' })).not.toBeInTheDocument();
-    expect(within(drawer).getByText(/Approving and declining are for a Supervisor/)).toBeInTheDocument();
+    // An Admin can't decide; they ask a supervisor instead (rev 2.14).
+    expect(within(drawer).getByRole('button', { name: 'Ask a supervisor' })).toBeInTheDocument();
 
     await user.click(within(drawer).getByRole('button', { name: 'History' }));
     expect(await within(drawer).findByText(/Changed an application's status/)).toBeInTheDocument();

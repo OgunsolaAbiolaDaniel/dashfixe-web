@@ -5,9 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/admin-work` (revision 2.13, the admin console's
-second PR), stacked on #33 (`feat/admin-foundation`, 2.12). Everything through #32 is merged,
-including 2.11 (`GET /api/health`), and production runs on Postgres ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/admin-requests` (revision 2.14, the admin
+console's third PR), stacked on #34 (`feat/admin-work`, 2.13). Everything through #33 is
+merged, including the console's foundation (2.12), and production runs on Postgres ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -35,11 +35,12 @@ Notes on each are below.
 route… layers of access… a supervisor… I as the super admin can also see the flow").
 1. **Foundation** (2.12, #33): accounts, sign-in, setup, roles, team, audit log, and the
    black console frame. Notes below.
-2. **Work screens** (2.13, this branch): the overview's figures, applications, problem
+2. **Work screens** (2.13, #34): the overview's figures, applications, problem
    reports and the waitlist in `/admin`, with owners, targets, history and logged exports.
    `/ops` redirects here. Notes below.
-3. **Supervisor sign-off and chat:** Admins send requests on a record, Supervisors sign
-   off, and the Super admin sees every thread.
+3. **Supervisor sign-off and chat** (2.14, this branch): Admins send requests on a
+   record, Supervisors sign off, every record has a discussion, and the Super admin sees
+   all of it plus the team's workload. Notes below.
 
 **What's left is the owner's (no code), in order:**
 1. **Claim the console** once 2.12 is live: open `/admin/setup` and enter `OPS_PASSCODE`
@@ -51,7 +52,26 @@ route… layers of access… a supervisor… I as the super admin can also see t
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.13**, on branch `feat/admin-work`, gives the console its work.
+**Revision 2.14**, on branch `feat/admin-requests`, is supervisor sign-off and chat.
+ARCHITECTURE §4 "Supervisor sign-off" has the model.
+- **Server** (`server/adminApi.ts`, the store's `admin_requests` + `admin_messages`):
+  - `requests` (list, create, `/review`, `/withdraw`), `thread` and `messages`
+  - approving applies the decision with the requester's name in the audit detail;
+    sending back needs a reason; nobody reviews their own; one waiting request per record
+    (a partial unique index on Postgres)
+- **Screens:**
+  - `pages/admin/AdminRequests.tsx`: the queue for reviewers, "my requests" for Admins
+  - `RequestPanel` and `Discussion` in `components/admin/work.tsx`, inside both detail
+    panels; a "Sign-off pending" pill in the tables
+  - a Requests item with a waiting count in the sidebar
+  - sign-offs first in the overview's attention list, plus a Team workload panel for
+    reviewers
+  - a Requests filter on the audit log
+- **Tests:** `server/adminRequests.test.ts` (5: the whole flow, refusals, one at a time,
+  withdraw, threads) and `pages/admin/AdminRequests.test.tsx` (3: ask and discuss, send
+  back with a reason, approve from the panel).
+
+**Revision 2.13**, on branch `feat/admin-work` (#34), gives the console its work.
 - **Server** (`server/adminApi.ts`, `adminStats.ts`, the store):
   - the routes: `applications` (+ `/update`), `reports` (+ `/update`), `waitlist`,
     `export`, `history`, `stats` and `people` (names only)

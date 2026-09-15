@@ -509,10 +509,22 @@ console" has the model.
 2. As an Admin, try: the Approve button isn't there, and the note says why.
 3. On Problem reports, a safety report sits at the top with its 1-hour countdown.
 
-**PR 3 · Supervisor sign-off and chat ⬜**
-- "Ask a supervisor" on a record: a request with a thread. The Supervisor's queue:
-  approve, or send back with a comment.
-- The Super admin sees every thread and the team's flow.
+**Revision 2.14 · Supervisor sign-off and chat ✅** (branch `feat/admin-requests`,
+stacked on #34)
+- ✅ "Ask a supervisor" on an application or report: propose approve, decline or resolve,
+  with a message.
+- ✅ The queue at `/admin/requests`: approve (which applies it) or send back with a
+  reason. Admins see their answers and can withdraw. The sidebar shows the count.
+- ✅ A discussion on every record; the Super admin sees every thread.
+- ✅ The team's flow: sign-offs first in "Needs attention", a Team workload panel, and a
+  Requests filter on the audit log.
+
+**Owner test (2.14):**
+1. As an Admin, open an application, press "Ask a supervisor", pick decline and say why.
+2. As a Supervisor, open Requests (the sidebar shows 1), send it back without a reason
+   (refused), then with one.
+3. As the Admin, read the reason in the record's Discussion, reply, and ask again; as the
+   Supervisor, approve it and see the application change and the audit log name you both.
 
 **Owner test (2.12):** after the deploy, open `/admin/setup`, enter `OPS_PASSCODE`, then
 your name, email and a password. Add a Supervisor from Team, sign in as them in a private

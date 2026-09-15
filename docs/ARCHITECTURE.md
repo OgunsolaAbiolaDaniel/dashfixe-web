@@ -6,9 +6,12 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.13 — the console's work screens: the overview's
+**Last revised:** 2026-09-15 · Revision 2.14 — supervisor sign-off: an Admin asks a
+supervisor on the record, a Supervisor or the Super admin approves (which applies it) or
+sends it back with a reason, and every record has a team discussion; `/admin/requests` is
+the queue, and the overview shows the team's workload. (Revision 2.13 — the console's work screens: the overview's
 figures, applications, problem reports and the waitlist, with owners, targets, history and
-logged exports. `/ops` now redirects to `/admin`. (Revision 2.12 — the admin console at
+logged exports. `/ops` now redirects to `/admin`.) (Revision 2.12 — the admin console at
 `/admin`: its own email +
 password accounts, three roles (Super admin · Supervisor · Admin) enforced on the server,
 one-time setup, team management and an audit log, in a black frame coloured by role (§4,
@@ -246,6 +249,7 @@ one-header rule), noindex and robots-disallowed, and linked from nowhere.
 | `/admin` | signed out → sign-in; signed in → overview | Overview (rev 2.13): six figures with 7-day trends (Admins see their own open work instead of the waitlist), what needs attention (safety first, then nearest its target), activity in your scope, the application pipeline, approved supply by trade × area, system status, your access |
 | `/admin/applications` | everyone (`applications.work`) | Status tabs + Mine, filters (trade, area, owner), search, bulk assign/call, waiting time against the 48 h target; a detail panel with contact, answers, owner, note, decision and history. Deep link: `?open=<id>` |
 | `/admin/reports` | everyone (`reports.work`) | Open / called back / resolved / mine; safety first; call-back countdown (1 h safety, 24 h otherwise); resolve with a written note; history |
+| `/admin/requests` | everyone, scoped (rev 2.14) | Supervisors and the Super admin: every sign-off request, by status and by who sent it, with Approve and Send back (reason required) in the row. Admins: their own requests, the answers, and Withdraw. The sidebar shows how many are waiting |
 | `/admin/waitlist` | Supervisor, Super admin | Sign-ups, search, export |
 | `/admin/team` | Super admin | Add a person with a starting password (shown once, sent by WhatsApp), change roles, reset passwords, disable/enable |
 | `/admin/audit` | everyone, scoped | Super admin: everything. Supervisor: the team (everyone but the Super admin). Admin: their own actions |
@@ -271,11 +275,26 @@ The permissions live in one table, `src/shared/adminRoles.ts`:
 | Team activity (`audit.team`) | — | ✓ | ✓ |
 | Full audit log, the team itself (`audit.all`, `team.manage`) | — | — | ✓ |
 
-**Supervisor sign-off (maker-checker, PR 3).** An Admin can't approve or decline. They
-send a request on the record, with a message thread, to the supervisors. A Supervisor
-approves it, or sends it back with a comment. The Super admin sees every request and
-thread, and can override. This is the standard least-privilege pattern: one person
-proposes, a more senior one approves, and everything is logged.
+**Supervisor sign-off (maker-checker, built in rev 2.14).** This is the standard
+least-privilege pattern: one person proposes, a more senior one approves, and everything
+is logged.
+- **Ask.** An Admin can't approve, decline or resolve a safety report. From the record's
+  panel they choose what they propose (approve or decline an application; resolve a
+  report, with the resolution written out) and add a message.
+- **Review.** A Supervisor or the Super admin approves it, which applies the decision
+  and logs "(request #n from Name)", or sends it back with a required reason. Nobody
+  reviews their own request, and the Admin can withdraw it while it waits.
+- **One at a time.** A record has at most one waiting request (a partial unique index on
+  Postgres). While it waits, the direct buttons step aside, so the decision goes through
+  the request.
+- **Discussion.** Every application and report has a thread in its panel. The request's
+  message and the reviewer's reason land in it, and anyone on the team can reply.
+- **Seeing the flow.** Reviewers get waiting sign-offs at the top of "Needs attention"
+  and a Team workload panel (open work per person, sign-offs waiting, sent and signed
+  off). The audit log has a Requests filter.
+- **API** (`server/adminApi.ts`): `GET /api/admin/requests` (all for reviewers, own
+  otherwise), `POST /api/admin/requests`, `/requests/review`, `/requests/withdraw`,
+  `/thread` and `/messages`. The store keeps `admin_requests` and `admin_messages`.
 
 **Accounts and sessions** (`server/adminApi.ts`, `server/passwords.ts`,
 `server/session.ts`):

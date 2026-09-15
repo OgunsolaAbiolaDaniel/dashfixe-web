@@ -5,9 +5,9 @@ import { reportTargetMs } from '../../shared/pilot';
 import { useAdminSession, type ConsoleAdmin } from '../../lib/adminSession';
 import { api } from '../../lib/api';
 import { ago, stamp } from '../../lib/console';
-import { downloadCsv, duration, targetTone, toCsv, type ConsoleReport, type Person, type ReportStatus } from '../../lib/consoleData';
+import { downloadCsv, duration, targetTone, toCsv, type ConsoleReport, type Person, type ReportStatus, type SignOffRequest } from '../../lib/consoleData';
 import { Btn, Initials, PageHead, Panel, Pill, TableWrap, inputClass, td, th } from '../../components/admin/ui';
-import { ContactButtons, FilterSelect, History, OwnerControl, Tabs } from '../../components/admin/work';
+import { ContactButtons, Discussion, FilterSelect, History, OwnerControl, RequestPanel, Tabs } from '../../components/admin/work';
 import { useLang } from '../../i18n';
 import type { StringKey } from '../../i18n/strings';
 import { errorKey } from './AdminAuth';
@@ -25,21 +25,27 @@ function Drawer({
   admin,
   people,
   version,
+  requests,
   onUpdate,
+  onRequestsChanged,
   onClose,
 }: {
   report: ConsoleReport;
   admin: ConsoleAdmin;
   people: Person[];
   version: number;
+  requests: SignOffRequest[];
   onUpdate: (patch: Record<string, unknown>) => Promise<boolean>;
+  onRequestsChanged: () => void;
   onClose: () => void;
 }) {
   const { t, lang } = useLang();
+  const [view, setView] = useState<'discussion' | 'history'>('discussion');
   const [resolving, setResolving] = useState(false);
   const [resolution, setResolution] = useState('');
   const canResolve = report.category !== 'safety' || can(admin.role, 'reports.resolveSafety');
   const canReopen = can(admin.role, 'reports.resolveSafety');
+  const pending = requests.some((r) => r.recordRef === report.reference && r.status === 'pending');
 
   return (
     <section aria-labelledby="report-drawer-title" className="overflow-hidden rounded-[7px] border border-k-line bg-k-panel lg:sticky lg:top-3">
@@ -74,6 +80,7 @@ function Drawer({
           </Btn>
         )}
         {report.status !== 'resolved' &&
+          !pending &&
           (canResolve ? (
             resolving ? (
               <form
@@ -109,8 +116,31 @@ function Drawer({
             {t('admin.act.reopen')}
           </Btn>
         )}
+        <RequestPanel
+          admin={admin}
+          recordType="report"
+          recordId={report.id}
+          recordRef={report.reference}
+          requests={requests}
+          canAsk={report.status !== 'resolved' && !canResolve}
+          actions={['resolve']}
+          onChanged={onRequestsChanged}
+        />
       </div>
-      <History record={report.reference} version={version} />
+      <div className="flex gap-1 border-b border-k-line px-2">
+        {(['discussion', 'history'] as const).map((v) => (
+          <button
+            key={v}
+            type="button"
+            aria-pressed={view === v}
+            onClick={() => setView(v)}
+            className={'-mb-px border-b-2 px-2 py-2 text-[12px] ' + (view === v ? 'border-[var(--acc)] text-k-text' : 'border-transparent text-k-muted hover:text-k-text')}
+          >
+            {t(v === 'discussion' ? 'admin.drawer.discussion' : 'admin.drawer.history')}
+          </button>
+        ))}
+      </div>
+      {view === 'discussion' ? <Discussion record={report.reference} admin={admin} version={version} /> : <History record={report.reference} version={version} />}
     </section>
   );
 }
@@ -127,6 +157,8 @@ export default function AdminReports({ admin }: { admin: ConsoleAdmin }) {
   const [error, setError] = useState<StringKey | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [requests, setRequests] = useState<SignOffRequest[]>([]);
   const [now] = useState(() => Date.now());
   const openId = Number(params.get('open')) || null;
 
@@ -142,9 +174,18 @@ export default function AdminReports({ admin }: { admin: ConsoleAdmin }) {
     return () => {
       live = false;
     };
-  }, [refresh]);
+  }, [refresh, reloadKey]);
+
+  useEffect(() => {
+    let live = true;
+    void api<{ requests: SignOffRequest[] }>('/api/admin/requests').then((r) => live && r.ok && setRequests(r.data.requests));
+    return () => {
+      live = false;
+    };
+  }, [reloadKey, version]);
 
   const list = useMemo(() => reports ?? [], [reports]);
+  const pendingRefs = new Set(requests.filter((r) => r.status === 'pending').map((r) => r.recordRef));
   const needle = q.trim().toLowerCase();
   const shown = list
     .filter(
@@ -279,6 +320,11 @@ export default function AdminReports({ admin }: { admin: ConsoleAdmin }) {
                       </td>
                       <td className={td}>
                         <Pill tone={STATUS_TONE[r.status]}>{t(`admin.rstatus.${r.status}`)}</Pill>
+                        {pendingRefs.has(r.reference) && (
+                          <span className="ml-1.5">
+                            <Pill tone="warn">{t('admin.req.pendingPill')}</Pill>
+                          </span>
+                        )}
                       </td>
                       <td className={td}>
                         {owner ? (
@@ -299,7 +345,20 @@ export default function AdminReports({ admin }: { admin: ConsoleAdmin }) {
           {reports && !shown.length && <p className="px-3 py-4 text-k-muted">{t('admin.empty')}</p>}
         </Panel>
         {open && (
-          <Drawer key={open.id} report={open} admin={admin} people={people} version={version} onUpdate={(patch) => update(open.id, patch)} onClose={() => select(null)} />
+          <Drawer
+            key={open.id}
+            report={open}
+            admin={admin}
+            people={people}
+            version={version}
+            requests={requests}
+            onUpdate={(patch) => update(open.id, patch)}
+            onRequestsChanged={() => {
+              setReloadKey((k) => k + 1);
+              setVersion((v) => v + 1);
+            }}
+            onClose={() => select(null)}
+          />
         )}
       </div>
     </>

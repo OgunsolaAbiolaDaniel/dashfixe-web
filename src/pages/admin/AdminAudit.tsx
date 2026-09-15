@@ -21,6 +21,7 @@ const FILTERS: Array<[string, StringKey, (action: string) => boolean]> = [
   ['signins', 'admin.audit.filter.signins', (a) => a === 'setup' || a.startsWith('signin')],
   ['team', 'admin.audit.filter.team', (a) => a.startsWith('team.')],
   ['passwords', 'admin.audit.filter.passwords', (a) => a === 'password.change' || a === 'team.password'],
+  ['requests', 'admin.audit.filter.requests', (a) => a.startsWith('request.')],
   ['exports', 'admin.audit.filter.exports', (a) => a === 'data.export'],
 ];
 

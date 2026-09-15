@@ -23,7 +23,9 @@ import { ADMIN_ROLES, can, isAdminRole, type AdminRole } from '../shared/adminRo
 import {
   APPLICATION_STATUSES,
   REPORT_STATUSES,
+  REQUEST_ACTIONS,
   getStore,
+  type RequestAction,
   type AdminPatch,
   type AdminRecord,
   type ApplicationPatch,
@@ -111,6 +113,16 @@ async function ownerChange(store: Store, me: AdminRecord, current: number | null
 }
 
 const decided = (status: string) => status === 'approved' || status === 'declined';
+
+/** A record the console knows: an application (A-1234 or #12) or a report (R-1234). */
+async function findRecord(store: Store, ref: string) {
+  if (/^R-\d+$/.test(ref)) {
+    const report = (await store.listReports(5000)).find((r) => r.reference === ref);
+    return report ? ({ type: 'report', report } as const) : null;
+  }
+  const app = (await store.listApplications(5000)).find((a) => (a.reference ?? `#${a.id}`) === ref);
+  return app ? ({ type: 'application', app } as const) : null;
+}
 
 async function currentAdmin(store: Store, req: ApiRequest): Promise<{ admin: AdminRecord; exp: number } | null> {
   const token = readAdminToken(req.cookieHeader);
@@ -440,6 +452,131 @@ export async function handleAdmin(req: ApiRequest): Promise<ApiResponse> {
       const target = str(req.body, 'record', 40);
       if (!target) return bad(400, 'invalid_record');
       return ok({ events: await store.listAudit({ record: target, limit: 100 }) });
+    }
+
+    // ── Supervisor sign-off and discussion (rev 2.14) ──
+
+    case 'GET /api/admin/requests': {
+      // Reviewers see every request; everyone else, their own.
+      const all = can(me.role, 'requests.review');
+      return ok({ scope: all ? 'all' : 'own', requests: await store.listRequests(all ? { limit: 500 } : { createdBy: me.id, limit: 500 }) });
+    }
+
+    case 'POST /api/admin/requests': {
+      if (!can(me.role, 'requests.create')) return bad(403, 'forbidden');
+      const recordType = field(req.body, 'recordType');
+      const recordId = field(req.body, 'recordId');
+      const action = field(req.body, 'action');
+      const rawNote = field(req.body, 'note');
+      const rawPayload = field(req.body, 'payload');
+      if (recordType !== 'application' && recordType !== 'report') return bad(400, 'invalid_record');
+      if (typeof recordId !== 'number' || !Number.isInteger(recordId)) return bad(400, 'invalid_id');
+      if (typeof action !== 'string' || !(REQUEST_ACTIONS as readonly string[]).includes(action)) return bad(400, 'invalid_action');
+      for (const v of [rawNote, rawPayload]) if (v !== undefined && v !== null && (typeof v !== 'string' || v.length > 1000)) return bad(400, 'invalid_note');
+      const note = typeof rawNote === 'string' && rawNote.trim() ? rawNote.trim() : null;
+      const payload = typeof rawPayload === 'string' && rawPayload.trim() ? rawPayload.trim() : null;
+
+      let recordRef: string;
+      if (recordType === 'application') {
+        const app = await store.getApplication(recordId);
+        if (!app) return bad(404, 'not_found');
+        if (action !== 'approve' && action !== 'decline') return bad(400, 'invalid_action');
+        if (decided(app.status)) return bad(409, 'already_decided');
+        recordRef = app.reference ?? `#${app.id}`;
+      } else {
+        const report = await store.getReport(recordId);
+        if (!report) return bad(404, 'not_found');
+        if (action !== 'resolve') return bad(400, 'invalid_action');
+        if (report.status === 'resolved') return bad(409, 'already_resolved');
+        if (!payload || payload.length < 3) return bad(400, 'resolution_required');
+        recordRef = report.reference;
+      }
+
+      try {
+        const request = await store.createRequest({ recordType, recordId, recordRef, action: action as RequestAction, payload, note, createdBy: me.id, createdByName: me.name });
+        if (note) await store.addMessage({ thread: recordRef, authorId: me.id, authorName: me.name, authorRole: me.role, body: note, requestId: request.id });
+        await record(store, me, 'request.create', recordRef, `${action}${note ? ` — ${note.slice(0, 100)}` : ''}`);
+        return ok({ ok: true, request });
+      } catch (e) {
+        if ((e as Error).message === 'already_requested') return bad(409, 'already_requested');
+        throw e;
+      }
+    }
+
+    case 'POST /api/admin/requests/review': {
+      if (!can(me.role, 'requests.review')) return bad(403, 'forbidden');
+      const id = field(req.body, 'id');
+      const decision = field(req.body, 'decision');
+      const rawNote = field(req.body, 'note');
+      if (typeof id !== 'number' || !Number.isInteger(id)) return bad(400, 'invalid_id');
+      if (decision !== 'approve' && decision !== 'return') return bad(400, 'invalid_decision');
+      if (rawNote !== undefined && rawNote !== null && (typeof rawNote !== 'string' || rawNote.length > 1000)) return bad(400, 'invalid_note');
+      const note = typeof rawNote === 'string' && rawNote.trim() ? rawNote.trim() : null;
+      if (decision === 'return' && (!note || note.length < 3)) return bad(400, 'note_required');
+
+      const request = await store.getRequest(id);
+      if (!request) return bad(404, 'not_found');
+      if (request.status !== 'pending') return bad(409, 'not_pending');
+      // Maker-checker: whoever asked can never sign their own request off.
+      if (request.createdBy === me.id) return bad(403, 'own_request');
+
+      const stamp = new Date(now).toISOString();
+      const via = `request #${request.id} from ${request.createdByName}`;
+      if (decision === 'approve') {
+        if (request.recordType === 'application') {
+          const app = await store.getApplication(request.recordId);
+          if (!app) return bad(404, 'not_found');
+          if (decided(app.status)) return bad(409, 'already_decided');
+          const status = request.action === 'decline' ? 'declined' : 'approved';
+          await store.updateApplication(app.id, { status, reviewedAt: stamp });
+          await record(store, me, 'application.status', request.recordRef, `${app.status} → ${status} (${via})`);
+        } else {
+          const report = await store.getReport(request.recordId);
+          if (!report) return bad(404, 'not_found');
+          if (report.status === 'resolved') return bad(409, 'already_resolved');
+          await store.updateReport(report.id, { status: 'resolved', resolution: request.payload, resolvedAt: stamp, calledAt: report.calledAt ?? stamp });
+          await record(store, me, 'report.status', request.recordRef, `resolved: ${(request.payload ?? '').slice(0, 100)} (${via})`);
+        }
+      }
+      const updated = await store.updateRequest(request.id, {
+        status: decision === 'approve' ? 'approved' : 'returned',
+        reviewedBy: me.id,
+        reviewedByName: me.name,
+        reviewedAt: stamp,
+        reviewNote: note,
+      });
+      if (note) await store.addMessage({ thread: request.recordRef, authorId: me.id, authorName: me.name, authorRole: me.role, body: note, requestId: request.id });
+      await record(store, me, decision === 'approve' ? 'request.approve' : 'request.return', request.recordRef, `#${request.id}${note ? ` — ${note.slice(0, 100)}` : ''}`);
+      return ok({ ok: true, request: updated });
+    }
+
+    case 'POST /api/admin/requests/withdraw': {
+      const id = field(req.body, 'id');
+      if (typeof id !== 'number' || !Number.isInteger(id)) return bad(400, 'invalid_id');
+      const request = await store.getRequest(id);
+      if (!request) return bad(404, 'not_found');
+      if (request.createdBy !== me.id) return bad(403, 'forbidden');
+      if (request.status !== 'pending') return bad(409, 'not_pending');
+      const updated = await store.updateRequest(request.id, { status: 'withdrawn', reviewedAt: new Date(now).toISOString() });
+      await record(store, me, 'request.withdraw', request.recordRef, `#${request.id}`);
+      return ok({ ok: true, request: updated });
+    }
+
+    case 'POST /api/admin/thread': {
+      const ref = str(req.body, 'record', 40);
+      if (!ref) return bad(400, 'invalid_record');
+      if (!(await findRecord(store, ref))) return bad(404, 'not_found');
+      return ok({ messages: await store.listMessages(ref) });
+    }
+
+    case 'POST /api/admin/messages': {
+      const ref = str(req.body, 'record', 40);
+      const body = str(req.body, 'body', 2000);
+      if (!ref) return bad(400, 'invalid_record');
+      if (!body) return bad(400, 'empty_message');
+      if (!(await findRecord(store, ref))) return bad(404, 'not_found');
+      const message = await store.addMessage({ thread: ref, authorId: me.id, authorName: me.name, authorRole: me.role, body, requestId: null });
+      return ok({ ok: true, message });
     }
 
     case 'GET /api/admin/audit': {
