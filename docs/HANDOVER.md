@@ -5,21 +5,42 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-14 · **Branch:** `feat/pro-help`, stacked on
-`feat/pro-dashboard` (#23), which is stacked on `feat/pro-apply` (#21). Merge in order:
-#21, #23, then this one. Everything through #20 is merged; #22 (the profile card in the
-chat) is separate ·
+**Last updated:** 2026-09-15 · **Branch:** `main`. Everything through #24 is merged,
+Dashfixe Pro included. #25 (the chat profile card's focus fix) is open ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
 
 ## Where we stopped
 
-Phases 0–4 are done, and Phase 5's code is done. Everything through #11 is merged, and
-`main` is green in CI (check and smoke).
+Phases 0–4 are done, Phase 5's code is done, and **Dashfixe Pro is built and live**.
 
-**Revision 2.4**, on branch `feat/chat-profile` (owner request, made mid-way through the
-Pro work), adds the artisan's profile card to the chat. In the chat header, the avatar
+**Production, verified live on 2026-09-15** (`dashfixe-web.vercel.app`, merge `6896fae`):
+`node scripts/check-prod.mjs` gives **27/27**, and the "production check" workflow passed
+on the deploy.
+- Every page loads cold: customer, account and every Pro page (`/pro`, `/pro/app`,
+  `/pro/apply`, `/pro/application`, `/pro/login`, `/pro/dashboard`, `/pro/help`).
+- `/for-artisans` 308-redirects to `/pro`.
+- `robots.txt` keeps the private pages out.
+- The pilot log in works, and a forged session is rejected.
+
+**One open PR: #25.** `main`'s check job is red: the chat profile card's test that checks
+focus comes back to the chat after closing is flaky on CI's slower runner.
+#25 makes the card own its focus (set once on open, handed back on close). It's green,
+and merging it turns `main` green. Production is unaffected; the flaky part was only
+the test's timing.
+
+**What's left is the owner's (no code), in order:**
+1. `DATABASE_URL`, free on Neon, so applications and the waitlist survive restarts.
+2. A domain, then `SITE_URL` and the `PROD_URL` repo variable.
+3. The `TWILIO_*` variables when SMS is funded.
+4. `VITE_LAUNCHED=true` on launch day.
+
+Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
+and payouts on the database. The code notes for each revision follow, newest first.
+
+**Revision 2.4** (#22, merged; its focus fix is #25) was an owner request, made mid-way
+through the Pro work. It adds the artisan's profile card to the chat. In the chat header, the avatar
 and name are now a "View Tiago's profile" button. It opens `ArtisanProfileModal`, a card
 on desktop and a sheet on phones, with the same pieces as `/artisan/:id`
 (`ArtisanProfileParts.tsx`), plus "Full profile" and "Back to chat". Escape closes it
