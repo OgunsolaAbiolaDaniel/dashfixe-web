@@ -256,7 +256,7 @@ The permissions live in one table, `src/shared/adminRoles.ts`:
 |---|---|---|---|
 | Call applicants, notes, mark called (`applications.work`) | ✓ | ✓ | ✓ |
 | Handle problem reports (`reports.work`) | ✓ | ✓ | ✓ |
-| Ask a supervisor to sign off (`requests.create`) | ✓ | ✓ | ✓ |
+| Ask a supervisor to sign off (`requests.create`) | ✓ | — (decides) | — (decides) |
 | Approve / decline (`applications.decide`) | — | ✓ | ✓ |
 | Sign off Admins' requests (`requests.review`) | — | ✓ | ✓ |
 | Resolve safety reports (`reports.resolveSafety`) | — | ✓ | ✓ |

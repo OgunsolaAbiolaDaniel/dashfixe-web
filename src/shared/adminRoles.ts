@@ -34,9 +34,12 @@ export type Permission =
   | 'audit.all'
   | 'team.manage';
 
-const ADMIN: readonly Permission[] = ['applications.work', 'reports.work', 'requests.create'];
+/** What every role does: work the queue. */
+const QUEUE: readonly Permission[] = ['applications.work', 'reports.work'];
+/** Admins can't decide, so they ask. Supervisors and the Super admin decide directly. */
+const ADMIN: readonly Permission[] = [...QUEUE, 'requests.create'];
 const SUPERVISOR: readonly Permission[] = [
-  ...ADMIN,
+  ...QUEUE,
   'applications.decide',
   'work.assign',
   'reports.resolveSafety',
