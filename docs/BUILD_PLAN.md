@@ -465,6 +465,18 @@ The third owner-picked chunk: "Get help with this job", "Report a problem", resc
 **Owner test:** book for later on `/explore`, open the job, change the time, then cancel.
 On the live job, report a problem, then see it on `/ops`.
 
+### Revision 2.10 · The customer journey in Playwright ✅ (branch `feat/journey`, stacked on #29)
+
+The fourth owner-picked chunk, and the last of the four.
+
+- ✅ **now:** search → chat (log in at the commit point) → approve → book → track →
+  receipt → rate → Activity (`e2e/journey.spec.ts`).
+- ✅ **later:** book a slot → change the time → cancel → Activity.
+- ✅ axe on `/job/:id` (signed in).
+
+**Owner test:** none needed. CI's smoke job runs it on every PR; locally, run
+`npx vite build && npx playwright test e2e/journey.spec.ts`.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

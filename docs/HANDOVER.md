@@ -5,9 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/job-help` (revision 2.9), stacked on #28
-(`feat/ops`, 2.8), which is stacked on #27 (`feat/launch-ready`, 2.7). Everything through
-#26 is merged ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/journey` (revision 2.10). It's the last
+of a stack of four PRs, each on top of the one before: #27 (2.7) → #28 (2.8) → #29 (2.9) →
+this one. Merge them in that order. Everything through #26 is merged ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -31,9 +31,12 @@ on the deploy.
 2. **Founders' `/ops`** (revision 2.8, PR #28): review the `/pro/apply` applications and
    mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`, plus
    `DATABASE_URL` so reviews survive restarts. Notes below.
-3. **Customer help and reschedule** on `/job/:id` (revision 2.9, `feat/job-help`). Notes
-   below.
-4. **A full customer journey in Playwright**: search → chat → book → track → receipt → rate.
+3. **Customer help and reschedule** on `/job/:id` (revision 2.9, PR #29). Notes below.
+4. **A full customer journey in Playwright** (revision 2.10, `feat/journey`): search →
+   chat → book → track → receipt → rate, and book ahead → change the time → cancel.
+
+All four are built. What's left is merging them in order, then the owner's variables
+below, now with `OPS_PHONES` and `OPS_PASSCODE` for `/ops`.
 
 **What's left is the owner's (no code), in order:**
 1. `DATABASE_URL`, free on Neon, so applications and the waitlist survive restarts.
@@ -44,7 +47,20 @@ on the deploy.
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.9**, on branch `feat/job-help`, puts "Need help with this job?" on `/job/:id`
+**Revision 2.10**, on branch `feat/journey`, adds `e2e/journey.spec.ts`: two whole customer
+journeys on the built app, run in CI's smoke job on every PR.
+- **now:** search on the home as a visitor → Tiago's card → Chat asks for a log in →
+  back to `/explore` → the chat's estimate → approve → book → Track → the walkthrough
+  finishes it → receipt → 5★ → Activity links the receipt, and it's still rated after a
+  reload.
+- **later:** `/explore?when=later&day=3&win=2` (three days ahead, so no window has
+  passed whatever the clock) → book → View booking → change 12–14 to 16–18 → cancel →
+  Activity shows a plain "Cancelled before travel" row.
+- axe now also audits `/job/dfx-1042` signed in.
+- Written to wait on what appears, never on time: the chat replies on timers. It passed
+  three repeat runs locally.
+
+**Revision 2.9**, on branch `feat/job-help` (#29), puts "Need help with this job?" on `/job/:id`
 (`components/job/JobHelp.tsx`). It's an inline card, not a modal, because the slot
 picker's own popover and sheet (z-80/81) must sit on top.
 - **Booked ahead:** *Change the time* uses the booking SlotPicker (`lib/jobs`

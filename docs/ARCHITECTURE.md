@@ -6,9 +6,10 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.9 — help on `/job/:id`: change the time or cancel
-(free, with credit refunded) before the artisan sets off, and "Report a problem", which
-reaches the team on `/ops`. (Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
+**Last revised:** 2026-09-15 · Revision 2.10 — the whole customer journey runs in Playwright on
+every PR (`e2e/journey.spec.ts`, §8), and axe checks `/job/:id`. (Revision 2.9 — help on
+`/job/:id`: change the time or cancel (free, with credit refunded) before the artisan sets
+off, and "Report a problem", which reaches the team on `/ops`.) (Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
 applications: a team phone plus a passcode, then call, WhatsApp or email each applicant
 and record new → called → approved or declined with a private note.) (Revision 2.7 —
 launch readiness: security headers and a
@@ -518,6 +519,16 @@ that pipeline with sample data. Geocoding: Nominatim within its fair-use policy 
   - the waitlist form POSTs
   - the production CSP blocks nothing the home and `/explore` load (rev 2.7: `vite preview`
     sends `vercel.json`'s headers, so this is the live policy)
+  - the job page stays one screen on desktop (rev 2.9)
+- **The customer journey (rev 2.10):** `e2e/journey.spec.ts` drives two customers end to
+  end on the built app.
+  - **now:** search on the home → Tiago's card → log in at the chat (the commit point) →
+    estimate → approve → book → track → finish (walkthrough) → receipt → rate → Activity
+    links the receipt, still rated after a reload.
+  - **later:** book three days ahead → change the time → cancel → a plain "Cancelled
+    before travel" row in Activity.
+  - The chat is scripted on timers, so the test waits on what appears and never sleeps;
+    repeat runs pass.
 - **Production (rev 1.6, headers rev 2.7):** `scripts/check-prod.mjs` runs after every
   production deploy: cold loads, redirects, SEO files, hreflang and JSON-LD, the security
   headers, year-long caching of hashed assets, the pilot login and a forged-session check.
