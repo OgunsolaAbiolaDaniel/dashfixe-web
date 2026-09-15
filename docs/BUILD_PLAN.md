@@ -432,6 +432,23 @@ The first of four owner-picked chunks ("so what else" → all four, one PR each)
 `/trade/plumbing` URL into Google's Rich Results Test and see the Service; open
 `/help?lang=pt` and the page is in Portuguese.
 
+### Revision 2.8 · The founders' `/ops` ✅ (branch `feat/ops`, stacked on #27)
+
+The second owner-picked chunk: review the Dashfixe Pro applications.
+
+- ✅ **`/ops`**, for a team phone (`OPS_PHONES`) plus a passcode (`OPS_PASSCODE`),
+  because pilot login trusts any number. Visitors are sent to log in; other phones are
+  turned away; without the variables it says how to set it up.
+- ✅ **Each application:** Call / WhatsApp / Email, what the applicant sent, a private
+  note, and new → called → approved or declined. Filters by status, newest first.
+- ✅ **API and storage:** `/api/ops/unlock`, `/api/ops/applications`,
+  `/api/ops/applications/status` and `/api/ops/lock`; `note` and `reviewed_at` columns.
+- ⬜ **Next, once real:** tell the applicant (SMS or email) when approved, and show the
+  status on their `/pro/application` page from the server, not just this device.
+
+**Owner test:** set `OPS_PHONES` and `OPS_PASSCODE` in Vercel (plus `DATABASE_URL` so it
+keeps), redeploy, apply once, then approve yourself on `/ops`.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode

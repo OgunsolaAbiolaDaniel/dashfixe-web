@@ -5,8 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/launch-ready` (revision 2.7). Everything
-through #26 is merged, Dashfixe Pro and the chat profile card's focus fix included ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/ops` (revision 2.8, stacked on #27,
+`feat/launch-ready`, revision 2.7). Everything through #26 is merged ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -25,10 +25,11 @@ on the deploy.
 - The pilot log in works, and a forged session is rejected.
 
 **In progress: the four owner-picked chunks, one PR each, in this order.**
-1. **Launch readiness** (revision 2.7, this branch): security headers and CSP, lazy pages,
+1. **Launch readiness** (revision 2.7, PR #27): security headers and CSP, lazy pages,
    sized photos, hreflang and JSON-LD. Notes below.
-2. **Founders' `/ops`**: review the `/pro/apply` applications and mark each called,
-   approved or declined. Restricted to the owner's phone, and needs `DATABASE_URL`.
+2. **Founders' `/ops`** (revision 2.8, `feat/ops`): review the `/pro/apply` applications
+   and mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`,
+   plus `DATABASE_URL` so reviews survive restarts. Notes below.
 3. **Customer help and reschedule** on `/job/:id`.
 4. **A full customer journey in Playwright**: search → chat → book → track → receipt → rate.
 
@@ -41,7 +42,29 @@ on the deploy.
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
 
-**Revision 2.7**, on branch `feat/launch-ready`, is the launch-readiness pass.
+**Revision 2.8**, on branch `feat/ops`, gives the founders `/ops`: the review of Dashfixe
+Pro applications. It's stacked on #27 because it registers its page in `routePages.ts`.
+- **Access** (`server/handlers.ts` `opsGate`, `server/session.ts`) requires a signed-in
+  phone in `OPS_PHONES` **and** the `OPS_PASSCODE`. The passcode buys an 8-hour
+  httpOnly `dfx_ops` cookie, scoped to `/api/ops` and bound to that phone. The passcode is
+  needed because pilot login signs anyone in as any number, so the owner's phone alone
+  would expose applicants' contact details. When SMS is live, the phone check becomes
+  real on its own; the passcode stays as a second factor.
+- **The page** (`pages/OpsPage.tsx`, minimal Pro header, linked from nowhere) lists
+  applications newest first, with counts per status as filters. Each shows Call / WhatsApp
+  / Email, what the applicant sent, a private note, and buttons for the other statuses.
+  It warns when `DATABASE_URL` is missing ("Not saved…").
+- **Storage** (`server/store.ts`): `listApplications` and `setApplicationStatus` on both
+  drivers. Postgres gains `note` and `reviewed_at` (`ADD COLUMN IF NOT EXISTS`, as before).
+- **Tests:** `server/ops.test.ts` covers every refusal, the phone-bound unlock, the
+  review, lock and sign-out. `pages/OpsPage.test.tsx` runs the page end to end, the other
+  phone, and the set-up notice. axe runs on `/ops`, and `check-prod` checks a visitor gets
+  401/503.
+- **Owner test:** set `OPS_PHONES` to your number and `OPS_PASSCODE` in Vercel, then
+  redeploy. Apply once on `/pro/apply`, then open `/ops`, log in, enter the passcode, and
+  approve the application with a note.
+
+**Revision 2.7**, on branch `feat/launch-ready` (#27), is the launch-readiness pass.
 - **Security headers** (`vercel.json`): a CSP naming every outside host, HSTS, no
   framing, nosniff, referrer and permissions policies, and immutable caching for
   `/assets/*`. `vite preview` sends the same headers (`productionHeaders()` in
@@ -475,6 +498,8 @@ docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 | `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes; add its hosts to the CSP in `vercel.json` |
 | `SITE_URL` | canonical/OG/sitemap URLs | e.g. `https://dashfixe.pt`; absent → Vercel's production hostname |
 | `VITE_LAUNCHED` | launch day | `true` retires `/waitlist` to `/` and drops it from the sitemap |
+| `OPS_PHONES` | `/ops` | the team's phones, comma-separated (`912 345 678, +351 913 …`) |
+| `OPS_PASSCODE` | `/ops` | a long random phrase, 12+ characters; without it `/ops` says it isn't set up. Share it only with the team; changing it locks everyone out of `/ops` (not out of the site) |
 
 After setting the first two: deploy, join the waitlist in production, log in once, and
 check the rows in Neon. That is the go-live smoke test. Then paste a `/trade/plumbing`

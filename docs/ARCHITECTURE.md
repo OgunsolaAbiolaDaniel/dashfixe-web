@@ -6,10 +6,13 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.7 — launch readiness: security headers and a
+**Last revised:** 2026-09-15 · Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
+applications: a team phone plus a passcode, then call, WhatsApp or email each applicant
+and record new → called → approved or declined with a private note. (Revision 2.7 —
+launch readiness: security headers and a
 Content-Security-Policy (`vercel.json`, also sent by `vite preview`), every page but the
 home split into its own chunk (`lib/lazyPage.tsx`), Pexels photos sized per screen
-(`shared/Photo`), and per-page hreflang (`?lang=pt`) and schema.org JSON-LD (`seo.ts`).
+(`shared/Photo`), and per-page hreflang (`?lang=pt`) and schema.org JSON-LD (`seo.ts`).)
 (Revision 2.6 — `/pro/help`, straight answers for artisans.
 Dashfixe Pro is complete: landing, app showcase, application and status, log in,
 dashboard, help.) (Revision 2.5 — artisans can log in: `/pro/login` (the same
@@ -154,6 +157,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/how-it-works` | marketing | The customer journey in five steps + the three trust rules (`#estimate`, `#safety`, `#cancellations`) | built (rev 1.5) |
 | `/waitlist` | own chrome | **Parked** (rev 1.5): reachable, linked from nowhere, `noindex`, out of the sitemap; `VITE_LAUNCHED=true` redirects it to `/` | built |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
+| `/ops` | own chrome (minimal Pro header) | The founders' review of Pro applications: team phone + passcode (§6), then each application with Call / WhatsApp / Email, what they sent, a private note, and new → called → approved/declined, filterable by status. Linked from nowhere; noindex and robots-disallowed. Visitors → `/login?next=/ops` | built (rev 2.8) |
 
 **Loading (rev 2.7).** Only `/` ships in the entry chunk. Every other page is
 `lazyPage(() => import(...))` in `routePages.ts`, which also maps routes to pages.
@@ -393,9 +397,27 @@ POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
 POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
 POST /api/auth/verify         { phone, code } → session cookie   → 200   live
 GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+POST /api/ops/unlock          { passcode } → ops cookie          → 200   live (rev 2.8)
+GET  /api/ops/applications    → { applications, persistent }     → 200   live (rev 2.8)
+POST /api/ops/applications/status { id, status, note? }          → 200   live (rev 2.8)
+POST /api/ops/lock                                               → 200   live (rev 2.8)
 GET  /api/artisans?lng&lat    → Supply (same shape as getSupply)         Phase 6
 POST /api/jobs · GET /api/jobs/:id · WS /api/jobs/:id/chat               Phase 6
 ```
+
+**The founders' ops API (rev 2.8)** needs three things.
+1. A session for a phone in `OPS_PHONES`.
+2. The `OPS_PASSCODE`, which must be at least 12 characters or ops stays off with a 503.
+   Pilot login signs anyone in as any number, so the phone alone proves nothing until
+   SMS is live.
+3. The unlock, which is a signed cookie (`dfx_ops`): httpOnly, `SameSite=Strict`, scoped
+   to `/api/ops`, 8 hours, and bound to the phone that entered the passcode. Logging out
+   clears it.
+
+The errors are, in order: `ops_disabled` 503 → `not_signed_in` 401 → `not_ops` 403 →
+`ops_locked` 403. A review sets the application's `status` (`received` → `called` →
+`approved`/`declined`), a private `note` and `reviewed_at`. Nothing reaches the
+applicant yet.
 
 **Auth is stateless, so login needs no database.**
 
