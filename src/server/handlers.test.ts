@@ -26,6 +26,28 @@ function browser() {
 
 const post = (path: string, body: unknown) => handleApi({ method: 'POST', path, body });
 
+describe('GET /api/health', () => {
+  it('names the storage, never its address', async () => {
+    const out = await handleApi({ method: 'GET', path: '/api/health', body: null });
+    expect(out).toMatchObject({ status: 200, body: { ok: true, storage: 'memory' } });
+    expect(JSON.stringify(out.body)).not.toMatch(/postgres:\/\//);
+  });
+
+  it('says 503 when the database does not answer', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setStoreForTests({
+      ...memoryStore(),
+      persistent: true,
+      ping: async () => {
+        throw new Error('connection refused');
+      },
+    });
+    const out = await handleApi({ method: 'GET', path: '/api/health', body: null });
+    expect(out).toMatchObject({ status: 503, body: { error: 'storage_unreachable' } });
+    error.mockRestore();
+  });
+});
+
 describe('POST /api/waitlist', () => {
   it('accepts a homeowner email and rejects junk', async () => {
     expect((await post('/api/waitlist', { email: 'ana@example.com' })).status).toBe(200);

@@ -400,6 +400,7 @@ POST /api/artisans/apply      { fullName, phone, email, trade }  → 200   live
 POST /api/auth/request-code   { phone }                          → 200   live (SMS adapter)
 POST /api/auth/verify         { phone, code } → session cookie   → 200   live
 GET  /api/auth/me · POST /api/auth/logout                        → 200   live
+GET  /api/health             → { ok, storage: postgres|memory } → 200 / 503   live (rev 2.11)
 POST /api/support/report      { jobId, category, details? } → ref → 200  live (rev 2.9, signed in)
 GET  /api/ops/reports         → { reports }                      → 200   live (rev 2.9)
 POST /api/ops/unlock          { passcode } → ops cookie          → 200   live (rev 2.8)

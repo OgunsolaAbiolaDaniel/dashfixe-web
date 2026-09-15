@@ -527,7 +527,7 @@ docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 
 | Variable | Required for | Notes |
 |---|---|---|
-| `DATABASE_URL` | persistence | Neon connection string; tables auto-create on first use |
+| `DATABASE_URL` | persistence | Neon connection string; tables auto-create on first use. It takes effect on the next deploy. Confirm with `GET /api/health`, which should say `"storage":"postgres"`; `check-prod` fails production otherwise. A failed connection is retried on the next request, not cached |
 | `AUTH_SECRET` | sessions | any long random string; rotating it logs everyone out |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | real SMS codes | without them login shows labelled pilot codes on screen |
 | `VITE_MAP_STYLE` | optional | switch tiles to a keyed provider without code changes; add its hosts to the CSP in `vercel.json` |

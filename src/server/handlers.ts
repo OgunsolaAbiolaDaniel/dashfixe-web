@@ -255,6 +255,19 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
     case 'POST /api/auth/logout':
       return { status: 200, body: { ok: true }, setCookie: [clearedSessionCookie(), clearedOpsCookie()] };
 
+    // Which storage this deployment uses, and whether it answers. Says "postgres" or
+    // "memory", never the URL; check-prod fails production unless it's postgres.
+    case 'GET /api/health': {
+      try {
+        const store = await getStore();
+        await store.ping();
+        return ok({ ok: true, storage: store.persistent ? 'postgres' : 'memory' });
+      } catch (e) {
+        console.error('[dashfixe] storage unreachable', e);
+        return bad(503, 'storage_unreachable');
+      }
+    }
+
     // "Report a problem" on a job (rev 2.9). Signed-in only: the phone is how the team calls back.
     case 'POST /api/support/report': {
       const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));

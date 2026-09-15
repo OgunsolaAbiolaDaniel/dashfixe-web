@@ -126,6 +126,15 @@ await check('login: request-code → verify → name → me', async () => {
   return 'pilot mode (on-screen code)';
 });
 
+// ── Storage: production keeps what people send (DATABASE_URL, owner 2026-09-15) ──
+await check('storage is Postgres and answering', async () => {
+  const r = await get('/api/health');
+  const body = await r.json();
+  expect(r.status === 200, `status ${r.status} ${body.error ?? ''}`);
+  expect(body.storage === 'postgres', `storage is "${body.storage}" — DATABASE_URL is not set on this deployment`);
+  return body.storage;
+});
+
 // ── Security: the founders' ops API never answers a visitor ──
 await check('ops API refuses a visitor', async () => {
   const r = await get('/api/ops/applications');
