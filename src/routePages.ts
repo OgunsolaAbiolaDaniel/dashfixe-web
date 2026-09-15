@@ -29,6 +29,8 @@ export const TradePage = lazyPage(() => import('./pages/TradePage'));
 export const HowItWorksPage = lazyPage(() => import('./pages/HowItWorksPage'));
 export const NotFoundPage = lazyPage(() => import('./pages/NotFoundPage'));
 export const OpsPage = lazyPage(() => import('./pages/OpsPage'));
+/** The whole admin console is one chunk; the customer site never downloads it. */
+export const AdminApp = lazyPage(() => import('./pages/admin/AdminApp'));
 
 const BY_ROUTE: Array<[string, { preload: () => Promise<unknown> }]> = [
   [ROUTES.explore, ExplorePage],
@@ -53,6 +55,7 @@ const BY_ROUTE: Array<[string, { preload: () => Promise<unknown> }]> = [
   [ROUTES.terms, LegalPage],
   [ROUTES.cookies, LegalPage],
   [ROUTES.ops, OpsPage],
+  [`${ROUTES.admin}/*`, AdminApp],
 ];
 
 /** Fetch the chunk of the page `pathname` renders (nothing for the home, which is in the entry). */

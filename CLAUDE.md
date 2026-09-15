@@ -11,7 +11,11 @@ and the API) and `docs/BUILD_PLAN.md` for what is next.
 - Design files in `../designs/` and `../Dashfixe.md` are the visual and copy contract.
   Marketing type uses the `display/h2/h3/lead/nav` tokens (see `docs/DESIGN.md`).
 - Never claim live supply. Sample artisans, chat replies and receipts stay labelled as sample.
-- One header for every page: `components/chrome/Header.tsx` (never build another).
+- One header for every page: `components/chrome/Header.tsx` (never build another). The one
+  exception is the admin console (`/admin/*`), which the owner asked to be its own room:
+  `components/admin/AdminShell.tsx`, black, and coloured by role.
+- Admin permissions live in ONE table, `src/shared/adminRoles.ts`. The server enforces it
+  (`src/server/adminApi.ts`); the console only hides what the server would refuse.
 - Import maps only from `components/map/lazy.tsx` (ESLint enforces it; a direct import puts
   ~800 kB of MapLibre back in the entry chunk).
 - Do not touch the MapLibre worker wiring in `vite.config.ts` / `components/map/kit.ts`

@@ -58,9 +58,30 @@ export default {
           tint: '#FEF3C7',
         },
         star: '#F5A524',
+        // The admin console (rev 2.12, its own room): black and neutral. Colour means
+        // the viewer's role (CSS vars from lib/console.ts) or attention (ok/warn/crit).
+        // `faint` is for borders and placeholders only — never text (3.1:1).
+        k: {
+          bg: '#09090B',
+          panel: '#111114',
+          panel2: '#16161A',
+          hover: '#1C1C21',
+          line: '#232329',
+          line2: '#2E2E36',
+          text: '#EDEDF0',
+          text2: '#B6B6C0',
+          muted: '#8B8B96',
+          faint: '#5E5E69',
+          ok: '#3FB950',
+          warn: '#D29922',
+          crit: '#F85149',
+        },
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        // The admin console only (loaded by lib/console.ts useConsoleFonts).
+        plex: ['"IBM Plex Sans"', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
+        plexmono: ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'Consolas', 'monospace'],
       },
       fontSize: {
         // Web scale

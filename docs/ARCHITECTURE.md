@@ -6,8 +6,12 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.10 — the whole customer journey runs in Playwright on
-every PR (`e2e/journey.spec.ts`, §8), and axe checks `/job/:id`. (Revision 2.9 — help on
+**Last revised:** 2026-09-15 · Revision 2.12 — the admin console at `/admin`: its own email +
+password accounts, three roles (Super admin · Supervisor · Admin) enforced on the server,
+one-time setup, team management and an audit log, in a black frame coloured by role (§4,
+"The admin console"). (Revision 2.11 — `GET /api/health` proves production is on Postgres.)
+(Revision 2.10 — the whole customer journey runs in Playwright on
+every PR (`e2e/journey.spec.ts`, §8), and axe checks `/job/:id`.) (Revision 2.9 — help on
 `/job/:id`: change the time or cancel (free, with credit refunded) before the artisan sets
 off, and "Report a problem", which reaches the team on `/ops`.) (Revision 2.8 — `/ops`, the founders' review of Dashfixe Pro
 applications: a team phone plus a passcode, then call, WhatsApp or email each applicant
@@ -226,6 +230,58 @@ to `/`, and `link('waitlist')` follows. The page is already out of the sitemap, 
 is parked. The honesty
 badges are deliberately *not* tied to the switch: they come off screen by screen as real
 supply replaces the sample data (Phase 6).
+
+### The admin console (rev 2.12)
+
+`/admin/*` is the back office: one lazy chunk (`pages/admin/AdminApp.tsx`), its own
+frame (`components/admin/AdminShell.tsx`: black, IBM Plex, the only exception to the
+one-header rule), noindex and robots-disallowed, and linked from nowhere.
+
+| Route | Who | What |
+|---|---|---|
+| `/admin/setup` | anyone with the key, once | Creates the first Super admin; the key is `OPS_PASSCODE`. Then it closes ("already set up") |
+| `/admin` | signed out → sign-in; signed in → overview | Overview: your access (from the permission table), the team at a glance (Super admin), recent activity in your scope |
+| `/admin/team` | Super admin | Add a person with a starting password (shown once, sent by WhatsApp), change roles, reset passwords, disable/enable |
+| `/admin/audit` | everyone, scoped | Super admin: everything. Supervisor: the team (everyone but the Super admin). Admin: their own actions |
+| `/admin/account` | everyone | Details, session end, change password |
+
+**Roles and permissions.** There are three roles: **Super admin** (violet),
+**Supervisor** (blue) and **Admin** (teal). The colour runs along the top bar, marks the
+current page and fills primary buttons, so everyone sees which access they're using.
+Red, amber and green only ever mean attention.
+
+The permissions live in one table, `src/shared/adminRoles.ts`:
+
+| Permission | Admin | Supervisor | Super admin |
+|---|---|---|---|
+| Call applicants, notes, mark called (`applications.work`) | ✓ | ✓ | ✓ |
+| Handle problem reports (`reports.work`) | ✓ | ✓ | ✓ |
+| Ask a supervisor to sign off (`requests.create`) | ✓ | — (decides) | — (decides) |
+| Approve / decline (`applications.decide`) | — | ✓ | ✓ |
+| Sign off Admins' requests (`requests.review`) | — | ✓ | ✓ |
+| Resolve safety reports (`reports.resolveSafety`) | — | ✓ | ✓ |
+| Assign work to anyone (`work.assign`) | — | ✓ | ✓ |
+| Waitlist, CSV exports (`waitlist.view`, `data.export`) | — | ✓ | ✓ |
+| Team activity (`audit.team`) | — | ✓ | ✓ |
+| Full audit log, the team itself (`audit.all`, `team.manage`) | — | — | ✓ |
+
+**Supervisor sign-off (maker-checker, PR 3).** An Admin can't approve or decline. They
+send a request on the record, with a message thread, to the supervisors. A Supervisor
+approves it, or sends it back with a comment. The Super admin sees every request and
+thread, and can override. This is the standard least-privilege pattern: one person
+proposes, a more senior one approves, and everything is logged.
+
+**Accounts and sessions** (`server/adminApi.ts`, `server/passwords.ts`,
+`server/session.ts`):
+- Email + password, stored as salted `scrypt`.
+- 5 wrong passwords lock the account for 15 minutes; the lock is logged. An unknown email
+  answers exactly like a wrong password.
+- A starting password works once, within 72 hours, and nothing opens until it's changed.
+- A session is an httpOnly, `SameSite=Strict` cookie (`dfx_admin`, `Path=/api/admin`)
+  lasting 12 hours. It carries a session version: a password change, reset or disable
+  bumps it and signs that person out everywhere.
+- Nobody disables or demotes themselves, and the last active Super admin stays.
+- Postgres tables `admins` and `admin_audit` are created on first use, like the others.
 
 ## 5. Navigation
 

@@ -94,6 +94,10 @@ export function pageMeta(pathname: string, lang: Lang): PageMeta {
     const name = AVAILABLE.find((a) => a.id === artisan)?.name;
     return { title: withSite(name ?? t('seo.explore.title')), description: t('seo.home.desc'), path, noindex: true, lang };
   }
+  // The admin console: titled for the tab, never indexed (and robots-disallowed).
+  if (/^\/admin(\/|$)/.test(path)) {
+    return { title: withSite(t('admin.title')), description: t('seo.home.desc'), path, noindex: true, lang };
+  }
   if (/^\/job\//.test(path)) {
     return { title: withSite(t('seo.job.title')), description: t('seo.home.desc'), path, noindex: true, lang };
   }
@@ -297,6 +301,7 @@ export function robotsTxt(siteUrl: string): string {
     'Disallow: /pro/application',
     'Disallow: /job/',
     'Disallow: /ops',
+    'Disallow: /admin',
     '',
     `Sitemap: ${siteUrl}/sitemap.xml`,
     '',
