@@ -1,4 +1,5 @@
 import { Basket, CardPlain, Diagnose, Euro, Globe, Reroute, Shield, Sparkle, Wrench } from '../icons';
+import Photo from '../shared/Photo';
 import WaitlistForm from './WaitlistForm';
 
 const TRUST = [
@@ -95,10 +96,10 @@ export default function Hero({ done, busy, error, onSubmit, onOpenArtisan }: Pro
 
               <div className="px-[18px] pt-[18px]">
                 <div className="relative overflow-hidden rounded-[18px] bg-canvas">
-                  <img
-                    src="https://images.pexels.com/photos/1249610/pexels-photo-1249610.jpeg?auto=compress&cs=tinysrgb&w=1600"
+                  <Photo
+                    id={1249610}
                     alt="A dripping tap, the kind of problem Dashfixe diagnoses from a photo"
-                    loading="lazy"
+                    sizes="(min-width: 768px) 440px, 100vw"
                     className="block h-[216px] w-full object-cover"
                   />
                   <div className="pointer-events-none absolute left-[22%] top-[24%] h-[46%] w-[44%] rounded-lg border-[1.5px] border-brand bg-brand/10" />

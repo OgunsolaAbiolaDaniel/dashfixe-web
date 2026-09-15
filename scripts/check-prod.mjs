@@ -69,6 +69,30 @@ await check('sitemap lists /how-it-works and not the parked waitlist', async () 
   expect(!xml.includes('/waitlist'), 'waitlist is listed');
 });
 
+await check('trade page carries hreflang and structured data', async () => {
+  const html = await (await get('/trade/plumbing')).text();
+  expect(html.includes('hreflang="pt-PT"'), 'missing the pt-PT alternate');
+  expect(html.includes('"@type":"Service"'), 'missing the Service JSON-LD');
+});
+
+// ── Security headers (vercel.json → headers) ──
+await check('security headers are set', async () => {
+  const h = (await get('/')).headers;
+  const csp = h.get('content-security-policy') ?? '';
+  expect(csp.includes("frame-ancestors 'none'") && csp.includes("script-src 'self'"), `CSP ${csp || 'missing'}`);
+  expect(/max-age=\d{7,}/.test(h.get('strict-transport-security') ?? ''), 'no HSTS');
+  expect(h.get('x-content-type-options') === 'nosniff', 'no nosniff');
+  expect(h.get('x-frame-options') === 'DENY', 'framing allowed');
+  expect((h.get('referrer-policy') ?? '').length > 0, 'no referrer policy');
+});
+await check('hashed assets are cached for a year', async () => {
+  const html = await (await get('/')).text();
+  const asset = /\/assets\/[^"]+\.js/.exec(html)?.[0];
+  expect(asset, 'no script in the shell');
+  const cc = (await get(asset)).headers.get('cache-control') ?? '';
+  expect(cc.includes('immutable'), `cache-control ${cc}`);
+});
+
 // ── The API, end to end: pilot login with a name ──
 await check('login: request-code → verify → name → me', async () => {
   const post = (path, body, cookie) =>

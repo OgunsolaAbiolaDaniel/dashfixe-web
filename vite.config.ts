@@ -53,6 +53,32 @@ function pilotApi(): Plugin {
 }
 
 /**
+ * The production response headers (vercel.json → `headers`: the CSP, HSTS, no
+ * framing…) on `vite preview` too, so the smoke suite runs the built app under the
+ * same Content-Security-Policy as production: a new outside host the CSP forgot
+ * fails a test instead of silently breaking the live site. Not on the dev server —
+ * Vite's HMR client needs inline scripts and a websocket.
+ */
+function productionHeaders(): Plugin {
+  type Rule = { source: string; headers: Array<{ key: string; value: string }> }
+  const rules = (JSON.parse(readFileSync('vercel.json', 'utf8')).headers as Rule[]).map((r) => ({
+    // Only the `/(.*)`-style sources vercel.json uses; path-to-regexp's full syntax isn't needed.
+    match: new RegExp(`^${r.source.replace(/\(\.\*\)/g, '.*')}$`),
+    headers: r.headers,
+  }))
+  return {
+    name: 'dashfixe-production-headers',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '/').split('?')[0]!
+        for (const rule of rules) if (rule.match.test(path)) for (const h of rule.headers) res.setHeader(h.key, h.value)
+        next()
+      })
+    },
+  }
+}
+
+/**
  * SEO at build time (src/seo.ts): a static index.html per public route with its
  * own title/description/canonical/Open Graph tags, plus sitemap.xml and robots.txt.
  * Vercel serves a real file before the SPA rewrite, so /trade/plumbing ships its
@@ -99,7 +125,7 @@ export default defineConfig(({ mode }) => {
   ).replace(/\/+$/, '')
 
   return {
-    plugins: [react(), pilotApi(), seoPages(siteUrl, env.VITE_LAUNCHED === 'true')],
+    plugins: [react(), pilotApi(), productionHeaders(), seoPages(siteUrl, env.VITE_LAUNCHED === 'true')],
     // Listen on IPv4 and IPv6: Node 24 binds `localhost` to ::1 only, which Chrome
     // then refuses when it tries 127.0.0.1.
     server: { host: true },

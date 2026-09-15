@@ -23,6 +23,17 @@ type LangValue = {
 const LangContext = createContext<LangValue | null>(null);
 
 function initialLang(): Lang {
+  // `?lang=pt` / `?lang=en` — the language variant URLs search engines index
+  // (hreflang, seo.ts). A link that names a language wins, and sticks.
+  const asked = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('lang')?.toUpperCase() : null;
+  if (asked === 'EN' || asked === 'PT') {
+    try {
+      localStorage.setItem(STORAGE_KEY, asked);
+    } catch {
+      /* ignore */
+    }
+    return asked;
+  }
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'EN' || saved === 'PT') return saved;
