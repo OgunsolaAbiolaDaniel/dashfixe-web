@@ -81,6 +81,8 @@ export interface Store {
   listReports(limit?: number): Promise<StoredReport[]>;
   /** Upserts the user row; first login is sign-up (phone-first, Uber-style). */
   ensureUser(phone: string): Promise<void>;
+  /** Throws when the storage can't be reached — GET /api/health. */
+  ping(): Promise<void>;
 }
 
 // ── In-memory driver (dev + tests) ──────────────────────────────────────────
@@ -116,6 +118,7 @@ export function memoryStore(): Store {
     async ensureUser(phone) {
       users.add(phone);
     },
+    async ping() {},
   };
 }
 
@@ -257,6 +260,9 @@ async function pgStore(databaseUrl: string): Promise<Store> {
     async ensureUser(phone) {
       await pool.query('INSERT INTO users (phone) VALUES ($1) ON CONFLICT DO NOTHING', [phone]);
     },
+    async ping() {
+      await pool.query('SELECT 1');
+    },
   };
 }
 
@@ -268,7 +274,13 @@ export function getStore(): Promise<Store> {
   if (!selected) {
     const url = process.env.DATABASE_URL;
     if (url) {
-      selected = pgStore(url);
+      // A failed connection must not be memoised: the next request tries again,
+      // instead of every request failing until the instance is recycled.
+      const attempt = pgStore(url);
+      attempt.catch(() => {
+        if (selected === attempt) selected = null;
+      });
+      selected = attempt;
     } else {
       console.warn('[dashfixe] DATABASE_URL not set — using the in-memory store (data will not survive a restart).');
       selected = Promise.resolve(memoryStore());
