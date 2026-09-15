@@ -5,8 +5,9 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `main` (`468b70e`). Everything through #30 is
-merged: revisions 2.7–2.10 (launch readiness, `/ops`, help with a job, the journey test) ·
+**Last updated:** 2026-09-15 · **Branch:** `feat/admin-foundation` (revision 2.12, the admin
+console's first PR). Everything through #32 is merged, including 2.11 (`GET /api/health`), and
+production runs on Postgres ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -30,18 +31,59 @@ The four owner-picked chunks are all merged: launch readiness (2.7, #27), `/ops`
 #28), help with a job (2.9, #29) and the customer journey in Playwright (2.10, #30).
 Notes on each are below.
 
+**In progress: the admin console, in three PRs** (owner request, 2026-09-15: "my admin
+route… layers of access… a supervisor… I as the super admin can also see the flow").
+1. **Foundation** (2.12, this branch): accounts, sign-in, setup, roles, team, audit log,
+   and the black console frame. Notes below.
+2. **Work screens:** applications, problem reports, waitlist and coverage move from
+   `/ops` into `/admin`, with the permissions enforced, owners, filters and SLA timers.
+3. **Supervisor sign-off and chat:** Admins send requests on a record, Supervisors sign
+   off, and the Super admin sees every thread.
+
 **What's left is the owner's (no code), in order:**
-1. **`DATABASE_URL`**, free on Neon. `/ops` depends on it. Without it, applications and
-   problem reports live in the memory of whichever serverless instance took them. Vercel
-   starts and stops instances freely, so `/ops` can come up empty even after someone
-   applied. Its yellow "Not saved" banner means this variable is missing. It also keeps
-   the waitlist.
+1. **Claim the console** once 2.12 is live: open `/admin/setup` and enter `OPS_PASSCODE`
+   as the setup key. `DATABASE_URL` is set, so admins and the audit log are kept.
 2. A domain, then `SITE_URL` and the `PROD_URL` repo variable.
 3. The `TWILIO_*` variables when SMS is funded.
 4. `VITE_LAUNCHED=true` on launch day.
 
 Then Phase 6: real artisans (recruited through `/pro/apply`), then real jobs, chat
 and payouts on the database. The code notes for each revision follow, newest first.
+
+**Revision 2.12**, on branch `feat/admin-foundation`, is the admin console's foundation.
+ARCHITECTURE §4 "The admin console" has the full model.
+- **Server** (`server/adminApi.ts`, `passwords.ts`, `session.ts`, `http.ts`, and the
+  store's `admins` + `admin_audit`):
+  - one-time setup keyed by `OPS_PASSCODE`, race-safe on Postgres through an advisory
+    lock
+  - email + password sign-in with scrypt, a 15-minute lock after 5 misses, and unknown
+    emails that look like wrong passwords
+  - starting passwords: once, within 72 h, forced change
+  - 12-hour sessions revoked by a session version
+  - team management with its guard rails, and a role-scoped audit log
+  - `handlers.ts` hands `/api/admin/*` to `adminApi.ts`; the request helpers moved to
+    `http.ts`
+- **Roles** (`shared/adminRoles.ts`): Super admin, Supervisor and Admin, and one
+  permission table read by both the server and the console.
+- **Console** (`pages/admin/*`, `components/admin/*`, `lib/adminSession.tsx`,
+  `lib/console.ts`):
+  - sign-in, setup, and the forced password change
+  - the black frame with the role colour (Super admin violet, Supervisor blue, Admin teal)
+  - an overview with your access, the team at a glance and recent activity
+  - team: add with a suggested starting password shown once, change role, reset, disable
+    after a confirm
+  - the audit log with filters, and account
+  - IBM Plex loads only on console pages; the console is one lazy chunk.
+- **Tests:** `server/adminApi.test.ts` has 12 tests: setup, lockout, unknown email,
+  starting passwords, 12-hour expiry, role refusals, the guard rails, sign-out on disable
+  and reset, and audit scopes. `pages/admin/AdminApp.test.tsx` runs 4 journeys. axe
+  checks `/admin`, and `check-prod` checks the console refuses a visitor.
+- **Next:** PR 2 (work screens) and PR 3 (supervisor sign-off and chat), per the list
+  above.
+
+**Revision 2.11** (#32) added `GET /api/health`, whose `storage` is `postgres` or
+`memory`, never the URL. `check-prod` now fails production unless it's Postgres, and a
+failed database connection is retried instead of cached.
 
 **Revision 2.10**, on branch `feat/journey`, adds `e2e/journey.spec.ts`: two whole customer
 journeys on the built app, run in CI's smoke job on every PR.
@@ -534,7 +576,7 @@ docs/                ARCHITECTURE · BUILD_PLAN · HANDOVER · DESIGN
 | `SITE_URL` | canonical/OG/sitemap URLs | e.g. `https://dashfixe.pt`; absent → Vercel's production hostname |
 | `VITE_LAUNCHED` | launch day | `true` retires `/waitlist` to `/` and drops it from the sitemap |
 | `OPS_PHONES` | `/ops` | the team's phones, comma-separated (`912 345 678, +351 913 …`) |
-| `OPS_PASSCODE` | `/ops` | a long random phrase, 12+ characters; without it `/ops` says it isn't set up. Share it only with the team; changing it locks everyone out of `/ops` (not out of the site) |
+| `OPS_PASSCODE` | `/ops`, `/admin/setup` | a long random phrase, 12+ characters; without it `/ops` says it isn't set up. Share it only with the team; changing it locks everyone out of `/ops` (not out of the site). Since 2.12 it's also the one-time setup key that claims the admin console |
 
 After setting the first two: deploy, join the waitlist in production, log in once, and
 check the rows in Neon. That is the go-live smoke test. Then paste a `/trade/plumbing`

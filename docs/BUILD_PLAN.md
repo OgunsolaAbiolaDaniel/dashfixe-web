@@ -477,6 +477,39 @@ The fourth owner-picked chunk, and the last of the four.
 **Owner test:** none needed. CI's smoke job runs it on every PR; locally, run
 `npx vite build && npx playwright test e2e/journey.spec.ts`.
 
+### The admin console · 3 PRs (owner request, 2026-09-15)
+
+The owner wants their own back office: a separate sign-in, layers of access, and
+supervisors who sign off what lesser admins can't do, all visible to the Super admin. The
+plan and clickable mockups were approved ("start building"). ARCHITECTURE §4 "The admin
+console" has the model.
+
+**Revision 2.12 · Foundation ✅** (branch `feat/admin-foundation`)
+- ✅ Email + password accounts: scrypt, a 15-minute lock after 5 misses, and starting
+  passwords that work once within 72 h and must be changed.
+- ✅ One-time setup at `/admin/setup`, keyed by `OPS_PASSCODE`.
+- ✅ Super admin · Supervisor · Admin in one permission table, enforced by the server.
+- ✅ Team page (Super admin): add, role, reset, disable. Nobody disables or demotes
+  themselves.
+- ✅ Audit log, scoped by role. Sessions last 12 h and are revoked on a password change,
+  reset or disable.
+- ✅ The black console frame, coloured by role; IBM Plex loads on console pages only.
+
+**PR 2 · Work screens ⬜**
+- Applications, problem reports, waitlist and coverage in `/admin`, with owners,
+  filters, SLA timers and history.
+- The overview's figures, pipeline and supply by trade × area.
+- `/ops` redirects to `/admin`.
+
+**PR 3 · Supervisor sign-off and chat ⬜**
+- "Ask a supervisor" on a record: a request with a thread. The Supervisor's queue:
+  approve, or send back with a comment.
+- The Super admin sees every thread and the team's flow.
+
+**Owner test (2.12):** after the deploy, open `/admin/setup`, enter `OPS_PASSCODE`, then
+your name, email and a password. Add a Supervisor from Team, sign in as them in a private
+window, and see the colour change and the Team page disappear.
+
 ### Still open in Phase 5 (operator steps, no code)
 
 - ⬜ **Real SMS codes when funded.** Set the three `TWILIO_*` vars. Until then, pilot mode
