@@ -35,6 +35,7 @@ async function openOpsAs(phone: string) {
   });
   const { devCode } = (await post('/api/auth/request-code', { phone })) as { devCode: string };
   await post('/api/auth/verify', { phone, code: devCode });
+  await post('/api/support/report', { jobId: 'dfx-1042', category: 'safety', details: 'He smelled of gas and left' });
   render(
     <MemoryRouter initialEntries={['/ops']}>
       <LangProvider initial="EN">
@@ -81,6 +82,14 @@ describe('/ops, the founders review', () => {
     expect(screen.getByText('No applications here yet.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /^Approved/ }));
     expect(screen.getByRole('article', { name: 'Tiago Ferreira' })).toBeInTheDocument();
+
+    // A customer's "Report a problem" lands in the second section.
+    await user.click(screen.getByRole('button', { name: /^Problem reports\s*1$/ }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Problem reports' })).toBeInTheDocument();
+    const report = screen.getByRole('article', { name: 'A safety concern' });
+    expect(within(report).getByText('Job dfx-1042', { exact: false })).toBeInTheDocument();
+    expect(within(report).getByText('He smelled of gas and left')).toBeInTheDocument();
+    expect(within(report).getByRole('link', { name: /Call \+351912345678/ })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Lock' }));
     expect(await screen.findByRole('heading', { name: 'Enter the team passcode' })).toBeInTheDocument();

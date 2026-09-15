@@ -155,7 +155,7 @@ function WalletCard() {
   const entryLabel = (e: (typeof wallet.history)[number]) => {
     if (e.kind === 'code') return t('acct.entry.code', { code: e.code });
     const job = getJob(e.jobId);
-    return t('acct.entry.job', { job: job ? job.title[lang] : e.jobId });
+    return t(e.kind === 'refund' ? 'wallet.refund' : 'acct.entry.job', { job: job ? job.title[lang] : e.jobId });
   };
 
   return (

@@ -42,13 +42,26 @@ type Application = {
   };
 };
 
+/** "Report a problem" from a customer's job page (rev 2.9). */
+type Report = {
+  id: number;
+  reference: string;
+  phone: string;
+  jobId: string;
+  category: 'late' | 'price' | 'quality' | 'damage' | 'safety' | 'other';
+  details: string | null;
+  createdAt: string;
+};
+
 type View =
   | { kind: 'loading' }
   | { kind: 'off' }
   | { kind: 'denied' }
   | { kind: 'locked' }
   | { kind: 'error' }
-  | { kind: 'list'; applications: Application[]; persistent: boolean };
+  | { kind: 'list'; applications: Application[]; reports: Report[]; persistent: boolean };
+
+type Section = 'applications' | 'reports';
 
 const CARD = 'rounded-card border border-line-soft bg-panel p-[clamp(18px,3vw,26px)]';
 const BTN = 'inline-flex h-10 items-center gap-2 rounded-btn px-4 text-[14px] font-bold transition disabled:opacity-60';
@@ -208,6 +221,42 @@ function ApplicationCard({ app, onSaved }: { app: Application; onSaved: (next: A
   );
 }
 
+function ReportCard({ report }: { report: Report }) {
+  const { t } = useLang();
+  const when = useWhen();
+  return (
+    <article className={CARD} aria-labelledby={`ops-report-${report.id}`}>
+      <div className="mb-1.5 flex flex-wrap items-start gap-x-4 gap-y-2">
+        <h2 id={`ops-report-${report.id}`} className="mr-auto text-[17px] font-extrabold tracking-[-.01em] text-ink">
+          {t(`report.cat.${report.category}`)}
+        </h2>
+        <span className={`rounded-full px-3 py-1 text-[12px] font-extrabold ${report.category === 'safety' ? PILL.called : PILL.received}`}>
+          {report.reference}
+        </span>
+      </div>
+      <p className="mb-3 text-[12.5px] font-semibold text-ink-40">
+        {t('ops.reports.job', { id: report.jobId })} · {t('ops.sent', { date: when(report.createdAt) })}
+      </p>
+      <p className="mb-4 whitespace-pre-line text-[14.5px] font-medium leading-[1.55] text-ink-80">{report.details ?? t('ops.reports.noDetails')}</p>
+      <div className="flex flex-wrap gap-2">
+        <a href={`tel:${report.phone}`} className={`${BTN} bg-ink text-white hover:bg-ink-80 hover:text-white`}>
+          <Phone size={15} />
+          {t('ops.call')} {report.phone}
+        </a>
+        <a
+          href={`https://wa.me/${report.phone.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noreferrer"
+          className={`${BTN} border border-line bg-panel text-ink hover:border-ink-30 hover:text-ink`}
+        >
+          <Chat size={15} />
+          {t('ops.whatsapp')}
+        </a>
+      </div>
+    </article>
+  );
+}
+
 function Unlock({ onUnlocked }: { onUnlocked: () => void }) {
   const { t } = useLang();
   const [passcode, setPasscode] = useState('');
@@ -270,10 +319,16 @@ export default function OpsPage() {
   const { signedIn, checking, phone } = useAuth();
   const [view, setView] = useState<View>({ kind: 'loading' });
   const [filter, setFilter] = useState<Status | 'all'>('all');
+  const [section, setSection] = useState<Section>('applications');
 
   const load = useCallback(() => {
-    void api<{ applications: Application[]; persistent: boolean }>('/api/ops/applications').then((r) => {
-      if (r.ok) return setView({ kind: 'list', applications: r.data.applications, persistent: r.data.persistent });
+    void Promise.all([
+      api<{ applications: Application[]; persistent: boolean }>('/api/ops/applications'),
+      api<{ reports: Report[] }>('/api/ops/reports'),
+    ]).then(([r, reports]) => {
+      if (r.ok) {
+        return setView({ kind: 'list', applications: r.data.applications, reports: reports.ok ? reports.data.reports : [], persistent: r.data.persistent });
+      }
       if (r.error === 'ops_disabled') return setView({ kind: 'off' });
       if (r.error === 'not_ops') return setView({ kind: 'denied' });
       if (r.error === 'ops_locked') return setView({ kind: 'locked' });
@@ -314,12 +369,35 @@ export default function OpsPage() {
             <div className="mb-6 flex flex-wrap items-end gap-x-6 gap-y-3">
               <div className="mr-auto">
                 <p className="mb-1.5 text-label text-brand-hover">{t('ops.kicker')}</p>
-                <h1 className="text-h2 text-ink">{t('ops.title')}</h1>
-                <p className="mt-1.5 max-w-[560px] text-lead text-ink-60">{t('ops.lead')}</p>
+                <h1 className="text-h2 text-ink">{t(section === 'reports' ? 'ops.reports.title' : 'ops.title')}</h1>
+                <p className="mt-1.5 max-w-[560px] text-lead text-ink-60">{t(section === 'reports' ? 'ops.reports.lead' : 'ops.lead')}</p>
               </div>
               <button type="button" onClick={lock} className="text-[14px] font-bold text-ink-60 transition hover:text-ink">
                 {t('ops.lock')}
               </button>
+            </div>
+
+            <div role="group" aria-label={t('ops.show')} className="mb-5 inline-flex rounded-full bg-well p-1">
+              {(
+                [
+                  ['applications', 'ops.title', view.applications.length],
+                  ['reports', 'ops.reports.title', view.reports.length],
+                ] as const
+              ).map(([id, key, n]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={section === id}
+                  onClick={() => setSection(id)}
+                  className={
+                    'inline-flex h-9 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition ' +
+                    (section === id ? 'bg-panel text-ink shadow-sm' : 'text-ink-60 hover:text-ink')
+                  }
+                >
+                  {t(key)}
+                  <span className={section === id ? 'text-ink-60' : 'text-ink-40'}>{n}</span>
+                </button>
+              ))}
             </div>
 
             {!view.persistent && (
@@ -328,6 +406,17 @@ export default function OpsPage() {
               </p>
             )}
 
+            {section === 'reports' && (
+              <div className="flex flex-col gap-4">
+                {view.reports.map((r) => (
+                  <ReportCard key={r.id} report={r} />
+                ))}
+                {!view.reports.length && <p className={`${CARD} text-[14.5px] font-medium text-ink-60`}>{t('ops.reports.empty')}</p>}
+              </div>
+            )}
+
+            {section === 'applications' && (
+            <>
             <div role="group" aria-label={t('ops.filters')} className="mb-5 flex flex-wrap gap-2">
               {(['all', ...STATUSES] as const).map((s) => {
                 const n = s === 'all' ? view.applications.length : view.applications.filter((a) => a.status === s).length;
@@ -359,6 +448,8 @@ export default function OpsPage() {
                 <p className={`${CARD} text-[14.5px] font-medium text-ink-60`}>{t('ops.empty')}</p>
               )}
             </div>
+            </>
+            )}
           </>
         )}
       </main>

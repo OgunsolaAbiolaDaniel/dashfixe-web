@@ -11,7 +11,14 @@
  * `.js` back to the `.ts` source).
  */
 import { randomInt } from 'node:crypto';
-import { APPLICATION_STATUSES, getStore, type ApplicationStatus, type ArtisanProfile } from './store.js';
+import {
+  APPLICATION_STATUSES,
+  REPORT_CATEGORIES,
+  getStore,
+  type ApplicationStatus,
+  type ArtisanProfile,
+  type ReportCategory,
+} from './store.js';
 import {
   challengeCookie,
   clearedChallengeCookie,
@@ -247,6 +254,38 @@ export async function handleApi(req: ApiRequest): Promise<ApiResponse> {
 
     case 'POST /api/auth/logout':
       return { status: 200, body: { ok: true }, setCookie: [clearedSessionCookie(), clearedOpsCookie()] };
+
+    // "Report a problem" on a job (rev 2.9). Signed-in only: the phone is how the team calls back.
+    case 'POST /api/support/report': {
+      const session = verifyToken(tokenFromCookieHeader(req.cookieHeader));
+      if (!session) return bad(401, 'not_signed_in');
+      const jobId = str(req.body, 'jobId', 40);
+      const category = field(req.body, 'category');
+      const rawDetails = field(req.body, 'details');
+      if (!jobId || !/^[\w-]+$/.test(jobId)) return bad(400, 'invalid_job');
+      if (typeof category !== 'string' || !(REPORT_CATEGORIES as readonly string[]).includes(category)) return bad(400, 'invalid_category');
+      if (rawDetails !== undefined && rawDetails !== null && (typeof rawDetails !== 'string' || rawDetails.length > 1000)) {
+        return bad(400, 'invalid_details');
+      }
+      const details = typeof rawDetails === 'string' && rawDetails.trim() ? rawDetails.trim() : null;
+      if (category === 'other' && !details) return bad(400, 'details_required');
+      const reference = `R-${randomInt(1000, 10_000)}`;
+      await (await getStore()).addReport({
+        phone: session.phone,
+        jobId,
+        category: category as ReportCategory,
+        details,
+        reference,
+        createdAt: new Date().toISOString(),
+      });
+      return ok({ ok: true, reference });
+    }
+
+    case 'GET /api/ops/reports': {
+      const gate = opsGate(req);
+      if ('denied' in gate) return gate.denied;
+      return ok({ reports: await (await getStore()).listReports() });
+    }
 
     case 'POST /api/ops/unlock': {
       const gate = opsGate(req, false);

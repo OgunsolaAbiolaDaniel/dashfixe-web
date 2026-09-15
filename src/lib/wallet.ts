@@ -10,7 +10,9 @@ import { useSyncExternalStore } from 'react';
 
 export type CreditEntry =
   | { id: string; date: string; amount: number; kind: 'code'; code: string }
-  | { id: string; date: string; amount: number; kind: 'job'; jobId: string };
+  | { id: string; date: string; amount: number; kind: 'job'; jobId: string }
+  /** Credit given back when a booking is cancelled before travel (rev 2.9). */
+  | { id: string; date: string; amount: number; kind: 'refund'; jobId: string };
 
 export type Wallet = { credit: number; history: CreditEntry[]; redeemed: string[] };
 
@@ -93,6 +95,20 @@ export function spendCredit(amount: number, jobId: string) {
     credit: Math.max(0, w.credit - amount),
     history: [{ id: id(), date: today(), amount: -amount, kind: 'job', jobId }, ...w.history],
   });
+}
+
+/** Give back what a cancelled job used — once per job. Returns the amount refunded. */
+export function refundCredit(jobId: string): number {
+  const w = getWallet();
+  if (w.history.some((e) => e.kind === 'refund' && e.jobId === jobId)) return 0;
+  const spent = -w.history.filter((e) => e.kind === 'job' && e.jobId === jobId).reduce((sum, e) => sum + e.amount, 0);
+  if (spent <= 0) return 0;
+  write({
+    ...w,
+    credit: w.credit + spent,
+    history: [{ id: id(), date: today(), amount: spent, kind: 'refund', jobId }, ...w.history],
+  });
+  return spent;
 }
 
 /** "DFX-ANA78" — the invite code, stable for a name and phone. */

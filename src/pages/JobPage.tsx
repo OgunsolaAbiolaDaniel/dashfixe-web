@@ -3,12 +3,13 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import AppBar from '../components/chrome/AppBar';
 import { TrackMap } from '../components/map/lazy';
 import ChatPanel from '../components/explore/ChatPanel';
+import JobHelp from '../components/job/JobHelp';
 import { Check } from '../components/icons';
 import { AVAILABLE } from '../components/explore/artisans';
 import { finishJob, formatDate, formatEuro, rateJob, useJobs, type Job } from '../lib/jobs';
 import { HOME } from '../lib/geo';
 import { DEFAULT_ADDRESS, exploreUrl } from '../search';
-import { ROUTES, artisanUrl, link } from '../routes';
+import { ROUTES, artisanUrl } from '../routes';
 import { useAuth } from '../auth';
 import { useLang } from '../i18n';
 
@@ -136,7 +137,7 @@ function LiveJob({ job }: { job: Job }) {
           >
             {t('customer.openChat')}
           </button>
-          <p className="text-[12.5px] font-medium leading-[1.5] text-ink-40">{t('job.cancelNote', { name: first })}</p>
+          <JobHelp job={job} onMessage={() => setChatOpen(true)} />
 
           {/* Walkthrough control — honest about what it is */}
           <div className="rounded-card border border-dashed border-line p-4">
@@ -254,6 +255,10 @@ function Receipt({ job }: { job: Job }) {
           )}
         </section>
 
+        <div className="mt-5">
+          <JobHelp job={job} />
+        </div>
+
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
             to={hasProfile ? exploreUrl({ artisan: job.artisanId }) : exploreUrl({ trade: job.trade })}
@@ -266,12 +271,6 @@ function Receipt({ job }: { job: Job }) {
             className="flex h-ctl items-center rounded-[13px] border border-line bg-panel px-5 text-[14.5px] font-bold text-ink transition hover:bg-page hover:text-ink"
           >
             {t('nav.activity')}
-          </Link>
-          <Link
-            to={link('help')}
-            className="flex h-ctl items-center rounded-[13px] border border-line bg-panel px-5 text-[14.5px] font-bold text-ink transition hover:bg-page hover:text-ink"
-          >
-            {t('job.help')}
           </Link>
         </div>
       </main>
