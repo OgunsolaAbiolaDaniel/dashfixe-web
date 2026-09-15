@@ -414,9 +414,10 @@ The owner asked for a way, with the chat open, to see the artisan's profile as a
   signs people in on Send code; the structure (codes, attempts, signed challenge) is
   already in place and tested.
 
-- ⬜ **Vercel env vars.** Set `DATABASE_URL` and `AUTH_SECRET` (plus `TWILIO_*` when
-  ready), and `SITE_URL` once the domain is chosen. Then verify one production login and
-  one waitlist row.
+- ✅ **`AUTH_SECRET`** is set (owner, 2026-09-14). Production rejects a forged session.
+- ⬜ **Vercel env vars.** Set `DATABASE_URL` (plus `TWILIO_*` when ready), and `SITE_URL`
+  once the domain is chosen. Then verify one production login, one waitlist row and one
+  Pro application row.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
