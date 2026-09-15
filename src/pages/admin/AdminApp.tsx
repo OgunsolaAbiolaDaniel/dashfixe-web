@@ -8,6 +8,9 @@ import AdminOverview from './AdminOverview';
 import AdminTeam from './AdminTeam';
 import AdminAudit from './AdminAudit';
 import AdminAccount from './AdminAccount';
+import AdminApplications from './AdminApplications';
+import AdminReports from './AdminReports';
+import AdminWaitlist from './AdminWaitlist';
 
 /**
  * /admin/* — the admin console (rev 2.12). One lazy chunk (routePages.ts), so
@@ -51,6 +54,9 @@ function Gate() {
     <AdminShell admin={admin} sessionEndsAt={sessionEndsAt}>
       <Routes>
         <Route index element={<AdminOverview admin={admin} />} />
+        <Route path="applications" element={<AdminApplications admin={admin} />} />
+        <Route path="reports" element={<AdminReports admin={admin} />} />
+        <Route path="waitlist" element={<AdminWaitlist admin={admin} />} />
         <Route path="team" element={<AdminTeam admin={admin} />} />
         <Route path="audit" element={<AdminAudit admin={admin} />} />
         <Route path="account" element={<AdminAccount admin={admin} sessionEndsAt={sessionEndsAt} />} />

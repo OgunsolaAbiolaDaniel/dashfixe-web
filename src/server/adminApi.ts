@@ -20,7 +20,19 @@
  * Server-only; relative imports carry .js (see handlers.ts).
  */
 import { ADMIN_ROLES, can, isAdminRole, type AdminRole } from '../shared/adminRoles.js';
-import { getStore, type AdminPatch, type AdminRecord, type Store } from './store.js';
+import {
+  APPLICATION_STATUSES,
+  REPORT_STATUSES,
+  getStore,
+  type AdminPatch,
+  type AdminRecord,
+  type ApplicationPatch,
+  type ApplicationStatus,
+  type ReportPatch,
+  type ReportStatus,
+  type Store,
+} from './store.js';
+import { computeStats } from './adminStats.js';
 import { acceptablePassword, burnPasswordCheck, hashPassword, verifyPassword } from './passwords.js';
 import { adminCookie, clearedAdminCookie, issueAdminToken, passcodeMatches, readAdminToken } from './session.js';
 import { EMAIL, bad, field, ok, str, type ApiRequest, type ApiResponse } from './http.js';
@@ -76,6 +88,29 @@ function signedIn(admin: AdminRecord): ApiResponse {
     setCookie: [adminCookie(issueAdminToken(admin.id, admin.sessionVersion))],
   };
 }
+
+type OwnerChange = { change: false } | { change: true; id: number | null; name: string | null } | { error: ApiResponse };
+
+/**
+ * Who may own a piece of work. `work.assign` (Supervisor, Super admin) gives it to
+ * anyone active; everyone else may only take something unowned, or let go of
+ * their own.
+ */
+async function ownerChange(store: Store, me: AdminRecord, current: number | null, requested: unknown): Promise<OwnerChange> {
+  if (requested === undefined || requested === current) return { change: false };
+  if (requested !== null && (typeof requested !== 'number' || !Number.isInteger(requested))) return { error: bad(400, 'invalid_owner') };
+  if (!can(me.role, 'work.assign')) {
+    const taking = requested === me.id && current === null;
+    const releasing = requested === null && current === me.id;
+    if (!taking && !releasing) return { error: bad(403, 'forbidden') };
+  }
+  if (requested === null) return { change: true, id: null, name: null };
+  const person = await store.getAdmin(requested);
+  if (!person || person.disabled) return { error: bad(400, 'invalid_owner') };
+  return { change: true, id: person.id, name: person.name };
+}
+
+const decided = (status: string) => status === 'approved' || status === 'declined';
 
 async function currentAdmin(store: Store, req: ApiRequest): Promise<{ admin: AdminRecord; exp: number } | null> {
   const token = readAdminToken(req.cookieHeader);
@@ -267,6 +302,144 @@ export async function handleAdmin(req: ApiRequest): Promise<ApiResponse> {
       const updated = await store.updateAdmin(target.id, patch);
       for (const [action, detail] of events) await record(store, me, action, target.email, detail || null);
       return ok({ ok: true, admin: publicAdmin(updated!, now) });
+    }
+
+    // ── The work (rev 2.13) ──
+
+    case 'GET /api/admin/people':
+      // Names for owners and history — every signed-in admin needs them; nothing private.
+      return ok({ people: (await store.listAdmins()).filter((a) => !a.disabled).map((a) => ({ id: a.id, name: a.name, role: a.role })) });
+
+    case 'GET /api/admin/stats': {
+      const [apps, reports, waitlist] = await Promise.all([store.listApplications(5000), store.listReports(5000), store.listWaitlist(20000)]);
+      const stats = computeStats(apps, reports, waitlist, now);
+      // The waitlist is Supervisor-and-up; Admins get its figure as null.
+      return ok({ ...stats, waitlist: can(me.role, 'waitlist.view') ? stats.waitlist : null, persistent: store.persistent });
+    }
+
+    case 'GET /api/admin/applications': {
+      if (!can(me.role, 'applications.work')) return bad(403, 'forbidden');
+      return ok({ applications: await store.listApplications(1000), persistent: store.persistent });
+    }
+
+    case 'POST /api/admin/applications/update': {
+      if (!can(me.role, 'applications.work')) return bad(403, 'forbidden');
+      const id = field(req.body, 'id');
+      if (typeof id !== 'number' || !Number.isInteger(id)) return bad(400, 'invalid_id');
+      const app = await store.getApplication(id);
+      if (!app) return bad(404, 'not_found');
+      const status = field(req.body, 'status');
+      const note = field(req.body, 'note');
+      if (status !== undefined && (typeof status !== 'string' || !(APPLICATION_STATUSES as readonly string[]).includes(status))) return bad(400, 'invalid_status');
+      if (note !== undefined && note !== null && (typeof note !== 'string' || note.length > 1000)) return bad(400, 'invalid_note');
+      // Deciding, or undoing a decision, is a Supervisor's (an Admin sends a request — PR 3).
+      if (typeof status === 'string' && status !== app.status && (decided(status) || decided(app.status)) && !can(me.role, 'applications.decide')) {
+        return bad(403, 'needs_supervisor');
+      }
+      const owner = await ownerChange(store, me, app.ownerId, field(req.body, 'ownerId'));
+      if ('error' in owner) return owner.error;
+
+      const stamp = new Date(now).toISOString();
+      const patch: ApplicationPatch = {};
+      const events: Array<[string, string]> = [];
+      if (typeof status === 'string' && status !== app.status) {
+        patch.status = status as ApplicationStatus;
+        patch.reviewedAt = stamp;
+        if (status === 'called' && !app.calledAt) patch.calledAt = stamp;
+        events.push(['application.status', `${app.status} → ${status}`]);
+      }
+      if (note !== undefined) {
+        const clean = typeof note === 'string' && note.trim() ? note.trim() : null;
+        if (clean !== app.note) {
+          patch.note = clean;
+          events.push(['application.note', clean ? clean.slice(0, 120) : 'cleared']);
+        }
+      }
+      if (owner.change) {
+        patch.ownerId = owner.id;
+        events.push(['application.assign', owner.name ?? 'unassigned']);
+      }
+      const updated = Object.keys(patch).length ? await store.updateApplication(app.id, patch) : app;
+      for (const [action, detail] of events) await record(store, me, action, app.reference ?? `#${app.id}`, detail);
+      return ok({ ok: true, application: updated });
+    }
+
+    case 'GET /api/admin/reports': {
+      if (!can(me.role, 'reports.work')) return bad(403, 'forbidden');
+      return ok({ reports: await store.listReports(1000) });
+    }
+
+    case 'POST /api/admin/reports/update': {
+      if (!can(me.role, 'reports.work')) return bad(403, 'forbidden');
+      const id = field(req.body, 'id');
+      if (typeof id !== 'number' || !Number.isInteger(id)) return bad(400, 'invalid_id');
+      const report = await store.getReport(id);
+      if (!report) return bad(404, 'not_found');
+      const status = field(req.body, 'status');
+      const rawResolution = field(req.body, 'resolution');
+      if (status !== undefined && (typeof status !== 'string' || !(REPORT_STATUSES as readonly string[]).includes(status))) return bad(400, 'invalid_status');
+      if (rawResolution !== undefined && rawResolution !== null && (typeof rawResolution !== 'string' || rawResolution.length > 1000)) return bad(400, 'invalid_resolution');
+      const resolution = typeof rawResolution === 'string' ? rawResolution.trim() : '';
+      const changing = typeof status === 'string' && status !== report.status;
+      if (changing && status === 'resolved') {
+        if (resolution.length < 3) return bad(400, 'resolution_required');
+        if (report.category === 'safety' && !can(me.role, 'reports.resolveSafety')) return bad(403, 'needs_supervisor');
+      }
+      // Reopening a resolved report overrules whoever resolved it.
+      if (changing && report.status === 'resolved' && !can(me.role, 'reports.resolveSafety')) return bad(403, 'needs_supervisor');
+      const owner = await ownerChange(store, me, report.ownerId, field(req.body, 'ownerId'));
+      if ('error' in owner) return owner.error;
+
+      const stamp = new Date(now).toISOString();
+      const patch: ReportPatch = {};
+      const events: Array<[string, string]> = [];
+      if (changing) {
+        patch.status = status as ReportStatus;
+        if (status === 'called' && !report.calledAt) patch.calledAt = stamp;
+        if (status === 'resolved') {
+          patch.resolution = resolution;
+          patch.resolvedAt = stamp;
+          patch.calledAt = report.calledAt ?? stamp;
+        }
+        if (report.status === 'resolved') {
+          patch.resolution = null;
+          patch.resolvedAt = null;
+        }
+        events.push(['report.status', status === 'resolved' ? `resolved: ${resolution.slice(0, 120)}` : `${report.status} → ${status}`]);
+      }
+      if (owner.change) {
+        patch.ownerId = owner.id;
+        events.push(['report.assign', owner.name ?? 'unassigned']);
+      }
+      const updated = Object.keys(patch).length ? await store.updateReport(report.id, patch) : report;
+      for (const [action, detail] of events) await record(store, me, action, report.reference, detail);
+      return ok({ ok: true, report: updated });
+    }
+
+    case 'GET /api/admin/waitlist': {
+      if (!can(me.role, 'waitlist.view')) return bad(403, 'forbidden');
+      return ok({ entries: await store.listWaitlist(20000) });
+    }
+
+    case 'POST /api/admin/export': {
+      // Exports carry people's emails and phones: Supervisor and up, and always logged.
+      if (!can(me.role, 'data.export')) return bad(403, 'forbidden');
+      const kind = field(req.body, 'kind');
+      let rows: unknown[];
+      if (kind === 'waitlist') rows = await store.listWaitlist(20000);
+      else if (kind === 'applications') rows = await store.listApplications(5000);
+      else if (kind === 'reports') rows = await store.listReports(5000);
+      else return bad(400, 'invalid_kind');
+      await record(store, me, 'data.export', kind, `${rows.length} rows`);
+      return ok({ kind, rows });
+    }
+
+    case 'POST /api/admin/history': {
+      // One record's story: every change and who made it.
+      if (!can(me.role, 'applications.work')) return bad(403, 'forbidden');
+      const target = str(req.body, 'record', 40);
+      if (!target) return bad(400, 'invalid_record');
+      return ok({ events: await store.listAudit({ record: target, limit: 100 }) });
     }
 
     case 'GET /api/admin/audit': {

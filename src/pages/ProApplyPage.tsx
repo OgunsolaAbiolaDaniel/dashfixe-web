@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import MarketingShell from '../components/chrome/MarketingShell';
 import { ChevronLeft } from '../components/icons';
 import { ROUTES, TRADE_SLUGS, link, type TradeSlug } from '../routes';
+import { PILOT_AREAS } from '../shared/pilot';
 import { useLang } from '../i18n';
 import { api } from '../lib/api';
 import { saveApplication } from '../lib/proApplication';
@@ -17,7 +18,7 @@ import type { StringKey } from '../i18n/strings';
  * Each step checks itself before moving on; errors sit under the field and
  * focus jumps to the first one.
  */
-const AREAS = ['Amora', 'Seixal', 'Corroios', 'Arrentela', 'Paio Pires', 'Fernão Ferro', 'Cruz de Pau'];
+const AREAS = PILOT_AREAS;
 const EXPERIENCE: Array<[string, StringKey]> = [
   ['0-2', 'pro.apply.exp.a'],
   ['3-5', 'pro.apply.exp.b'],

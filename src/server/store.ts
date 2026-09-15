@@ -46,7 +46,12 @@ export type StoredApplication = ArtisanApplication & {
   /** The founder's private note from the call. */
   note: string | null;
   reviewedAt: string | null;
+  /** The admin who owns it in the console (rev 2.13), or nobody yet. */
+  ownerId: number | null;
+  /** First time it was marked called — the "time to first call" figure. */
+  calledAt: string | null;
 };
+export type ApplicationPatch = Partial<Pick<StoredApplication, 'status' | 'note' | 'reviewedAt' | 'ownerId' | 'calledAt'>>;
 
 /** "Report a problem" on a job (rev 2.9): what went wrong, as the customer picks it. */
 export const REPORT_CATEGORIES = ['late', 'price', 'quality', 'damage', 'safety', 'other'] as const;
@@ -62,7 +67,22 @@ export type JobReport = {
   reference: string;
   createdAt: string;
 };
-export type StoredReport = JobReport & { id: number };
+/** Where the team's handling of a report has got to (rev 2.13). */
+export const REPORT_STATUSES = ['open', 'called', 'resolved'] as const;
+export type ReportStatus = (typeof REPORT_STATUSES)[number];
+
+export type StoredReport = JobReport & {
+  id: number;
+  status: ReportStatus;
+  ownerId: number | null;
+  /** What happened and what we did — required to resolve. */
+  resolution: string | null;
+  calledAt: string | null;
+  resolvedAt: string | null;
+};
+export type ReportPatch = Partial<Pick<StoredReport, 'status' | 'ownerId' | 'resolution' | 'calledAt' | 'resolvedAt'>>;
+
+export type StoredWaitlistEntry = WaitlistEntry & { id: number };
 
 /** A console account (rev 2.12). The hash never leaves the server. */
 export type AdminRecord = {
@@ -100,7 +120,7 @@ export type AuditEvent = {
   record: string | null;
   detail: string | null;
 };
-export type AuditQuery = { limit?: number; adminId?: number; excludeRole?: AdminRole };
+export type AuditQuery = { limit?: number; adminId?: number; excludeRole?: AdminRole; /** One record's history, e.g. A-7304. */ record?: string };
 
 /**
  * Login codes are NOT stored here: they ride in a signed cookie (session.ts), so
@@ -115,9 +135,16 @@ export interface Store {
   listApplications(limit?: number): Promise<StoredApplication[]>;
   /** The updated application, or null when there is no such id. */
   setApplicationStatus(id: number, status: ApplicationStatus, note: string | null): Promise<StoredApplication | null>;
+  getApplication(id: number): Promise<StoredApplication | null>;
+  /** reviewedAt/calledAt are set by the caller; null clears. */
+  updateApplication(id: number, patch: ApplicationPatch): Promise<StoredApplication | null>;
   addReport(report: JobReport): Promise<void>;
-  /** Newest first, at most `limit` — the team reads them on /ops. */
+  /** Newest first, at most `limit` — the team reads them on /ops and /admin/reports. */
   listReports(limit?: number): Promise<StoredReport[]>;
+  getReport(id: number): Promise<StoredReport | null>;
+  updateReport(id: number, patch: ReportPatch): Promise<StoredReport | null>;
+  /** Newest first. */
+  listWaitlist(limit?: number): Promise<StoredWaitlistEntry[]>;
   /** Upserts the user row; first login is sign-up (phone-first, Uber-style). */
   ensureUser(phone: string): Promise<void>;
   /** Throws when the storage can't be reached — GET /api/health. */
@@ -141,7 +168,7 @@ export interface Store {
 // ── In-memory driver (dev + tests) ──────────────────────────────────────────
 
 export function memoryStore(): Store {
-  const waitlist: WaitlistEntry[] = [];
+  const waitlist: StoredWaitlistEntry[] = [];
   const applications: StoredApplication[] = [];
   const reports: StoredReport[] = [];
   const users = new Set<string>();
@@ -165,10 +192,23 @@ export function memoryStore(): Store {
   return {
     persistent: false,
     async addWaitlist(entry) {
-      waitlist.push(entry);
+      waitlist.push({ ...entry, id: waitlist.length + 1 });
+    },
+    async listWaitlist(limit = 5000) {
+      return [...waitlist].reverse().slice(0, limit);
     },
     async addApplication(app) {
-      applications.push({ ...app, id: applications.length + 1, status: 'received', note: null, reviewedAt: null });
+      applications.push({ ...app, id: applications.length + 1, status: 'received', note: null, reviewedAt: null, ownerId: null, calledAt: null });
+    },
+    async getApplication(id) {
+      const a = applications.find((x) => x.id === id);
+      return a ? { ...a } : null;
+    },
+    async updateApplication(id, patch) {
+      const a = applications.find((x) => x.id === id);
+      if (!a) return null;
+      Object.assign(a, patch);
+      return { ...a };
     },
     async listApplications(limit = 500) {
       return [...applications].reverse().slice(0, limit);
@@ -180,10 +220,20 @@ export function memoryStore(): Store {
       return { ...app };
     },
     async addReport(report) {
-      reports.push({ ...report, id: reports.length + 1 });
+      reports.push({ ...report, id: reports.length + 1, status: 'open', ownerId: null, resolution: null, calledAt: null, resolvedAt: null });
     },
     async listReports(limit = 500) {
       return [...reports].reverse().slice(0, limit);
+    },
+    async getReport(id) {
+      const r = reports.find((x) => x.id === id);
+      return r ? { ...r } : null;
+    },
+    async updateReport(id, patch) {
+      const r = reports.find((x) => x.id === id);
+      if (!r) return null;
+      Object.assign(r, patch);
+      return { ...r };
     },
     async ensureUser(phone) {
       users.add(phone);
@@ -216,10 +266,15 @@ export function memoryStore(): Store {
     async addAudit(event) {
       audit.push({ ...event, id: audit.length + 1, at: new Date().toISOString() });
     },
-    async listAudit({ limit = 200, adminId, excludeRole } = {}) {
+    async listAudit({ limit = 200, adminId, excludeRole, record } = {}) {
       return [...audit]
         .reverse()
-        .filter((e) => (adminId === undefined || e.adminId === adminId) && (!excludeRole || (e.role !== null && e.role !== excludeRole)))
+        .filter(
+          (e) =>
+            (adminId === undefined || e.adminId === adminId) &&
+            (!excludeRole || (e.role !== null && e.role !== excludeRole)) &&
+            (record === undefined || e.record === record),
+        )
         .slice(0, limit);
     },
   };
@@ -260,6 +315,13 @@ CREATE TABLE IF NOT EXISTS job_reports (
   reference TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS owner_id INTEGER;
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS called_at TIMESTAMPTZ;
+ALTER TABLE job_reports ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'open';
+ALTER TABLE job_reports ADD COLUMN IF NOT EXISTS owner_id INTEGER;
+ALTER TABLE job_reports ADD COLUMN IF NOT EXISTS resolution TEXT;
+ALTER TABLE job_reports ADD COLUMN IF NOT EXISTS called_at TIMESTAMPTZ;
+ALTER TABLE job_reports ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS admins (
   id SERIAL PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
@@ -287,6 +349,7 @@ CREATE TABLE IF NOT EXISTS admin_audit (
   detail TEXT
 );
 CREATE INDEX IF NOT EXISTS admin_audit_at ON admin_audit (at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS admin_audit_record ON admin_audit (record);
 `;
 
 type AdminRow = {
@@ -363,10 +426,63 @@ type ReportRow = {
   category: ReportCategory;
   details: string | null;
   reference: string;
+  status: string;
+  owner_id: number | null;
+  resolution: string | null;
+  called_at: Date | null;
+  resolved_at: Date | null;
   created_at: Date;
 };
 
-const APPLICATION_COLUMNS = 'id, full_name, phone, email, trade, profile, reference, status, note, reviewed_at, created_at';
+const REPORT_COLUMNS = 'id, phone, job_id, category, details, reference, status, owner_id, resolution, called_at, resolved_at, created_at';
+
+function reportFromRow(r: ReportRow): StoredReport {
+  return {
+    id: r.id,
+    phone: r.phone,
+    jobId: r.job_id,
+    category: r.category,
+    details: r.details,
+    reference: r.reference,
+    status: (REPORT_STATUSES as readonly string[]).includes(r.status) ? (r.status as ReportStatus) : 'open',
+    ownerId: r.owner_id,
+    resolution: r.resolution,
+    calledAt: isoOrNull(r.called_at),
+    resolvedAt: isoOrNull(r.resolved_at),
+    createdAt: r.created_at.toISOString(),
+  };
+}
+
+/** Patch key → column, for applications and reports. Only these can be updated. */
+const APPLICATION_PATCH: Record<keyof ApplicationPatch, string> = {
+  status: 'status',
+  note: 'note',
+  reviewedAt: 'reviewed_at',
+  ownerId: 'owner_id',
+  calledAt: 'called_at',
+};
+const REPORT_PATCH: Record<keyof ReportPatch, string> = {
+  status: 'status',
+  ownerId: 'owner_id',
+  resolution: 'resolution',
+  calledAt: 'called_at',
+  resolvedAt: 'resolved_at',
+};
+
+/** `SET a = $2, b = $3` from a patch, keeping only known keys ($1 is the id). */
+function setClause(patch: Record<string, unknown>, columns: Record<string, string>): { sql: string; values: unknown[] } {
+  const values: unknown[] = [];
+  const sets: string[] = [];
+  for (const [key, value] of Object.entries(patch)) {
+    const column = columns[key];
+    if (!column || value === undefined) continue;
+    values.push(value);
+    sets.push(`${column} = $${values.length + 1}`);
+  }
+  return { sql: sets.join(', '), values };
+}
+
+const APPLICATION_COLUMNS = 'id, full_name, phone, email, trade, profile, reference, status, note, reviewed_at, owner_id, called_at, created_at';
 
 type ApplicationRow = {
   id: number;
@@ -379,6 +495,8 @@ type ApplicationRow = {
   status: string;
   note: string | null;
   reviewed_at: Date | null;
+  owner_id: number | null;
+  called_at: Date | null;
   created_at: Date;
 };
 
@@ -394,6 +512,8 @@ function fromRow(r: ApplicationRow): StoredApplication {
     status: (APPLICATION_STATUSES as readonly string[]).includes(r.status) ? (r.status as ApplicationStatus) : 'received',
     note: r.note,
     reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null,
+    ownerId: r.owner_id,
+    calledAt: isoOrNull(r.called_at),
     createdAt: r.created_at.toISOString(),
   };
 }
@@ -409,6 +529,18 @@ async function pgStore(databaseUrl: string): Promise<Store> {
         entry.email,
         entry.userType,
       ]);
+    },
+    async listWaitlist(limit = 5000) {
+      const { rows } = await pool.query<{ id: number; email: string; user_type: string; created_at: Date }>(
+        'SELECT id, email, user_type, created_at FROM waitlist_entries ORDER BY created_at DESC, id DESC LIMIT $1',
+        [limit],
+      );
+      return rows.map((r) => ({
+        id: r.id,
+        email: r.email,
+        userType: r.user_type === 'ARTISAN' ? 'ARTISAN' : 'HOMEOWNER',
+        createdAt: r.created_at.toISOString(),
+      }));
     },
     async addApplication(app) {
       await pool.query(
@@ -430,6 +562,17 @@ async function pgStore(databaseUrl: string): Promise<Store> {
       );
       return rows[0] ? fromRow(rows[0]) : null;
     },
+    async getApplication(id) {
+      const { rows } = await pool.query<ApplicationRow>(`SELECT ${APPLICATION_COLUMNS} FROM artisan_applications WHERE id = $1`, [id]);
+      return rows[0] ? fromRow(rows[0]) : null;
+    },
+    async updateApplication(id, patch) {
+      const { sql, values } = setClause(patch, APPLICATION_PATCH);
+      const { rows } = sql
+        ? await pool.query<ApplicationRow>(`UPDATE artisan_applications SET ${sql} WHERE id = $1 RETURNING ${APPLICATION_COLUMNS}`, [id, ...values])
+        : await pool.query<ApplicationRow>(`SELECT ${APPLICATION_COLUMNS} FROM artisan_applications WHERE id = $1`, [id]);
+      return rows[0] ? fromRow(rows[0]) : null;
+    },
     async addReport(r) {
       await pool.query('INSERT INTO job_reports (phone, job_id, category, details, reference) VALUES ($1, $2, $3, $4, $5)', [
         r.phone,
@@ -440,19 +583,19 @@ async function pgStore(databaseUrl: string): Promise<Store> {
       ]);
     },
     async listReports(limit = 500) {
-      const { rows } = await pool.query<ReportRow>(
-        'SELECT id, phone, job_id, category, details, reference, created_at FROM job_reports ORDER BY created_at DESC, id DESC LIMIT $1',
-        [limit],
-      );
-      return rows.map((r) => ({
-        id: r.id,
-        phone: r.phone,
-        jobId: r.job_id,
-        category: r.category,
-        details: r.details,
-        reference: r.reference,
-        createdAt: r.created_at.toISOString(),
-      }));
+      const { rows } = await pool.query<ReportRow>(`SELECT ${REPORT_COLUMNS} FROM job_reports ORDER BY created_at DESC, id DESC LIMIT $1`, [limit]);
+      return rows.map(reportFromRow);
+    },
+    async getReport(id) {
+      const { rows } = await pool.query<ReportRow>(`SELECT ${REPORT_COLUMNS} FROM job_reports WHERE id = $1`, [id]);
+      return rows[0] ? reportFromRow(rows[0]) : null;
+    },
+    async updateReport(id, patch) {
+      const { sql, values } = setClause(patch, REPORT_PATCH);
+      const { rows } = sql
+        ? await pool.query<ReportRow>(`UPDATE job_reports SET ${sql} WHERE id = $1 RETURNING ${REPORT_COLUMNS}`, [id, ...values])
+        : await pool.query<ReportRow>(`SELECT ${REPORT_COLUMNS} FROM job_reports WHERE id = $1`, [id]);
+      return rows[0] ? reportFromRow(rows[0]) : null;
     },
     async ensureUser(phone) {
       await pool.query('INSERT INTO users (phone) VALUES ($1) ON CONFLICT DO NOTHING', [phone]);
@@ -531,9 +674,13 @@ async function pgStore(databaseUrl: string): Promise<Store> {
         e.detail,
       ]);
     },
-    async listAudit({ limit = 200, adminId, excludeRole } = {}) {
+    async listAudit({ limit = 200, adminId, excludeRole, record } = {}) {
       const values: unknown[] = [];
       const where: string[] = [];
+      if (record !== undefined) {
+        values.push(record);
+        where.push(`record = $${values.length}`);
+      }
       if (adminId !== undefined) {
         values.push(adminId);
         where.push(`admin_id = $${values.length}`);

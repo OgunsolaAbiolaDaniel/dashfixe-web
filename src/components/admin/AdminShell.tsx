@@ -25,12 +25,13 @@ const ICONS = {
   overview: svg('M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z'),
   applications: svg('M2 9l2-6h8l2 6v4H2zM2 9h4l1 2h2l1-2h4'),
   reports: svg('M3 14V2M3 3h8l-1.5 3L11 9H3'),
+  waitlist: svg('M5 4h9M5 8h9M5 12h9M2 4h.01M2 8h.01M2 12h.01'),
   team: svg('M6 7a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.5 14c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4M11 7.5a2 2 0 000-4M12 10c1.4.4 2.3 1.8 2.5 4'),
   audit: svg('M3 2h10v12H3zM6 5h4M6 8h4M6 11h2'),
   account: svg('M8 8a3 3 0 100-6 3 3 0 000 6zM2.5 14.5c.6-2.8 2.8-4.5 5.5-4.5s4.9 1.7 5.5 4.5'),
 };
 
-type Item = { to: string; label: StringKey; icon: ReactNode; next?: boolean };
+type Item = { to: string; label: StringKey; icon: ReactNode };
 
 const ENV_TONE = {
   production: 'bg-k-crit/15 text-k-crit',
@@ -49,8 +50,9 @@ export default function AdminShell({ admin, sessionEndsAt, children }: { admin: 
     {
       label: 'admin.nav.work',
       items: [
-        { to: '/admin/applications', label: 'admin.nav.applications', icon: ICONS.applications, next: true },
-        { to: '/admin/reports', label: 'admin.nav.reports', icon: ICONS.reports, next: true },
+        { to: '/admin/applications', label: 'admin.nav.applications', icon: ICONS.applications },
+        { to: '/admin/reports', label: 'admin.nav.reports', icon: ICONS.reports },
+        ...(can(admin.role, 'waitlist.view') ? [{ to: '/admin/waitlist', label: 'admin.nav.waitlist' as StringKey, icon: ICONS.waitlist }] : []),
       ],
     },
     {
@@ -116,14 +118,7 @@ export default function AdminShell({ admin, sessionEndsAt, children }: { admin: 
                   {t(group.label)}
                 </span>
               )}
-              {group.items.map((item) =>
-                item.next ? (
-                  <span key={item.to} aria-disabled="true" className="flex items-center gap-2.5 whitespace-nowrap rounded-[5px] px-2.5 py-1.5 text-k-muted">
-                    {item.icon}
-                    {t(item.label)}
-                    <em className="ml-auto hidden font-plexmono text-[10px] not-italic md:inline">{t('admin.nav.next')}</em>
-                  </span>
-                ) : (
+              {group.items.map((item) => (
                   <Link
                     key={item.to}
                     to={item.to}

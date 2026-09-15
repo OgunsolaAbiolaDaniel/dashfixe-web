@@ -61,7 +61,7 @@ const PAGES: Record<string, Entry> = {
   // One device's application status: private.
   [ROUTES.proApplication]: { title: 'seo.proStatus.title', description: 'seo.proApply.desc', noindex: true },
   // The founders' tool: never indexed, and robots-disallowed.
-  [ROUTES.ops]: { title: 'ops.title', description: 'seo.proApply.desc', noindex: true },
+  [ROUTES.ops]: { title: 'admin.title', description: 'seo.proApply.desc', noindex: true },
   // The app showcase is sample stills, like /artisan/*: shareable, not indexed.
   [ROUTES.proApp]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
 };
