@@ -5,9 +5,8 @@
 > `../Dashfixe.md` (full handover) and `../Dashfixemarklatest.md`; the design files are in
 > `../designs/`. This file is about **the code and where it stands**.
 
-**Last updated:** 2026-09-15 · **Branch:** `feat/journey` (revision 2.10). It's the last
-of a stack of four PRs, each on top of the one before: #27 (2.7) → #28 (2.8) → #29 (2.9) →
-this one. Merge them in that order. Everything through #26 is merged ·
+**Last updated:** 2026-09-15 · **Branch:** `main` (`468b70e`). Everything through #30 is
+merged: revisions 2.7–2.10 (launch readiness, `/ops`, help with a job, the journey test) ·
 **Remote:** `github.com/OgunsolaAbiolaDaniel/dashfixe-web` · **Deploy:** Vercel (`.vercel/`)
 
 ---
@@ -16,30 +15,27 @@ this one. Merge them in that order. Everything through #26 is merged ·
 
 Phases 0–4 are done, Phase 5's code is done, and **Dashfixe Pro is built and live**.
 
-**Production, verified live on 2026-09-15** (`dashfixe-web.vercel.app`, merge `6896fae`):
-`node scripts/check-prod.mjs` gives **27/27**, and the "production check" workflow passed
+**Production, verified live on 2026-09-15** (`dashfixe-web.vercel.app`, merge `468b70e`):
+`node scripts/check-prod.mjs` gives **32/32**, and the "production check" workflow passed
 on the deploy.
-- Every page loads cold: customer, account and every Pro page (`/pro`, `/pro/app`,
-  `/pro/apply`, `/pro/application`, `/pro/login`, `/pro/dashboard`, `/pro/help`).
-- `/for-artisans` 308-redirects to `/pro`.
-- `robots.txt` keeps the private pages out.
+- Every page loads cold, `/ops` included.
+- The security headers are set, and hashed assets are cached for a year.
+- The trade pages carry hreflang and JSON-LD.
 - The pilot log in works, and a forged session is rejected.
+- **`/ops` is switched on:** the owner set `OPS_PHONES` and `OPS_PASSCODE`. A visitor gets
+  401 and a signed-in phone that isn't on the list gets 403 `not_ops`, even with a
+  guessed passcode.
 
-**In progress: the four owner-picked chunks, one PR each, in this order.**
-1. **Launch readiness** (revision 2.7, PR #27): security headers and CSP, lazy pages,
-   sized photos, hreflang and JSON-LD. Notes below.
-2. **Founders' `/ops`** (revision 2.8, PR #28): review the `/pro/apply` applications and
-   mark each called, approved or declined. It needs `OPS_PHONES` and `OPS_PASSCODE`, plus
-   `DATABASE_URL` so reviews survive restarts. Notes below.
-3. **Customer help and reschedule** on `/job/:id` (revision 2.9, PR #29). Notes below.
-4. **A full customer journey in Playwright** (revision 2.10, `feat/journey`): search →
-   chat → book → track → receipt → rate, and book ahead → change the time → cancel.
-
-All four are built. What's left is merging them in order, then the owner's variables
-below, now with `OPS_PHONES` and `OPS_PASSCODE` for `/ops`.
+The four owner-picked chunks are all merged: launch readiness (2.7, #27), `/ops` (2.8,
+#28), help with a job (2.9, #29) and the customer journey in Playwright (2.10, #30).
+Notes on each are below.
 
 **What's left is the owner's (no code), in order:**
-1. `DATABASE_URL`, free on Neon, so applications and the waitlist survive restarts.
+1. **`DATABASE_URL`**, free on Neon. `/ops` depends on it. Without it, applications and
+   problem reports live in the memory of whichever serverless instance took them. Vercel
+   starts and stops instances freely, so `/ops` can come up empty even after someone
+   applied. Its yellow "Not saved" banner means this variable is missing. It also keeps
+   the waitlist.
 2. A domain, then `SITE_URL` and the `PROD_URL` repo variable.
 3. The `TWILIO_*` variables when SMS is funded.
 4. `VITE_LAUNCHED=true` on launch day.

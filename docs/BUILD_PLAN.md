@@ -484,9 +484,12 @@ The fourth owner-picked chunk, and the last of the four.
   already in place and tested.
 
 - ✅ **`AUTH_SECRET`** is set (owner, 2026-09-14). Production rejects a forged session.
-- ⬜ **Vercel env vars.** Set `DATABASE_URL` (plus `TWILIO_*` when ready), and `SITE_URL`
-  once the domain is chosen. Then verify one production login, one waitlist row and one
-  Pro application row.
+- ✅ **`OPS_PHONES` and `OPS_PASSCODE`** are set (owner, 2026-09-15). `/ops` is on, and
+  other phones get `not_ops`.
+- ⬜ **Vercel env vars.** Set `DATABASE_URL` next, because `/ops` needs it to see
+  applications reliably on serverless. Then `TWILIO_*` when ready, and `SITE_URL` once
+  the domain is chosen. Then verify one production login, one waitlist row, and one Pro
+  application approved on `/ops`.
 - ⬜ **Launch day.** Set `VITE_LAUNCHED=true` and redeploy. The honesty badges stay until
   real supply replaces the sample data (Phase 6).
 
