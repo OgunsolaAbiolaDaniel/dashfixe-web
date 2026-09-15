@@ -53,7 +53,9 @@ function LiveJob({ job }: { job: Job }) {
     <div className="flex min-h-screen flex-col bg-page lg:h-dvh lg:overflow-hidden">
       <AppBar />
       <div className="grid min-h-0 flex-1 items-stretch grid-cols-1 lg:grid-cols-[minmax(340px,436px)_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)]">
-        <div className="flex min-h-0 min-w-0 flex-col gap-[18px] overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
+        {/* `relative`: visually hidden inputs (sr-only, absolute) must be contained by the
+            scroller, or their static positions below the fold stretch the whole document. */}
+        <div className="relative flex min-h-0 min-w-0 flex-col gap-[18px] overflow-y-auto border-r border-line-soft bg-page p-[26px] [&>*]:shrink-0">
           <div>
             <div className="mb-2.5 flex flex-wrap items-center gap-3">
               {booked ? (

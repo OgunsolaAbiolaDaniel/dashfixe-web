@@ -571,6 +571,12 @@ link into WhatsApp — the card should show that page's title and the map image.
 - **Serverless has no shared memory.** An in-memory OTP store fails when `verify` lands
   on a different instance from `request-code`. The pending code now rides in a signed
   cookie (`server/session.ts`).
+- **`sr-only` inputs escape a non-positioned scroller.** `sr-only` is `position:
+  absolute`. Inside a scrolling column that isn't `relative`, the inputs sit against
+  the page at their static position far down the column, which stretches the document
+  under a one-screen (`h-dvh overflow-hidden`) layout. On `/job/:id` the report form's
+  radios made the page 184px taller, so the app bar could scroll away. Give such
+  scrollers `relative`; the smoke test "the job page stays one screen" guards it.
 - **A scrolling flex column shrinks its children.** Cards with `overflow-hidden` get
   clipped (the chat's approved estimate lost its footer). Add `[&>*]:shrink-0` to the
   scroller.
