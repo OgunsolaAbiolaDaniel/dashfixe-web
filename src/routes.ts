@@ -46,6 +46,8 @@ export const ROUTES = {
   proDashboard: '/pro/dashboard',
   /** Help for artisans: pay, jobs, estimates, papers, safety, account (rev 2.6). */
   proHelp: '/pro/help',
+  /** The founders' application review — team phones + passcode only (rev 2.8). Linked from nowhere. */
+  ops: '/ops',
   about: '/about',
   help: '/help',
   privacy: '/privacy',

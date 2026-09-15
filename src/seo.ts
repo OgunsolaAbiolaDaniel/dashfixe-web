@@ -60,6 +60,8 @@ const PAGES: Record<string, Entry> = {
   [ROUTES.proDashboard]: { title: 'pro.dash.title', description: 'seo.proApply.desc', noindex: true },
   // One device's application status: private.
   [ROUTES.proApplication]: { title: 'seo.proStatus.title', description: 'seo.proApply.desc', noindex: true },
+  // The founders' tool: never indexed, and robots-disallowed.
+  [ROUTES.ops]: { title: 'ops.title', description: 'seo.proApply.desc', noindex: true },
   // The app showcase is sample stills, like /artisan/*: shareable, not indexed.
   [ROUTES.proApp]: { title: 'seo.pro.title', description: 'seo.pro.desc', noindex: true },
 };
@@ -294,6 +296,7 @@ export function robotsTxt(siteUrl: string): string {
     'Disallow: /pro/dashboard',
     'Disallow: /pro/application',
     'Disallow: /job/',
+    'Disallow: /ops',
     '',
     `Sitemap: ${siteUrl}/sitemap.xml`,
     '',

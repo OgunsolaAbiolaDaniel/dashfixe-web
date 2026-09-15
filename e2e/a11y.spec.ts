@@ -23,8 +23,8 @@ const PAGES = [
   '/no-such-page',
 ];
 
-/** Signed-in pages, reached through the pilot login first. */
-const PRIVATE = ['/account', '/activity', '/pro/dashboard'];
+/** Signed-in pages, reached through the pilot login first. (/ops shows its set-up notice: CI has no team variables.) */
+const PRIVATE = ['/account', '/activity', '/pro/dashboard', '/ops'];
 
 async function audit(page: Page, path: string) {
   await expect(page.locator('h1').first()).toBeVisible();

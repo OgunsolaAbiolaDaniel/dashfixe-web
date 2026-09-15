@@ -17,6 +17,7 @@ import {
   LegalPage,
   LoginPage,
   NotFoundPage,
+  OpsPage,
   ProAppPage,
   ProApplicationPage,
   ProApplyPage,
@@ -107,6 +108,8 @@ export default function AppRoutes() {
         <Route path={ROUTES.proDashboard} element={<ProDashboardPage />} />
         <Route path={ROUTES.proHelp} element={<ProHelpPage />} />
         <Route path={ROUTES.forArtisans} element={<Moved to={ROUTES.pro} />} />
+        {/* The founders' review of Pro applications (rev 2.8): its own minimal chrome, linked from nowhere. */}
+        <Route path={ROUTES.ops} element={<OpsPage />} />
         <Route path={ROUTES.about} element={<AboutPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path={ROUTES.privacy} element={<LegalPage kind="privacy" />} />

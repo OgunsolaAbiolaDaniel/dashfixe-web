@@ -34,13 +34,32 @@ export type ArtisanApplication = {
   reference?: string;
   createdAt: string;
 };
+
+/** Where a founder's review has got to (/ops, rev 2.8). Every application starts `received`. */
+export const APPLICATION_STATUSES = ['received', 'called', 'approved', 'declined'] as const;
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+
+export type StoredApplication = ArtisanApplication & {
+  id: number;
+  status: ApplicationStatus;
+  /** The founder's private note from the call. */
+  note: string | null;
+  reviewedAt: string | null;
+};
+
 /**
  * Login codes are NOT stored here: they ride in a signed cookie (session.ts), so
  * auth works on serverless with no database. Only data worth keeping lives here.
  */
 export interface Store {
+  /** False for the in-memory driver: what /ops shows is gone after a restart. */
+  readonly persistent: boolean;
   addWaitlist(entry: WaitlistEntry): Promise<void>;
   addApplication(app: ArtisanApplication): Promise<void>;
+  /** Newest first, at most `limit`. */
+  listApplications(limit?: number): Promise<StoredApplication[]>;
+  /** The updated application, or null when there is no such id. */
+  setApplicationStatus(id: number, status: ApplicationStatus, note: string | null): Promise<StoredApplication | null>;
   /** Upserts the user row; first login is sign-up (phone-first, Uber-style). */
   ensureUser(phone: string): Promise<void>;
 }
@@ -49,14 +68,24 @@ export interface Store {
 
 export function memoryStore(): Store {
   const waitlist: WaitlistEntry[] = [];
-  const applications: ArtisanApplication[] = [];
+  const applications: StoredApplication[] = [];
   const users = new Set<string>();
   return {
+    persistent: false,
     async addWaitlist(entry) {
       waitlist.push(entry);
     },
     async addApplication(app) {
-      applications.push(app);
+      applications.push({ ...app, id: applications.length + 1, status: 'received', note: null, reviewedAt: null });
+    },
+    async listApplications(limit = 500) {
+      return [...applications].reverse().slice(0, limit);
+    },
+    async setApplicationStatus(id, status, note) {
+      const app = applications.find((a) => a.id === id);
+      if (!app) return null;
+      Object.assign(app, { status, note, reviewedAt: new Date().toISOString() });
+      return { ...app };
     },
     async ensureUser(phone) {
       users.add(phone);
@@ -84,17 +113,52 @@ CREATE TABLE IF NOT EXISTS artisan_applications (
 );
 ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS profile JSONB;
 ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS reference TEXT;
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE artisan_applications ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS users (
   phone TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 `;
 
+const APPLICATION_COLUMNS = 'id, full_name, phone, email, trade, profile, reference, status, note, reviewed_at, created_at';
+
+type ApplicationRow = {
+  id: number;
+  full_name: string;
+  phone: string;
+  email: string;
+  trade: string;
+  profile: ArtisanProfile | null;
+  reference: string | null;
+  status: string;
+  note: string | null;
+  reviewed_at: Date | null;
+  created_at: Date;
+};
+
+function fromRow(r: ApplicationRow): StoredApplication {
+  return {
+    id: r.id,
+    fullName: r.full_name,
+    phone: r.phone,
+    email: r.email,
+    trade: r.trade,
+    ...(r.profile ? { profile: r.profile } : {}),
+    ...(r.reference ? { reference: r.reference } : {}),
+    status: (APPLICATION_STATUSES as readonly string[]).includes(r.status) ? (r.status as ApplicationStatus) : 'received',
+    note: r.note,
+    reviewedAt: r.reviewed_at ? r.reviewed_at.toISOString() : null,
+    createdAt: r.created_at.toISOString(),
+  };
+}
+
 async function pgStore(databaseUrl: string): Promise<Store> {
   const { Pool } = await import('pg');
   const pool = new Pool({ connectionString: databaseUrl, max: 3 });
   await pool.query(DDL);
   return {
+    persistent: true,
     async addWaitlist(entry) {
       await pool.query('INSERT INTO waitlist_entries (email, user_type) VALUES ($1, $2)', [
         entry.email,
@@ -106,6 +170,20 @@ async function pgStore(databaseUrl: string): Promise<Store> {
         'INSERT INTO artisan_applications (full_name, phone, email, trade, profile, reference) VALUES ($1, $2, $3, $4, $5, $6)',
         [app.fullName, app.phone, app.email, app.trade, app.profile ? JSON.stringify(app.profile) : null, app.reference ?? null],
       );
+    },
+    async listApplications(limit = 500) {
+      const { rows } = await pool.query<ApplicationRow>(
+        `SELECT ${APPLICATION_COLUMNS} FROM artisan_applications ORDER BY created_at DESC, id DESC LIMIT $1`,
+        [limit],
+      );
+      return rows.map(fromRow);
+    },
+    async setApplicationStatus(id, status, note) {
+      const { rows } = await pool.query<ApplicationRow>(
+        `UPDATE artisan_applications SET status = $2, note = $3, reviewed_at = now() WHERE id = $1 RETURNING ${APPLICATION_COLUMNS}`,
+        [id, status, note],
+      );
+      return rows[0] ? fromRow(rows[0]) : null;
     },
     async ensureUser(phone) {
       await pool.query('INSERT INTO users (phone) VALUES ($1) ON CONFLICT DO NOTHING', [phone]);

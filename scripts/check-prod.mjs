@@ -29,7 +29,7 @@ const expect = (cond, msg) => {
 const get = (path, init) => fetch(BASE + path, { redirect: 'manual', ...init });
 
 // ── Pages load cold (a refresh or a shared link, not a click inside the app) ──
-for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/pro/apply', '/pro/application', '/pro/login', '/pro/dashboard', '/pro/help', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
+for (const path of ['/', '/explore', '/explore?when=later&day=20&win=4', '/login', '/activity', '/account', '/pro', '/pro/app', '/pro/apply', '/pro/application', '/pro/login', '/pro/dashboard', '/pro/help', '/ops', '/job/dfx-1042', '/artisan/tf', '/how-it-works', '/trade/plumbing', '/help', '/no-such-page']) {
   await check(`GET ${path} serves the app`, async () => {
     const r = await get(path);
     const type = r.headers.get('content-type') ?? '';
@@ -124,6 +124,14 @@ await check('login: request-code → verify → name → me', async () => {
   const me = await (await get('/api/auth/me', { headers: { cookie: cookie() } })).json();
   expect(me.signedIn && me.name === 'Smoke', `me ${JSON.stringify(me)}`);
   return 'pilot mode (on-screen code)';
+});
+
+// ── Security: the founders' ops API never answers a visitor ──
+await check('ops API refuses a visitor', async () => {
+  const r = await get('/api/ops/applications');
+  // 401 when the team variables are set, 503 until they are; never the list.
+  expect([401, 503].includes(r.status), `status ${r.status}`);
+  return (await r.json()).error;
 });
 
 // ── Security: AUTH_SECRET must be set — a token signed with the public fallback key must fail ──
