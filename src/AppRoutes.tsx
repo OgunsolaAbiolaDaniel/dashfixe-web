@@ -4,7 +4,28 @@ import HomePage from './pages/HomePage';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { AssistantProvider } from './components/assistant/AssistantProvider';
 import LocationPrompt from './components/shared/LocationPrompt';
-import { lazyPage, preloadPagesWhenIdle } from './lib/lazyPage';
+import { preloadPagesWhenIdle } from './lib/lazyPage';
+import {
+  AboutPage,
+  AccountPage,
+  ActivityPage,
+  ArtisanProfilePage,
+  ExplorePage,
+  HelpPage,
+  HowItWorksPage,
+  JobPage,
+  LegalPage,
+  LoginPage,
+  NotFoundPage,
+  ProAppPage,
+  ProApplicationPage,
+  ProApplyPage,
+  ProDashboardPage,
+  ProHelpPage,
+  ProLandingPage,
+  TradePage,
+  WaitlistPage,
+} from './routePages';
 import { ROUTES, link } from './routes';
 import { launched } from './config';
 import { applyMeta, pageMeta } from './seo';
@@ -16,27 +37,9 @@ import { useLang } from './i18n';
  * real navigation, including the redirects.
  *
  * The home ships in the entry chunk; every other page is its own chunk
- * (lib/lazyPage), fetched on first visit or once the first page is idle.
+ * (routePages.ts): the first page's is fetched before the first render (main.tsx),
+ * the rest on first visit or once the first page is idle.
  */
-const WaitlistPage = lazyPage(() => import('./pages/WaitlistPage'));
-const ExplorePage = lazyPage(() => import('./pages/ExplorePage'));
-const ActivityPage = lazyPage(() => import('./pages/ActivityPage'));
-const AccountPage = lazyPage(() => import('./pages/AccountPage'));
-const ArtisanProfilePage = lazyPage(() => import('./pages/ArtisanProfilePage'));
-const JobPage = lazyPage(() => import('./pages/JobPage'));
-const ProLandingPage = lazyPage(() => import('./pages/ProLandingPage'));
-const ProAppPage = lazyPage(() => import('./pages/ProAppPage'));
-const ProApplyPage = lazyPage(() => import('./pages/ProApplyPage'));
-const ProApplicationPage = lazyPage(() => import('./pages/ProApplicationPage'));
-const ProDashboardPage = lazyPage(() => import('./pages/ProDashboardPage'));
-const ProHelpPage = lazyPage(() => import('./pages/ProHelpPage'));
-const AboutPage = lazyPage(() => import('./pages/AboutPage'));
-const HelpPage = lazyPage(() => import('./pages/HelpPage'));
-const LegalPage = lazyPage(() => import('./pages/LegalPage'));
-const LoginPage = lazyPage(() => import('./pages/LoginPage'));
-const TradePage = lazyPage(() => import('./pages/TradePage'));
-const HowItWorksPage = lazyPage(() => import('./pages/HowItWorksPage'));
-const NotFoundPage = lazyPage(() => import('./pages/NotFoundPage'));
 
 /** Hash links must still work after a client-side navigation. */
 function HashScroll() {

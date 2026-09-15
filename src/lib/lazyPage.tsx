@@ -12,7 +12,12 @@ type Module<P> = { default: ComponentType<P> };
 
 const loaders: Array<() => Promise<unknown>> = [];
 
-export function lazyPage<P extends object>(load: () => Promise<Module<P>>): ComponentType<P> {
+export type LazyPage<P> = ComponentType<P> & {
+  /** Fetch the chunk now; rendering afterwards never suspends. */
+  preload: () => Promise<unknown>;
+};
+
+export function lazyPage<P extends object>(load: () => Promise<Module<P>>): LazyPage<P> {
   let loaded: ComponentType<P> | null = null;
   let pending: Promise<Module<P>> | null = null;
   const fetchPage = () =>
@@ -34,7 +39,7 @@ export function lazyPage<P extends object>(load: () => Promise<Module<P>>): Comp
     const [Component] = useState(() => loaded ?? Lazy);
     return <Component {...props} />;
   }
-  return Page;
+  return Object.assign(Page, { preload: fetchPage });
 }
 
 /** Fetch every page chunk — once the first page is idle, and before tests that mount the tree. */
