@@ -6,9 +6,13 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-14 · Revision 2.6 — `/pro/help`, straight answers for artisans.
+**Last revised:** 2026-09-15 · Revision 2.7 — launch readiness: security headers and a
+Content-Security-Policy (`vercel.json`, also sent by `vite preview`), every page but the
+home split into its own chunk (`lib/lazyPage.tsx`), Pexels photos sized per screen
+(`shared/Photo`), and per-page hreflang (`?lang=pt`) and schema.org JSON-LD (`seo.ts`).
+(Revision 2.6 — `/pro/help`, straight answers for artisans.
 Dashfixe Pro is complete: landing, app showcase, application and status, log in,
-dashboard, help. (Revision 2.5 — artisans can log in: `/pro/login` (the same
+dashboard, help.) (Revision 2.5 — artisans can log in: `/pro/login` (the same
 phone sign-in, in Pro chrome) and `/pro/dashboard` (the application's status, a checklist
 for the call, their hours, their profile, and a sample preview).)
 (Revision 2.3 — the Dashfixe Pro application: `/pro/apply`
@@ -150,6 +154,23 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/how-it-works` | marketing | The customer journey in five steps + the three trust rules (`#estimate`, `#safety`, `#cancellations`) | built (rev 1.5) |
 | `/waitlist` | own chrome | **Parked** (rev 1.5): reachable, linked from nowhere, `noindex`, out of the sitemap; `VITE_LAUNCHED=true` redirects it to `/` | built |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
+
+**Loading (rev 2.7).** Only `/` ships in the entry chunk. Every other page is
+`lazyPage(() => import(...))` in `routePages.ts`, which also maps routes to pages.
+- The first page of a visit never suspends. Its pre-rendered HTML modulepreloads its chunk
+  (`PAGE_MODULES` in `vite.config.ts`), and `main.tsx` awaits `preloadRoute()` before the
+  first render. Rendering into a fallback instead cost a blank frame plus React's reveal
+  throttle, and measured slower than the single bundle.
+- Later pages load on first visit behind a screen-height Suspense fallback.
+- Once the first page is idle, every page's chunk is warmed, unless the visitor asked to
+  save data. A page whose chunk has arrived renders at once.
+
+**Search (rev 2.7).** Every indexable page carries its language variants: English at the
+plain URL, Portuguese at `?lang=pt` (i18n reads it and remembers it), and `x-default`,
+in the pre-rendered head, at runtime and in the sitemap. It also carries schema.org
+JSON-LD: `Organization` and `WebSite` on `/`, a `Service` with the pilot area on each
+`/trade/:slug`, and `FAQPage` on `/help` and `/pro/help`, built from `lib/faq.ts`, the
+same list the pages render. No ratings or reviews are claimed; private pages get none.
 
 ### Cut in revision 1, and why
 
@@ -426,7 +447,9 @@ and their 83 kB of CSS behind `React.lazy`, with a placeholder in the map's own 
 colour so nothing jumps. An ESLint `no-restricted-imports` rule rejects any direct import,
 because one stray import pulls about 800 kB back into the entry chunk.
 
-- **Entry JS:** 1,445 → 424 kB (gzip 399 → 123 kB).
+- **Entry JS:** 1,445 → 424 kB (gzip 399 → 123 kB). It had grown back to 589 kB (gzip
+  164 kB) by rev 2.6; splitting the pages (rev 2.7) took it to 288 kB (gzip 86 kB), plus
+  the shared dictionaries (93 kB, gzip 30 kB) and API client (41 kB, gzip 15 kB).
 - **What skips the map:** marketing pages and `/login` never download it, and the smoke
   suite asserts that.
 
@@ -459,6 +482,11 @@ that pipeline with sample data. Geocoding: Nominatim within its fair-use policy 
   - cold deep links and redirects resolve
   - OTP login lands on `?next=` and survives a reload
   - the waitlist form POSTs
+  - the production CSP blocks nothing the home and `/explore` load (rev 2.7: `vite preview`
+    sends `vercel.json`'s headers, so this is the live policy)
+- **Production (rev 1.6, headers rev 2.7):** `scripts/check-prod.mjs` runs after every
+  production deploy: cold loads, redirects, SEO files, hreflang and JSON-LD, the security
+  headers, year-long caching of hashed assets, the pilot login and a forged-session check.
 - **CI:** GitHub Actions runs `check` (gate + build), then `smoke` (Chromium), on every
   PR, keeping traces on failure. No PR merges red. That one rule would have prevented the
   2026-09-10 main breakage.
