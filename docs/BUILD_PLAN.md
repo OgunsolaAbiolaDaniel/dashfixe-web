@@ -495,11 +495,19 @@ console" has the model.
   reset or disable.
 - ✅ The black console frame, coloured by role; IBM Plex loads on console pages only.
 
-**PR 2 · Work screens ⬜**
-- Applications, problem reports, waitlist and coverage in `/admin`, with owners,
-  filters, SLA timers and history.
-- The overview's figures, pipeline and supply by trade × area.
-- `/ops` redirects to `/admin`.
+**Revision 2.13 · Work screens ✅** (branch `feat/admin-work`, stacked on #33)
+- ✅ Applications, problem reports and the waitlist in `/admin`, with owners, filters,
+  search, bulk actions, target timers and per-record history.
+- ✅ The overview: six figures with trends, what needs attention, the pipeline, supply by
+  trade × area, and system status.
+- ✅ The server enforces the rules: an Admin can't decide or reopen, safety reports need a
+  Supervisor, and resolving needs a note.
+- ✅ Logged CSV exports (Supervisor and up); `/ops` redirects to `/admin`.
+
+**Owner test (2.13):**
+1. As the Super admin, open Applications, assign one to a Supervisor and approve it.
+2. As an Admin, try: the Approve button isn't there, and the note says why.
+3. On Problem reports, a safety report sits at the top with its 1-hour countdown.
 
 **PR 3 · Supervisor sign-off and chat ⬜**
 - "Ask a supervisor" on a record: a request with a thread. The Supervisor's queue:

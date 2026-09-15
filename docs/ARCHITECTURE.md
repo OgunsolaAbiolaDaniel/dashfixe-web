@@ -6,10 +6,13 @@
 > stay in `../Dashfixe.md`. Code state lives in `docs/HANDOVER.md`.
 
 **Owner of this document:** whoever is acting as architect in the current session.
-**Last revised:** 2026-09-15 · Revision 2.12 — the admin console at `/admin`: its own email +
+**Last revised:** 2026-09-15 · Revision 2.13 — the console's work screens: the overview's
+figures, applications, problem reports and the waitlist, with owners, targets, history and
+logged exports. `/ops` now redirects to `/admin`. (Revision 2.12 — the admin console at
+`/admin`: its own email +
 password accounts, three roles (Super admin · Supervisor · Admin) enforced on the server,
 one-time setup, team management and an audit log, in a black frame coloured by role (§4,
-"The admin console"). (Revision 2.11 — `GET /api/health` proves production is on Postgres.)
+"The admin console").) (Revision 2.11 — `GET /api/health` proves production is on Postgres.)
 (Revision 2.10 — the whole customer journey runs in Playwright on
 every PR (`e2e/journey.spec.ts`, §8), and axe checks `/job/:id`.) (Revision 2.9 — help on
 `/job/:id`: change the time or cancel (free, with credit refunded) before the artisan sets
@@ -164,7 +167,7 @@ Four journeys cover everyone. Every nav decision below exists to serve these.
 | `/how-it-works` | marketing | The customer journey in five steps + the three trust rules (`#estimate`, `#safety`, `#cancellations`) | built (rev 1.5) |
 | `/waitlist` | own chrome | **Parked** (rev 1.5): reachable, linked from nowhere, `noindex`, out of the sitemap; `VITE_LAUNCHED=true` redirects it to `/` | built |
 | `/login` | own chrome | Phone-first log in/sign up (one flow), `?next=` returns to the commit point | built (rev 1.3) |
-| `/ops` | own chrome (minimal Pro header) | The founders' review of Pro applications: team phone + passcode (§6), then each application with Call / WhatsApp / Email, what they sent, a private note, and new → called → approved/declined, filterable by status. Linked from nowhere; noindex and robots-disallowed. Visitors → `/login?next=/ops` | built (rev 2.8) |
+| `/ops` | — | **Redirects to `/admin`** (rev 2.13); the page is gone, and `/api/ops/*` stays until it's retired. Was: the founders' review of Pro applications: team phone + passcode (§6), then each application with Call / WhatsApp / Email, what they sent, a private note, and new → called → approved/declined, filterable by status. Linked from nowhere; noindex and robots-disallowed. Visitors → `/login?next=/ops` | built (rev 2.8) |
 
 **Loading (rev 2.7).** Only `/` ships in the entry chunk. Every other page is
 `lazyPage(() => import(...))` in `routePages.ts`, which also maps routes to pages.
@@ -240,7 +243,10 @@ one-header rule), noindex and robots-disallowed, and linked from nowhere.
 | Route | Who | What |
 |---|---|---|
 | `/admin/setup` | anyone with the key, once | Creates the first Super admin; the key is `OPS_PASSCODE`. Then it closes ("already set up") |
-| `/admin` | signed out → sign-in; signed in → overview | Overview: your access (from the permission table), the team at a glance (Super admin), recent activity in your scope |
+| `/admin` | signed out → sign-in; signed in → overview | Overview (rev 2.13): six figures with 7-day trends (Admins see their own open work instead of the waitlist), what needs attention (safety first, then nearest its target), activity in your scope, the application pipeline, approved supply by trade × area, system status, your access |
+| `/admin/applications` | everyone (`applications.work`) | Status tabs + Mine, filters (trade, area, owner), search, bulk assign/call, waiting time against the 48 h target; a detail panel with contact, answers, owner, note, decision and history. Deep link: `?open=<id>` |
+| `/admin/reports` | everyone (`reports.work`) | Open / called back / resolved / mine; safety first; call-back countdown (1 h safety, 24 h otherwise); resolve with a written note; history |
+| `/admin/waitlist` | Supervisor, Super admin | Sign-ups, search, export |
 | `/admin/team` | Super admin | Add a person with a starting password (shown once, sent by WhatsApp), change roles, reset passwords, disable/enable |
 | `/admin/audit` | everyone, scoped | Super admin: everything. Supervisor: the team (everyone but the Super admin). Admin: their own actions |
 | `/admin/account` | everyone | Details, session end, change password |
